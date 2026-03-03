@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { login } from "@/lib/api/auth";
 
 export async function getMe() {
-  const res = await fetch("http://localhost:3001/api/auth/me", {
+  const res = await fetch("/api/auth/me", {
     credentials: "include",
   });
 
