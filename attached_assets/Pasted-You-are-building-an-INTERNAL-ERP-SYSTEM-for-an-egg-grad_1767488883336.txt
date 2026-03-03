@@ -1,0 +1,235 @@
+You are building an INTERNAL ERP SYSTEM for an egg grading and packing plant.
+This is NOT a generic ERP. Do NOT simplify business logic.
+
+========================================
+CORE BUSINESS CONSTRAINTS (LOCK THESE)
+========================================
+1. Eggs are always counted internally in EGG units (law, stock, traceability).
+2. Egg receiving is FIXED:
+   - 10 trays = 3,000 eggs per receiving lot.
+   - Egg count is SYSTEM FIXED and CANNOT be edited.
+   - Weight is recorded ONLY for QA and yield analysis.
+3. No override is allowed for grading or packing rules.
+4. Packaging goods are the ONLY items with flexible purchasing units.
+5. Database module is for STATIC / MASTER DATA only.
+   - Operational recording (Good Receive, Grading) is a separate module.
+
+========================================
+BACKEND – DATA MODEL (TASK 1 & 2 ONLY)
+========================================
+
+IMPORTANT:
+- Remove / deprecate all generic tables such as raw_materials, finished_goods, generic_item, generic_uom.
+- Use clear domain-specific naming.
+- DO NOT mix master data with operational data.
+
+----------------------------------------
+TABLE: item_master   (STATIC DATA ONLY)
+----------------------------------------
+Purpose: Single source of truth for Eggs and Packaging Goods.
+
+Fields:
+- item_id (PK)
+- item_code
+- item_name
+- item_category ENUM('EGG','PACKAGING')
+- egg_type ENUM('UNGR','GRADED','UNDER','FG') NULLABLE
+- grade_code ENUM('B0','B1','B2','B3','B4','B5','UNDER') NULLABLE
+- base_uom
+    - ALWAYS 'EGG' for eggs
+    - ALWAYS 'PCS' for packaging goods
+- lot_tracked BOOLEAN
+- is_sellable BOOLEAN
+
+Examples:
+EGG-UNGR
+EGG-GRD-B0
+EGG-GRD-B1
+FG-B0-10
+FG-B0-30
+PKG-TRAY30
+PKG-LID30
+PKG-LABEL
+
+----------------------------------------
+TABLE: egg_grade_rule   (LAW TABLE)
+----------------------------------------
+Purpose: Legal grading rule (weight → grade).
+This table represents LAW and MUST be data-driven.
+
+Fields:
+- grade_code
+- min_weight_g
+- max_weight_g
+
+Seed data:
+B0    | 70.000 | NULL
+B1    | 65.000 | 69.999
+B2    | 60.000 | 64.999
+B3    | 55.000 | 59.999
+B4    | 50.000 | 54.999
+B5    | 45.000 | 49.999
+UNDER | NULL   | 44.999
+
+DO NOT hardcode grading logic.
+Always query this table.
+
+----------------------------------------
+TABLE: finished_pack_spec   (LAW TABLE)
+----------------------------------------
+Purpose: Legal packing rule ONLY (not packaging, not BOM).
+
+Fields:
+- sku_item_id (FK → item_master, egg_type = 'FG')
+- pack_eggs
+- target_grade
+- min_total_weight_g
+- allow_below_grade_eggs
+
+Seed data example:
+FG-B0-10 | 10 | B0 | 700  | 0
+FG-B0-30 | 30 | B0 | 2100 | 1
+FG-B1-10 | 10 | B1 | 650  | 0
+FG-B1-30 | 30 | B1 | 1950 | 1
+
+STRICT:
+- No override
+- No admin bypass
+
+========================================
+OPERATIONAL MODULE (NOT DATABASE)
+========================================
+This module is used DAILY by production staff.
+
+----------------------------------------
+TABLE: egg_receiving_lot
+----------------------------------------
+Purpose: Good Receive (Incoming lot).
+
+Fields:
+- lot_id
+- received_date
+- incoming_bill_no
+- supplier_farm
+- truck_plate
+- driver_name
+
+Process Input:
+- egg_count (ALWAYS 3000, system fixed)
+- total_weight_kg
+- price_per_egg
+
+Process Output – Graded Eggs (COUNTS):
+- qty_b0 (Jumbo & No.0)
+- qty_b1
+- qty_b2
+- qty_b3
+- qty_b4
+- qty_b5
+- qty_b6 (if applicable)
+
+Process Output – Undergraded Eggs:
+- dirty
+- thin_shell
+- dented
+- cracked
+- bag_eggs
+
+Lost:
+- unusable_qty
+
+Quality Check:
+- color_value (1–15)
+- freshness_value
+- reference_images (file upload)
+
+System Rules:
+- egg_count is ALWAYS 3000
+- Sum of all outputs + lost MUST = 3000
+- If QC fails → lot status = HOLD (cannot be used)
+
+========================================
+FRONTEND / UX STRUCTURE
+========================================
+
+MAIN NAVIGATION:
+
+Database (STATIC – used rarely)
+ ├── Eggs
+ │    ├── Egg Master
+ │    ├── Grade Rules (view-only)
+ │    ├── Pack Rules (view-only)
+ │
+ ├── Packaging Goods
+ │    ├── Packaging Items
+ │
+Operations (DAILY USE)
+ ├── Good Receive
+ │    ├── Receive Egg Lot
+ │    ├── Grading Record
+ │    └── QC Review
+
+DO NOT place Good Receive under Database.
+
+========================================
+GOOD RECEIVE UX (STRICT FLOW)
+========================================
+Screen: Receive Egg Lot
+
+- Date
+- Incoming Bill No.
+- Farm
+- Truck Plate
+- Driver
+- Trays: fixed = 10 (read-only)
+- Egg count: auto = 3000 (read-only)
+- Total weight (kg): input
+- Price per egg
+- QC checklist
+- CONFIRM
+
+NO editable egg quantity.
+NO override.
+
+========================================
+BACKEND VALIDATION (MUST ENFORCE)
+========================================
+
+1. Egg receiving:
+   - egg_count MUST = 3000
+   - outputs + lost MUST equal 3000
+
+2. Packing validation (single grade):
+   - number_of_eggs == pack_eggs
+   - total_weight >= min_total_weight_g
+   - eggs_below_grade <= allow_below_grade_eggs
+
+If validation fails:
+- Block transaction
+- Return clear error message
+- Do NOT allow override
+
+========================================
+DATABASE CLEANUP (RUN ONCE)
+========================================
+DROP TABLE IF EXISTS
+  finished_goods,
+  raw_materials,
+  generic_item,
+  generic_uom;
+
+========================================
+DEVELOPMENT MODE
+========================================
+- Create seed/sample data for ALL tables.
+- UI must work with sample data first.
+- Real data will be uploaded later.
+- Do NOT add extra ERP modules.
+- Do NOT invent business rules.
+- Ask before expanding scope.
+
+START WITH:
+1) Database schema
+2) Seed data
+3) CRUD UI for Database module
+4) Good Receive operational screen

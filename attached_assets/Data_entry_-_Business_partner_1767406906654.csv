@@ -1,0 +1,32 @@
+,,,,,,,,,,,,,,,,,,,
+code,nickname,partnerType,businessName,businessType,customerType,branchCode,branchName,taxId,addressLine1,addressLine2,district,subDistrict,province,postalCode,country,creditDays,paymentTerms,customerTier,isActive
+Yes,Yes,Yes,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No,No
+"C001, S001","ตลาดไท, MK - Makro","customer, supplier, both",บริษัท สยามแม็คโคร จำกัด,"Individual, Corporation","Traditional Trade, Modern Trade",1,สำนักงานใหญ่,107536000293,1468 ถ.พัฒนาการ,ชั้น 5,สวนหลวง,สวนหลวง,กรุงเทพมหานคร,10250,Thailand,"30, 45, 60","COD, Credit","Standard, Wholesale, Modern Trade","true, false"
+C001,Makro,customer,บริษัท ซีพี แอกซ์ตร้า จำกัด (มหาชน),Corporation,Modern Trade,00000,สำนักงานใหญ่,0107567000414,1468 ถนนพัฒนาการ ,,แขวงพัฒนาการ,เขตสวนหลวง,กรุงเทพมหานคร,10250,Thailand,,Credit,,TRUE
+C002,BigC,customer,บริษัท บิ๊กซี ซูเปอร์เซ็นเตอร์ จำกัด (มหาชน),Corporation,Modern Trade,00000,สำนักงานใหญ่,0107536000633,88/9 ซอยสมานฉันท์ - บาร์โบส,,แขวงพระโขนง,เขตคลองเตย,กรุงเทพมหานคร,10110,Thailand,,Credit,,TRUE
+C003,CJ Express,customer,บริษัท ซี.เจ.เอ็กซ์เพรส กรุ๊ป จำกัด,Corporation,Modern Trade,00000,สำนักงานใหญ่,0105556055491,"393 อาคาร 393 สีลม ชั้น 2,4, และ 5",,แขวงสีลม,เขตบางรัก,กรุงเทพมหานคร,10500,Thailand,,Credit,,TRUE
+C004,Thaifood,customer,บริษัท ไทย ฟู้ดส์ เฟรซ มาร์เก็ต จำกัด,Corporation,Modern Trade,00000,สำนักงานใหญ่,0105563089753,1010 อาคาร ชินวัตร 3 ชั้น12 ถ.วิภาวดี,,แขวงจัตุจักร,เขตจัตุจักร,กรุงเทพมหานคร,10900,Thailand,,Credit,,TRUE
+C005,ทั่วไป,customer,บริษัท มาเธอร์ มาร์เก็ตติ้ง จำกัด (มหาชน),Corporation,Traditional Trade,00000,สำนักงานใหญ่,107566000593,345 ถนนมหาราช,,ปากน้ำ,อำเภอเมืองกระบี่,จังหวัดกระบี่,81000,Thailand,,Credit,,TRUE
+C006,ทั่วไป,customer,บริษัท สมาร์โกร เวท จำกัด,Corporation,Traditional Trade,00000,สำนักงานใหญ่,105566013171,50 ซอยนาคนิวาส 48 แยก14-4 ถนนนาคนิวาส,,,,,10230,Thailand,,COD,,TRUE
+C010,ทั่วไป,customer,ลูกค้าทั่วไป,Individual,Traditional Trade,,,,,,,,,,Thailand,,Cash,,TRUE
+C011,ทั่วไป,customer,สวัสดิการพนักงาน,Individual,Traditional Trade,,,,,,,,,,Thailand,,Cash,,TRUE
+C012,ทั่วไป,customer,ขอนแก่น,Individual,Traditional Trade,,,,,,วังชัย,อำเภอน้ำพอง,จังหวัดขอนแก่น,40140,Thailand,,COD,,TRUE
+C013,ทั่วไป,customer,คุณไข่มุข,Individual,Traditional Trade,,,,,,,,,,Thailand,,COD,,TRUE
+C014,ทั่วไป,customer,เจ๊นกไข่สด,Individual,Traditional Trade,,,,,,,,,,Thailand,,COD,,TRUE
+C015,ทั่วไป,customer,นายรัฐสรรค์ กาญจนรัตน์ภูภร(ไพฑูรย์),Individual,Traditional Trade,,,,39/6 หมู่ 9,,บางเมืองใหม่,อำเภอเมือง,จ.สมุทรปราการ,10270,Thailand,,COD,,TRUE
+C016,ทั่วไป,customer,นายอนันต์ อินทรกานต์,Individual,Traditional Trade,,,,245/17 หมู่บ้านซิตี้พาร์คบางเสาธง,,บางเสาธง,อำเภอบางเสาธง,จังหวัดสมุทรปราการ,10570,Thailand,,COD,,TRUE
+C017,ทั่วไป,customer,บริษัท เจเอส คอมเมอร์เชียล เทรด จำกัด,Corporation,Traditional Trade,00000,สำนักงานใหญ่,255557000389,598 หมู่8,,กบินทร์,อำเภอกบินทร์บุรี,จังหวัดปราจีนบุรี,25110,Thailand,,COD,,TRUE
+C018,ทั่วไป,customer,บริษัท ที เจ เค จำกัด,Corporation,Traditional Trade,00000,สำนักงานใหญ่,815562001023,495/30 ถนนอุตรกิจ,,กระบี่ใหญ่จ.กระบี่,,,,Thailand,,COD,,TRUE
+C019,ทั่วไป,customer,บริษัท บ้านหมูดวงเจริญ จำกัด (สำนักงานใหญ่),Corporation,Traditional Trade,00000,สำนักงานใหญ่,135561023593,49/203 หมู่ที่ 8,,คลองสอง,อำเภอคลองหลวง,จ.ปทุมธานี,12120,Thailand,,COD,,TRUE
+C020,ทั่วไป,customer,บริษัท ส.พาทรัพย์ จำกัด,Corporation,Traditional Trade,00000,สำนักงานใหญ่,265566001082,8/8 หมู่ที่ 8,,อาษา,อำเภอบ้านนา,จังหวัดนครนายก,26110,Thailand,,COD,,TRUE
+C021,ทั่วไป,customer,บริษัท เอ็ม เอส พี อินเตอร์ฟู้ดส์ 2021 จำกัด,Corporation,Traditional Trade,00000,สำนักงานใหญ่,515560000561,92 หมู่ 15,,ป่าสัก,อำเภอเมือง,จ.ลำพูน,51000,Thailand,,COD,,TRUE
+C022,ทั่วไป,customer,บ้านไข่ตอก,Individual,Traditional Trade,,,,เลขที่ 7/48 หมู่ที่ 1,,หนองชาก,อำเภอบ้านบึง,จังหวัดชลบุรี,20170,Thailand,,COD,,TRUE
+C023,ทั่วไป,customer,ปรีชา ตันติวัฒนวงษ์,Individual,Traditional Trade,,,,,,,,,,Thailand,,COD,,TRUE
+C024,ทั่วไป,customer,พลอย เตตาน,Individual,Traditional Trade,,,,,,,,,,Thailand,,COD,,TRUE
+C025,ทั่วไป,customer,ยิ่งเจริญ (79),Individual,Traditional Trade,,,,ตลาด79 วังน้ำเขียว,,,,,,Thailand,,COD,,TRUE
+C026,ทั่วไป,customer,ร้าน เจ๊นก ไข่สด,Individual,Traditional Trade,,,3349900563125,325 ถนนนาคนิวาส,,ลาดพร้าว,เขตลาดพร้าว,กรุงเทพฯ,10230,Thailand,,COD,,TRUE
+C027,ทั่วไป,customer,ร้านอาหารพาร์คคุณพิมพ์,Individual,Traditional Trade,,,1100500341076,58 หมู่5,,กบินทร์,อำเภอกบินทร์บุรี,จังหวัดปราจีนบุรี,25110,Thailand,,COD,,TRUE
+C028,ทั่วไป,customer,หมอเหน่ง,Individual,Traditional Trade,,,,,,,,,,Thailand,,COD,,TRUE
+C029,ทั่วไป,customer,ห้างหุ้นส่วนจำกัด นิวแสงทองเทรดดิ้ง,Corporation,Traditional Trade,00000,สำนักงานใหญ่,103504005377,109-111 ถนนเยาวราช,,สัมพันธวงศ์,,,10100,Thailand,,COD,,TRUE
+C030,ทั่วไป,customer,ห้างหุ่นส่วนจำกัด ร่วมมิตรฟาร์ม,Corporation,Traditional Trade,00000,สำนักงานใหญ่,103520016787,321 ถนนวิภาวดีรังสิต,,สามเสนใน,เขตพญาไท,กรุงเทพมหานคร,10400,Thailand,,COD,,TRUE
+C031,ทั่วไป,customer,เฮียเตี้ย,Individual,Traditional Trade,,,,,,,,,,,,,,

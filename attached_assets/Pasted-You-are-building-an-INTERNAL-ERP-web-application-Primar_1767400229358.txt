@@ -1,0 +1,148 @@
+You are building an INTERNAL ERP web application.
+Primary language: THAI
+Secondary language: English (for technical terms only)
+
+DESIGN GOALS:
+- Enterprise-grade ERP UI
+- Optimized for long daily usage
+- High readability for Thai language
+- Neutral-first design (90% neutral, 10% brand)
+- Clear data hierarchy, strong table usability
+
+==================================================
+TYPOGRAPHY (CRITICAL)
+==================================================
+
+PRIMARY FONT:
+- Use "Noto Sans Thai" as the main font
+- Fallback stack:
+  font-family: "Noto Sans Thai", "Noto Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+FONT USAGE RULES:
+- All UI text, tables, forms, labels must use Noto Sans Thai
+- Use normal to medium weights (400–500) for body text
+- Use semibold (600) for headings and table headers
+- Avoid thin fonts (300) for ERP readability
+
+LOAD FONT VIA GOOGLE FONTS:
+https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap
+
+==================================================
+COLOR SYSTEM (ROLE-BASED)
+==================================================
+
+BRAND COLORS:
+- Primary Brand Red: #B70000
+- Brand Red Dark (hover): #A30000
+- Danger Red: #D60000
+- Gold Highlight: #FFD44D
+- Gold Warning: #D1990F
+- Success Green: #00B254
+- Success Green Dark: #008743
+
+NEUTRALS (DOMINANT):
+- App background: #F6F7F8
+- Card / surface: #FFFFFF
+- Border / divider: #E5E7EB
+- Primary text: #1F2937
+- Secondary text: #6B7280
+- Muted text: #9CA3AF
+
+THEME RULES:
+1) Do NOT use red or gold as page backgrounds.
+2) Use red ONLY for primary actions, errors, and critical emphasis.
+3) Gold is for highlights and attention states only.
+4) Green is ONLY for success / approved / completed statuses.
+5) Majority of UI must remain neutral for eye comfort.
+
+==================================================
+LAYOUT
+==================================================
+
+- Left sidebar navigation (dark neutral)
+- Top header bar
+- Main content uses cards and tables
+- Responsive grid system
+- Sticky table headers where applicable
+
+SIDEBAR:
+- Background: #111827
+- Text: #E5E7EB
+- Active menu indicator: thin left bar or underline in #B70000
+- Do NOT fill active item with red
+
+==================================================
+BUTTON SYSTEM
+==================================================
+
+PRIMARY BUTTON:
+- Background: #B70000
+- Text: #FFFFFF
+- Hover: #A30000
+- Disabled: bg #F2B5B5, text #FFFFFF
+
+SECONDARY BUTTON:
+- Background: #FFFFFF
+- Border: #B70000
+- Text: #B70000
+- Hover background: #FDECEC
+
+DANGER BUTTON:
+- Background: #D60000
+- Text: #FFFFFF
+
+==================================================
+STATUS COLORS (ERP STANDARD)
+==================================================
+
+- ร่าง (Draft): #9CA3AF
+- รอดำเนินการ (Pending): #FFD44D
+- อนุมัติแล้ว (Approved): #00B254
+- เสร็จสิ้น (Completed): #008743
+- ปฏิเสธ (Rejected): #B70000
+- เกินกำหนด (Overdue): #D1990F
+
+==================================================
+TABLE & FORM RULES
+==================================================
+
+TABLES:
+- Strong header contrast
+- Zebra rows very subtle
+- Column alignment for numbers
+- Sticky headers for large datasets
+
+FORMS:
+- Clear Thai labels
+- Helper text below inputs
+- Error state uses #D60000
+- Focus ring: 2px solid #FFD44D
+
+==================================================
+ACCESSIBILITY
+==================================================
+
+- Ensure strong contrast for Thai characters
+- Never use gold text
+- Red text ONLY for errors or negative values
+- Use proper spacing for Thai readability
+
+==================================================
+IMPLEMENTATION REQUEST
+==================================================
+
+Use React + Tailwind (or default Replit stack).
+Define CSS variables (design tokens) for all colors and typography.
+Apply font globally.
+Create these screens in Thai:
+1) หน้าเข้าสู่ระบบ (Login)
+2) แดชบอร์ด (Dashboard) – KPI cards + activity
+3) รายการสินค้า / สต็อก (Inventory table)
+4) หน้ารายละเอียด + ฟอร์มแก้ไข (Detail + Form)
+
+STYLE:
+- Rounded corners 8px
+- Soft shadows
+- Clean, modern, professional ERP look
+- No decorative gradients
+

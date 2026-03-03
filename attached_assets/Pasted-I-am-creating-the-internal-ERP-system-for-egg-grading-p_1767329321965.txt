@@ -1,0 +1,73 @@
+I am creating the internal ERP system for egg grading plants productions. We are just-in-time production where the product will be processed and finished within 2 days due to the nature of the product shelf. This will be from end-to-end management system: order receive —> productions —> deliver to customer door.
+Main functions of the team are  A. Sale and supply chain 
+B. Logistics  C. HR
+D. Productions 
+F. Quality assurance 
+G. Stock E. Engineering and maintenance  
+ D. Productions  and F. Quality assurance and G. Stock has sub-team to control the following working stations 
+- Good receive
+- Grading egg 
+- Packing
+- Order picking
+- Load out
+- Ungraded reprocessing 
+- Good receive
+- Grading egg 
+- Packing
+- Packaging 
+    - Sticker / Labeling
+    - Basket
+    - Finishing package
+- Baskets
+
+
+I think I would like to start with UX so that I can construct key framework of each module in my head properly. The framework designed to help each user to use their work function properly from manager, supervisor, officer, and worker. Please be noted that not all functions required to complete all jobs are listed below. But they are first I can think of…
+ Here are the navigation tap I think it more appropriate
+1. Database - This ought to be the central of all static data that we will input and all features will be pulling information from here
+* Finished good listing
+* Raw material listing
+* Customers
+* Suppliers
+* Driver
+* Vehicles   
+The following will be grouping by functions / user that will manage this 2. Order management - This ought to be the main input from other system to our system
+* Order input
+* Daily order summary
+* Price adjustment
+* Issuing invoices 
+* Return items
+
+3. Productions - production request to each working stations.
+* Planned Production request + required raw material of each workstations to each workstations. The logic started with order inputs 
+    * SKU transformations grading — ungraded egg --> graded egg + under graded egg + lost
+    * SKU transformations packing — Graded egg —> Finished good
+    * SKU transformations packing — Package preparations —> Sticker on lid, Labeling
+    * Order picking — Finished good to orders
+* Required raw material
+* Actual output - real-time production reports
+* Daily productions order and productivity 
+
+4. Inventory - I think I want to create the printing QR code for pick-up, put away and product transformation. This module is to traceability of the products, stock management (FIFO). This will be a logic to support production module where to pick inventory and put away. Can we
+* Good receive 
+* Stock locations in different area
+* Stock card of each stock locations reports
+* Stock for ungraded egg, graded egg, under graded egg, packaging (tray, lid, closer,
+
+5. Logistics 
+* This will be planned at order level
+* Planning 
+* Actual - How and  
+
+6. Customer supports 
+* Claim case - and claim status
+
+7. Reports and dashboard
+- Daily order fulfillment reports 
+- Sale reports SKUs, egg size by date, by customers 
+- Production reports 
+- Inventory report including aging inventory 
+
+In addition
+1. App configurations
+* control access to user
+* languages

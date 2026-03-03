@@ -1,0 +1,140 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* EggGrade ERP Typography - Thai-first */
+  --font-sans: 'Noto Sans Thai', 'Noto Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  /* Brand Colors */
+  --brand-red: 0 100% 36%;          /* #B70000 */
+  --brand-red-dark: 0 100% 32%;     /* #A30000 */
+  --danger-red: 0 100% 42%;         /* #D60000 */
+  --gold-highlight: 45 100% 65%;    /* #FFD44D */
+  --gold-warning: 43 85% 44%;       /* #D1990F */
+  --success-green: 153 100% 35%;    /* #00B254 */
+  --success-green-dark: 153 100% 26%; /* #008743 */
+
+  /* Neutral Palette */
+  --background: 210 14% 97%;        /* #F6F7F8 - App background */
+  --foreground: 220 13% 18%;        /* #1F2937 - Primary text */
+  
+  --card: 0 0% 100%;                /* #FFFFFF */
+  --card-foreground: 220 13% 18%;   /* #1F2937 */
+  
+  --primary: 0 100% 36%;            /* #B70000 - Brand Red */
+  --primary-foreground: 0 0% 100%;  /* #FFFFFF */
+  
+  --secondary: 0 0% 100%;           /* #FFFFFF */
+  --secondary-foreground: 0 100% 36%; /* #B70000 */
+  
+  --muted: 210 14% 95%;             /* Slightly darker than background */
+  --muted-foreground: 220 9% 46%;   /* #6B7280 - Secondary text */
+  
+  --accent: 45 100% 65%;            /* #FFD44D - Gold */
+  --accent-foreground: 220 13% 18%; /* Dark text on gold */
+  
+  --destructive: 0 100% 42%;        /* #D60000 - Danger Red */
+  --destructive-foreground: 0 0% 100%;
+
+  --border: 220 13% 91%;            /* #E5E7EB */
+  --input: 220 13% 91%;             /* #E5E7EB */
+  --ring: 45 100% 65%;              /* Gold focus ring */
+  
+  /* Popover/Dropdown backgrounds - solid white */
+  --popover: 0 0% 100%;             /* #FFFFFF */
+  --popover-foreground: 220 13% 18%; /* #1F2937 */
+  
+  --radius: 0.5rem;                 /* 8px rounded corners */
+
+  /* Sidebar - Dark Theme */
+  --sidebar-background: 222 47% 11%;   /* #111827 */
+  --sidebar-foreground: 220 13% 91%;   /* #E5E7EB */
+  --sidebar-primary: 0 100% 36%;       /* #B70000 */
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 222 47% 15%;
+  --sidebar-accent-foreground: 220 13% 91%;
+  --sidebar-border: 222 47% 20%;
+  --sidebar-ring: 0 100% 36%;
+
+  /* Status Colors */
+  --status-draft: 220 9% 64%;          /* #9CA3AF - ร่าง */
+  --status-pending: 45 100% 65%;       /* #FFD44D - รอดำเนินการ */
+  --status-approved: 153 100% 35%;     /* #00B254 - อนุมัติแล้ว */
+  --status-completed: 153 100% 26%;    /* #008743 - เสร็จสิ้น */
+  --status-rejected: 0 100% 36%;       /* #B70000 - ปฏิเสธ */
+  --status-overdue: 43 85% 44%;        /* #D1990F - เกินกำหนด */
+}
+
+.dark {
+  --background: 222 47% 11%;
+  --foreground: 220 13% 91%;
+  --card: 222 47% 15%;
+  --card-foreground: 220 13% 91%;
+  --popover: 222 47% 15%;
+  --popover-foreground: 220 13% 91%;
+  --primary: 0 100% 40%;
+  --primary-foreground: 0 0% 100%;
+  --secondary: 222 47% 20%;
+  --secondary-foreground: 0 100% 45%;
+  --muted: 222 47% 17%;
+  --muted-foreground: 220 9% 64%;
+  --accent: 45 100% 55%;
+  --accent-foreground: 220 13% 18%;
+  --destructive: 0 100% 42%;
+  --destructive-foreground: 0 0% 100%;
+  --border: 222 47% 20%;
+  --input: 222 47% 20%;
+  --ring: 45 100% 55%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: var(--font-sans);
+  }
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+  }
+}
+
+/* ERP Status Badge Utilities */
+@layer components {
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  .status-draft {
+    @apply bg-status-draft/20 text-gray-700;
+  }
+  .status-pending {
+    @apply bg-status-pending/30 text-amber-900;
+  }
+  .status-approved {
+    @apply bg-status-approved/20 text-emerald-800;
+  }
+  .status-completed {
+    @apply bg-status-completed/20 text-emerald-900;
+  }
+  .status-rejected {
+    @apply bg-status-rejected/20 text-red-800;
+  }
+  .status-overdue {
+    @apply bg-status-overdue/20 text-amber-800;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-muted-foreground/20 rounded-full hover:bg-muted-foreground/30 transition-colors;
+}

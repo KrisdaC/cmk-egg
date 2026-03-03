@@ -1,0 +1,121 @@
+{
+  "colorScheme": "light",
+  "fonts": [
+    {
+      "family": "sans-serif",
+      "count": 50
+    },
+    {
+      "family": "Roboto",
+      "count": 48
+    },
+    {
+      "family": "Arial",
+      "count": 48
+    },
+    {
+      "family": "Google Sans",
+      "count": 16
+    },
+    {
+      "family": "arial",
+      "count": 2
+    },
+    {
+      "family": "Google Sans Text",
+      "count": 1
+    },
+    {
+      "family": "Helvetica",
+      "count": 1
+    },
+    {
+      "family": "monospace",
+      "count": 1
+    }
+  ],
+  "colors": {
+    "primary": "#0B57D0",
+    "accent": "#1A73E8",
+    "background": "#FFFFFF",
+    "textPrimary": "#1F1F1F",
+    "link": "#1A73E8"
+  },
+  "typography": {
+    "fontFamilies": {
+      "primary": "Roboto",
+      "heading": "Roboto"
+    },
+    "fontStacks": {
+      "body": [
+        "Roboto",
+        "Arial",
+        "sans-serif"
+      ],
+      "heading": [
+        "Roboto",
+        "Arial",
+        "sans-serif"
+      ],
+      "paragraph": [
+        "Roboto",
+        "Arial",
+        "sans-serif"
+      ]
+    },
+    "fontSizes": {
+      "h1": "14px",
+      "h2": "14px",
+      "body": "14px"
+    }
+  },
+  "spacing": {
+    "baseUnit": 4,
+    "borderRadius": "20px"
+  },
+  "components": {
+    "input": {
+      "background": "transparent",
+      "textColor": "#212121",
+      "borderColor": null,
+      "borderRadius": "0px",
+      "borderRadiusCorners": {
+        "topLeft": "0px",
+        "topRight": "0px",
+        "bottomRight": "0px",
+        "bottomLeft": "0px"
+      },
+      "shadow": "none"
+    }
+  },
+  "images": {
+    "logo": "File saved at: attached_assets/logo.svg",
+    "favicon": "https://www.gstatic.com/images/branding/searchlogo/ico/favicon.ico",
+    "ogImage": null
+  },
+  "__framework_hints": [],
+  "__llm_logo_reasoning": {
+    "selectedIndex": 0,
+    "reasoning": "Logo rejected: Low confidence. Heuristic fallback: Weak indicators: no link (brand logos usually link to homepage, penalty), top-left position, highest logo on page, src contains logo, too small (likely icon, penalty), small square icon (likely UI icon, heavy penalty), SVG format, body location without header (penalty), not visible (penalty). Score: -25. LLM validation recommended (close scores: top=-25, second=0)",
+    "confidence": 0.30000000000000004,
+    "rejected": true
+  },
+  "__llm_button_reasoning": {
+    "primary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "secondary": {
+      "index": -1,
+      "text": "N/A",
+      "reasoning": "LLM failed"
+    },
+    "confidence": 0
+  },
+  "confidence": {
+    "buttons": 0,
+    "colors": 0,
+    "overall": 0
+  }
+}

@@ -1,0 +1,21 @@
+# Node
+node_modules/
+dist/
+build/
+
+# Logs
+logs
+*.log
+
+# Env
+.env
+.env.*
+
+# OS
+.DS_Store
+
+# Vite
+client/dist/
+
+# PM2
+.pm2/
