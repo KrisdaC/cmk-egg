@@ -1,15 +1,70 @@
 import { Router } from "express";
 import { db } from "../db";
 import { products } from "@shared/schema";
-import { eq } from "drizzle-orm";
 import { productBusinessPartners } from "@shared/schema";
+import { businessPartners } from "@shared/schema";
+import { eq, and, desc } from "drizzle-orm";
 const router = Router();
 
 router.get("/", async (req, res) => {
   try {
-    const finishedGoods = await db.query.products.findMany({
-      orderBy: (products, { desc }) => [desc(products.id)],
-    });
+    const rows = await db
+      .select({
+        productId: products.id,
+        sku: products.sku,
+        name: products.name,
+        description: products.description,
+        sellingUnits: products.sellingUnits,
+        packingUnits: products.packingUnits,
+        paletteUnits: products.paletteUnits,
+        packsPerSellingUnit: products.packsPerSellingUnit,
+        eggsPerPack: products.eggsPerPack,
+        eggsPerSellingUnit: products.eggsPerSellingUnit,
+        isActive: products.isActive,
+        isUndergrade: products.isUndergrade,
+        partnerName: businessPartners.businessName,
+      })
+      .from(products)
+      .leftJoin(
+        productBusinessPartners,
+        eq(productBusinessPartners.productId, products.id),
+      )
+      .leftJoin(
+        businessPartners,
+        eq(productBusinessPartners.businessPartnerId, businessPartners.id),
+      )
+      .orderBy(desc(products.id));
+
+    const map = new Map<number, any>();
+
+    for (const row of rows) {
+      if (!map.has(row.productId)) {
+        map.set(row.productId, {
+          id: row.productId,
+          sku: row.sku,
+          name: row.name,
+          description: row.description,
+          sellingUnits: row.sellingUnits,
+          packingUnits: row.packingUnits,
+          paletteUnits: row.paletteUnits,
+          packsPerSellingUnit: row.packsPerSellingUnit,
+          eggsPerPack: row.eggsPerPack,
+          eggsPerSellingUnit: row.eggsPerSellingUnit,
+          isActive: row.isActive,
+          isUndergrade: row.isUndergrade,
+          business_partner_names: [],
+        });
+      }
+
+      if (row.partnerName) {
+        map.get(row.productId).business_partner_names.push(row.partnerName);
+      }
+    }
+
+    const finishedGoods = Array.from(map.values()).map((item) => ({
+      ...item,
+      businessPartnerNames: item.business_partner_names.join(", "),
+    }));
 
     res.json(finishedGoods);
   } catch (err) {

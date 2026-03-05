@@ -83,6 +83,7 @@ interface Product {
   isUndergrade?: boolean;
   isActive?: boolean;
   vendor?: { id: number; code: string; name: string };
+  businessPartnerNames?: string;
 }
 
 export default function FinishedGoods() {
@@ -141,7 +142,6 @@ export default function FinishedGoods() {
     sticker_label: z.string().optional(),
 
     business_partner_ids: z.array(z.number()).optional(),
-
     is_active: z.boolean().default(true),
     is_undergrade: z.boolean().default(false),
   });
@@ -367,7 +367,6 @@ export default function FinishedGoods() {
                   <TableHead>SKU</TableHead>
                   <TableHead>Product Name</TableHead>
                   <TableHead>Vendor</TableHead>
-                  <TableHead>Size</TableHead>
                   <TableHead>Packing</TableHead>
                   <TableHead>Qty/Pack</TableHead>
                   <TableHead>Status</TableHead>
@@ -390,11 +389,8 @@ export default function FinishedGoods() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-xs">
-                        {product.vendor?.code || "-"}
+                        {product.businessPartnerNames || "-"}
                       </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {formatSizeDisplay(product)}
                     </TableCell>
                     <TableCell className="text-sm">
                       {product.packingUnits || "-"}
