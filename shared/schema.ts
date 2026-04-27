@@ -8,6 +8,8 @@ import {
   date,
   decimal,
   time,
+  varchar,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -454,23 +456,21 @@ export const products = pgTable("products", {
   sellingUnits: text("selling_units"), // ฟอง, ถาด, ตะกร้า, แพ็ค, มัด
   packingUnits: text("packing_units"), // แพ็ค 4, ถาด, ถาด/ครอบ, etc
   paletteUnits: text("palette_units"), // แพ็ค 4, ถาด, ถาด/ครอบ, etc
-  packsPerSellingUnit: decimal("packs_per_selling_unit", {
-    precision: 10,
-    scale: 3,
-  }).default("1"),
-  eggsPerPack: integer("eggs_per_pack").default(30),
-  eggsPerSellingUnit: integer("eggs_per_selling_unit").default(30),
-  eggSizeA: text("egg_size_a"), // Primary egg size: 0, 1, 2, 3, 4, 5, 6, or undergrade types
-  eggSizeB: text("egg_size_b"), // Secondary egg size for mixed products
-  percentageA: integer("percentage_a").default(100), // Percentage of size A (100% = single size)
-  eggsPerSellingUnitA: decimal("eggs_per_selling_unit_a", {
-    precision: 10,
-    scale: 2,
-  }),
-  eggsPerSellingUnitB: decimal("eggs_per_selling_unit_b", {
-    precision: 10,
-    scale: 2,
-  }),
+  eggsPerSellingUnit: integer("eggs_per_selling_unit").default(1),
+  eggsPerPack: integer("eggs_per_pack").default(1),
+  packsPerBasket: integer("packs_per_basket").default(1),
+  basketsPerPalette: integer("baskets_per_palette").default(1),
+  // eggSizeA: text("egg_size_a"), // Primary egg size: 0, 1, 2, 3, 4, 5, 6, or undergrade types
+  // eggSizeB: text("egg_size_b"), // Secondary egg size for mixed products
+  // percentageA: integer("percentage_a").default(100), // Percentage of size A (100% = single size)
+  // eggsPerSellingUnitA: decimal("eggs_per_selling_unit_a", {
+  //   precision: 10,
+  //   scale: 2,
+  // }),
+  // eggsPerSellingUnitB: decimal("eggs_per_selling_unit_b", {
+  //   precision: 10,
+  //   scale: 2,
+  // }),
   skuSizeCategory: text("sku_size_category"), // 0, 1, 2, 3, 4, 5, 6, 2-3 M, 3-4 S, etc
   crateSize: text("crate_size"), // no, S, M, A, CJ - Grey
   packBase: text("pack_base"), // packaging material code
@@ -478,10 +478,53 @@ export const products = pgTable("products", {
   barcodeLabel: text("barcode_label"),
   stickerLabel: text("sticker_label"),
   currentPrice: decimal("current_price", { precision: 10, scale: 2 }),
+  type: text("type"),
   isActive: boolean("is_active").default(true),
-  isUndergrade: boolean("is_undergrade").default(false),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Items - Updated version of Finished Goods (products)
+export const items = pgTable("items", {
+  id: serial("id").primaryKey(),
+  sku: text("sku"),
+  name: text("name").notNull(),
+  description: text("description"),
+  partnerId: integer("partner_id").references(() => businessPartners.id),
+  itemNumber: varchar("item_number"),
+  itemType: varchar("item_type"),
+  itemRole: varchar("item_role"),
+  sellingUnit: varchar("selling_unit"),
+  baseUnit: varchar("base_unit"),
+  packUnit: varchar("pack_unit"),
+  paletteUnit: varchar("palette_unit"),
+  basketUnit: varchar("basket_unit"),
+  eggsPerBasket: integer("eggs_per_basket"),
+  eggsPerPack: integer("eggs_per_pack"),
+  eggsPerPalette: integer("eggs_per_palette"),
+  barcodeLabel: varchar("barcode_label"),
+  isActive: varchar("is_active").default("active"),
+  isSellable: boolean("is_sellable").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Item ↔ Business Partners (Many-to-Many)
+export const itemBusinessPartners = pgTable(
+  "item_business_partners",
+  {
+    id: serial("id").primaryKey(),
+    itemId: integer("item_id")
+      .notNull()
+      .references(() => items.id, { onDelete: "cascade" }),
+    partnerId: integer("partner_id")
+      .notNull()
+      .references(() => businessPartners.id, { onDelete: "cascade" }),
+    customerItemNumber: varchar("customer_item_number"),
+    barcodeLabel: varchar("barcode_label"),
+    isActive: boolean("is_active").default(true),
+    createdAt: timestamp("created_at").defaultNow(),
+  },
+  (t) => [uniqueIndex("ibp_item_partner_unique").on(t.itemId, t.partnerId)],
+);
 
 // Product ↔ Business Partners (Many-to-Many)
 export const productBusinessPartners = pgTable("product_business_partners", {
@@ -650,7 +693,7 @@ export const orders = pgTable("orders", {
   orderDate: date("order_date").defaultNow(),
   deliveryDate: date("delivery_date"),
   deliveryTime: text("delivery_time"), // Preferred time slot
-  status: text("status").default("draft"), // draft, confirmed, in_production, ready, shipped, delivered, cancelled
+  status: text("status").default("pending"), // draft, confirmed, in_production, ready, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
   logisticsStatus: text("logistics_status").default("pending"), // pending, scheduled, dispatched, delivered
   driverId: integer("driver_id").references(() => drivers.id),
@@ -666,12 +709,23 @@ export const orderItems = pgTable("order_items", {
   orderId: integer("order_id")
     .references(() => orders.id)
     .notNull(),
-  productId: integer("product_id")
-    .references(() => products.id)
+  itemId: integer("item_id")
+    .references(() => items.id)
     .notNull(),
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+});
+
+export const orderStatusHistory = pgTable("order_status_history", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id")
+    .references(() => orders.id)
+    .notNull(),
+  fromStatus: text("from_status"),
+  toStatus: text("to_status").notNull(),
+  changedBy: text("changed_by"), // optional
+  changedAt: timestamp("changed_at").defaultNow(),
 });
 
 // Production Requests (Generated from orders)
@@ -846,6 +900,20 @@ export const vehiclesRelations = relations(vehicles, ({ many }) => ({
   deliverySchedules: many(deliverySchedules),
 }));
 
+export const itemBusinessPartnersRelations = relations(
+  itemBusinessPartners,
+  ({ one }) => ({
+    item: one(items, {
+      fields: [itemBusinessPartners.itemId],
+      references: [items.id],
+    }),
+    partner: one(businessPartners, {
+      fields: [itemBusinessPartners.partnerId],
+      references: [businessPartners.id],
+    }),
+  }),
+);
+
 export const businessPartnersRelations = relations(
   businessPartners,
   ({ many }) => ({
@@ -853,6 +921,7 @@ export const businessPartnersRelations = relations(
     contacts: many(partnerContacts),
     orders: many(orders),
     products: many(products),
+    itemPartners: many(itemBusinessPartners),
   }),
 );
 
@@ -1034,9 +1103,9 @@ export const orderItemsRelations = relations(orderItems, ({ one }) => ({
     fields: [orderItems.orderId],
     references: [orders.id],
   }),
-  product: one(products, {
-    fields: [orderItems.productId],
-    references: [products.id],
+  item: one(items, {
+    fields: [orderItems.itemId],
+    references: [items.id],
   }),
 }));
 
@@ -1399,6 +1468,21 @@ export type InsertDeliveryScheduleItem = z.infer<
 
 export type StockMovement = typeof stockMovements.$inferSelect;
 export type InsertStockMovement = z.infer<typeof insertStockMovementSchema>;
+
+export const itemsRelations = relations(items, ({ one, many }) => ({
+  partner: one(businessPartners, {
+    fields: [items.partnerId],
+    references: [businessPartners.id],
+  }),
+  partners: many(itemBusinessPartners),
+}));
+
+export const insertItemSchema = createInsertSchema(items).omit({
+  id: true,
+  createdAt: true,
+});
+export type Item = typeof items.$inferSelect;
+export type InsertItem = z.infer<typeof insertItemSchema>;
 
 // === BACKWARD COMPATIBILITY ALIASES ===
 // These aliases allow existing code to work while transitioning to new names

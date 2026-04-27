@@ -61,6 +61,7 @@ import {
 
 import Dashboard from "@/pages/Dashboard";
 import FinishedGoods from "@/pages/database/FinishedGoods";
+import Items from "@/pages/database/Items";
 import RawMaterials from "@/pages/database/RawMaterials";
 import Customers from "@/pages/database/Customers";
 import Contacts from "@/pages/database/Contacts";
@@ -92,6 +93,8 @@ import AppConfig from "@/pages/settings/AppConfig";
 import Login from "@/pages/Login";
 import NotFound from "@/pages/not-found";
 import { useMe } from "./hooks/useAuth";
+import OrderFormPage from "./pages/orders/OrderFormPage";
+import OrderUploadPage from "./pages/orders/OrderUploadPage";
 
 const navigationGroups = [
   {
@@ -104,7 +107,7 @@ const navigationGroups = [
     items: [
       // { title: "Eggs", url: "/database/eggs", icon: Egg },
       // { title: "Packaging", url: "/database/packaging", icon: Package },
-      { title: "Finished Goods", url: "/database/finished-goods", icon: Boxes },
+      { title: "Items", url: "/database/items", icon: Boxes },
       // { title: "Raw Materials", url: "/database/raw-materials", icon: Box },
       { title: "Customers", url: "/database/customers", icon: Users },
       { title: "Suppliers", url: "/database/suppliers", icon: Building2 },
@@ -384,6 +387,10 @@ function Router() {
         component={() => <ProtectedRoute component={FinishedGoods} />}
       />
       <Route
+        path="/database/items"
+        component={() => <ProtectedRoute component={Items} />}
+      />
+      <Route
         path="/database/raw-materials"
         component={() => <ProtectedRoute component={RawMaterials} />}
       />
@@ -428,6 +435,25 @@ function Router() {
       <Route
         path="/orders/returns"
         component={() => <ProtectedRoute component={Returns} />}
+      />
+      <Route
+        path="/orders/new"
+        component={() => <ProtectedRoute component={OrderFormPage} />}
+      />
+
+      <Route
+        path="/orders/upload"
+        component={() => <ProtectedRoute component={OrderUploadPage} />}
+      />
+
+      <Route
+        path="/orders/:id"
+        component={() => <ProtectedRoute component={OrderFormPage} />}
+      />
+
+      <Route
+        path="/orders/:id/edit"
+        component={() => <ProtectedRoute component={OrderFormPage} />}
       />
 
       {/* Productions */}

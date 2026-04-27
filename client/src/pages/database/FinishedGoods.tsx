@@ -68,11 +68,13 @@ interface Product {
   id: number;
   sku: string;
   name: string;
+  barcode: string;
   description?: string;
   vendorId?: number;
   sellingUnits?: string;
   packingUnits?: string;
   paletteUnits?: string;
+  basketUnits?: string;
   eggsPerPack?: number;
   eggsPerSellingUnit?: number;
   eggSizeA?: string;
@@ -80,7 +82,7 @@ interface Product {
   percentageA?: number;
   skuSizeCategory?: string;
   crateSize?: string;
-  isUndergrade?: boolean;
+  type?: string;
   isActive?: boolean;
   vendor?: { id: number; code: string; name: string };
   businessPartnerNames?: string;
@@ -126,14 +128,17 @@ export default function FinishedGoods() {
     sku: z.string().min(1, "กรุณากรอก SKU"),
     name: z.string().min(1, "กรุณากรอกชื่อสินค้า"),
     description: z.string().optional(),
+    barcode: z.string().optional(),
 
     selling_units: z.string().optional(),
     packing_units: z.string().optional(),
     palette_units: z.string().optional(),
+    basket_units: z.string().optional(),
 
-    packs_per_selling_unit: z.number().min(0).optional(),
-    eggs_per_pack: z.number().min(0).optional(),
-    eggs_per_selling_unit: z.number().min(0).optional(),
+    eggs_per_selling_unit: z.number().min(1).optional(),
+    eggs_per_pack: z.number().min(1).optional(),
+    packs_per_basket: z.number().min(1).optional(),
+    baskets_per_palette: z.number().min(1).optional(),
 
     sku_size_category: z.string().optional(),
     pack_base: z.string().optional(),
@@ -143,7 +148,7 @@ export default function FinishedGoods() {
 
     business_partner_ids: z.array(z.number()).optional(),
     is_active: z.boolean().default(true),
-    is_undergrade: z.boolean().default(false),
+    type: z.string(),
   });
 
   type FinishedGoodFormValues = z.infer<typeof finishedGoodFormSchema>;
@@ -154,12 +159,15 @@ export default function FinishedGoods() {
       sku: "",
       name: "",
       description: "",
+      barcode: "",
       selling_units: undefined,
       packing_units: undefined,
       palette_units: undefined,
-      packs_per_selling_unit: 1,
-      eggs_per_pack: 30,
-      eggs_per_selling_unit: 30,
+      basket_units: undefined,
+      eggs_per_selling_unit: 1,
+      eggs_per_pack: 1,
+      packs_per_basket: 1,
+      baskets_per_palette: 1,
       sku_size_category: "",
       pack_base: "",
       lid_cover: "",
@@ -168,7 +176,7 @@ export default function FinishedGoods() {
       business_partner_ids: [],
 
       is_active: true,
-      is_undergrade: false,
+      type: undefined,
     },
   });
 
@@ -196,19 +204,19 @@ export default function FinishedGoods() {
       sku: editingFinishedGood.sku,
       name: editingFinishedGood.name,
       description: editingFinishedGood.description ?? "",
+      barcode: editingFinishedGood.barcodeLabel ?? "",
 
       selling_units: editingFinishedGood.sellingUnits ?? undefined,
       packing_units: editingFinishedGood.packingUnits ?? undefined,
       palette_units: editingFinishedGood.paletteUnits ?? undefined,
-
-      packs_per_selling_unit: editingFinishedGood.packsPerSellingUnit
-        ? Number(editingFinishedGood.packsPerSellingUnit)
-        : undefined,
-
-      eggs_per_pack: editingFinishedGood.eggsPerPack ?? undefined,
+      basket_units: editingFinishedGood.basket_units ?? undefined,
 
       eggs_per_selling_unit:
-        editingFinishedGood.eggsPerSellingUnit ?? undefined,
+        Number(editingFinishedGood.eggs_per_selling_unit) ?? undefined,
+      eggs_per_pack: Number(editingFinishedGood.eggsPerPack) ?? undefined,
+      packs_per_basket: Number(editingFinishedGood.packsPerBasket) ?? undefined,
+
+      baskets_per_palette: editingFinishedGood.basketsPerPalette ?? undefined,
 
       sku_size_category: editingFinishedGood.skuSizeCategory ?? "",
       pack_base: editingFinishedGood.packBase ?? "",
@@ -219,7 +227,7 @@ export default function FinishedGoods() {
       business_partner_ids: editingFinishedGood.business_partner_ids ?? [],
 
       is_active: editingFinishedGood.isActive ?? true,
-      is_undergrade: editingFinishedGood.isUndergrade ?? false,
+      type: editingFinishedGood.type ?? "",
     });
   }, [editingFinishedGood, finishedGoodForm]);
 
@@ -299,9 +307,8 @@ export default function FinishedGoods() {
               selling_units: undefined,
               packing_units: undefined,
               palette_units: undefined,
-              packs_per_selling_unit: 1,
-              eggs_per_pack: 30,
-              eggs_per_selling_unit: 30,
+              packs_per_basket: 1,
+              baskets_per_palette: 1,
               sku_size_category: "",
               pack_base: "",
               lid_cover: "",
@@ -309,7 +316,7 @@ export default function FinishedGoods() {
               sticker_label: "",
               business_partner_ids: [], // ✅ REQUIRED
               is_active: true,
-              is_undergrade: false,
+              type: "",
             });
             setDialogOpen(true);
           }}
@@ -365,12 +372,12 @@ export default function FinishedGoods() {
               <TableHeader>
                 <TableRow>
                   <TableHead>SKU</TableHead>
-                  <TableHead>Product Name</TableHead>
-                  <TableHead>Vendor</TableHead>
-                  <TableHead>Packing</TableHead>
-                  <TableHead>Qty/Pack</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead>ชื่อสินค้า</TableHead>
+                  <TableHead>ลูกค้า</TableHead>
+                  <TableHead>หน่วยขาย</TableHead>
+                  <TableHead>หน่วยแพ๊ค</TableHead>
+                  <TableHead>ประเภท</TableHead>
+                  <TableHead className="w-[100px]">จัดการ</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -393,22 +400,12 @@ export default function FinishedGoods() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-sm">
-                      {product.packingUnits || "-"}
+                      {product.sellingUnits || "-"}
                     </TableCell>
                     <TableCell className="text-sm">
-                      {product.eggsPerPack || "-"}
+                      {product.packingUnits || "-"}
                     </TableCell>
-                    <TableCell>
-                      {product.isUndergrade ? (
-                        <Badge variant="destructive" className="text-xs">
-                          Undergrade
-                        </Badge>
-                      ) : (
-                        <Badge variant="secondary" className="text-xs">
-                          {product.isActive !== false ? "Active" : "Inactive"}
-                        </Badge>
-                      )}
-                    </TableCell>
+                    <TableCell>{product.type || "-"}</TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button
@@ -467,7 +464,7 @@ export default function FinishedGoods() {
               className="space-y-4"
             >
               {/* SKU + Name */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-3 gap-4">
                 <FormField
                   control={finishedGoodForm.control}
                   name="sku"
@@ -495,6 +492,20 @@ export default function FinishedGoods() {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={finishedGoodForm.control}
+                  name="barcode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>บาร์โค้ด</FormLabel>
+                      <FormControl>
+                        <Input placeholder="8858878500304" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               {/* Description */}
@@ -512,134 +523,29 @@ export default function FinishedGoods() {
               />
 
               {/* Units */}
-              <div className="grid grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={finishedGoodForm.control}
                   name="selling_units"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Selling Units</FormLabel>
+                      <FormLabel>หน่วยขาย</FormLabel>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
+                            <SelectValue placeholder="เลือกหน่วยขาย" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
                           {/* ["ฟอง", "ถาด", "ตะกร้า", "แพ็ค", "มัด"] */}
                           <SelectItem value="ฟอง">ฟอง</SelectItem>
-                          <SelectItem value="ถาด">ถาด</SelectItem>
-                          <SelectItem value="ตะกร้า">ตะกร้า</SelectItem>
                           <SelectItem value="แพ็ค">แพ็ค</SelectItem>
-                          <SelectItem value="มัด">มัด</SelectItem>
+                          <SelectItem value="ถาด">ถาด/ตะกร้า/มัด</SelectItem>
                         </SelectContent>
                       </Select>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={finishedGoodForm.control}
-                  name="packing_units"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Packing Units</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {/* ["แพ็ค 4", "ถาด", "ถาด/ครอบ"] */}
-                          <SelectItem value="แพ็ค4">แพ็ค4</SelectItem>
-                          <SelectItem value="ถาด">ถาด</SelectItem>
-                          <SelectItem value="ถาด/ครอบ">ถาด/ครอบ</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={finishedGoodForm.control}
-                  name="palette_units"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Palette Units</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select unit" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {/* ["แพ็ค 4", "ถาด", "ถาด/ครอบ"] */}
-                          <SelectItem value="แพ็ค4">แพ็ค4</SelectItem>
-                          <SelectItem value="ถาด">ถาด</SelectItem>
-                          <SelectItem value="ถาด/ครอบ">ถาด/ครอบ</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-              </div>
-
-              {/* Egg conversions */}
-              <div className="grid grid-cols-3 gap-4">
-                <FormField
-                  control={finishedGoodForm.control}
-                  name="packs_per_selling_unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Packs / Selling Unit</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === ""
-                                ? undefined
-                                : Number(e.target.value),
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={finishedGoodForm.control}
-                  name="eggs_per_pack"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Eggs / Pack</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          value={field.value ?? ""}
-                          onChange={(e) =>
-                            field.onChange(
-                              e.target.value === ""
-                                ? undefined
-                                : Number(e.target.value),
-                            )
-                          }
-                        />
-                      </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -649,7 +555,7 @@ export default function FinishedGoods() {
                   name="eggs_per_selling_unit"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Eggs / Selling Unit</FormLabel>
+                      <FormLabel>จำนวนไข่ต่อหน่วยขาย</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -663,6 +569,173 @@ export default function FinishedGoods() {
                           }
                         />
                       </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={finishedGoodForm.control}
+                  name="packing_units"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>หน่วยแพ๊ค</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={(val) => {
+                          field.onChange(val);
+
+                          const PACKING_EGGS_MAP: Record<string, number> = {
+                            แพ็ค4: 4,
+                            แพ็ค10: 10,
+                            แพ็ค12: 12,
+                            แพ็ค15: 15,
+                            มัด4: 4,
+                            มัด5: 5,
+                            ถาด: 30,
+                            "ถาด/ครอบ": 30,
+                          };
+
+                          const eggs = PACKING_EGGS_MAP[val];
+                          if (eggs) {
+                            finishedGoodForm.setValue("eggs_per_pack", eggs);
+                          }
+                        }}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="เลือกหน่วยแพ๊ค" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="ถาด">ถาด</SelectItem>
+                          <SelectItem value="แพ็ค4">แพ็ค 4</SelectItem>
+                          <SelectItem value="แพ็ค10">แพ็ค 10</SelectItem>
+                          <SelectItem value="แพ็ค12">แพ็ค 12</SelectItem>
+                          <SelectItem value="แพ็ค15">แพ็ค 15</SelectItem>
+                          <SelectItem value="มัด4">มัด 4</SelectItem>
+                          <SelectItem value="มัด5">มัด 5</SelectItem>
+                          <SelectItem value="ถาด/ครอบ">ถาด/ครอบ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={finishedGoodForm.control}
+                  name="eggs_per_pack"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>จำนวนไข่ต่อแพ๊ค</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value ?? "1"}
+                          readOnly
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={finishedGoodForm.control}
+                  name="basket_units"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>หน่วยตะกร้า</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="เลือกหน่วยตะกร้า" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {/* ["แพ็ค 4", "ถาด", "ถาด/ครอบ"] */}
+                          <SelectItem value="S">S</SelectItem>
+                          <SelectItem value="M">M</SelectItem>
+                          <SelectItem value="A">A</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={finishedGoodForm.control}
+                  name="packs_per_basket"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>จำนวนแพ๊คต่อตะกร้า</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value),
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={finishedGoodForm.control}
+                  name="palette_units"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>หน่วย palette</FormLabel>
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="เลือกหน่วย palette" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {/* ["แพ็ค 4", "ถาด", "ถาด/ครอบ"] */}
+                          <SelectItem value="แพ็ค4">แพ็ค4</SelectItem>
+                          <SelectItem value="ถาด">ถาด</SelectItem>
+                          <SelectItem value="ถาด/ครอบ">ถาด/ครอบ</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={finishedGoodForm.control}
+                  name="baskets_per_palette"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>จำนวนตะกร้าต่อ palette</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value === ""
+                                ? undefined
+                                : Number(e.target.value),
+                            )
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -744,7 +817,7 @@ export default function FinishedGoods() {
                 name="business_partner_ids"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Business Partners</FormLabel>
+                    <FormLabel>Customers</FormLabel>
 
                     <Popover>
                       <PopoverTrigger asChild>
@@ -752,14 +825,14 @@ export default function FinishedGoods() {
                           <Button
                             variant="outline"
                             role="combobox"
-                            className="w-full justify-between"
+                            className="w-full justify-between border-input !border-input"
                           >
                             {field.value && field.value.length > 0
                               ? businessPartners
                                   .filter((bp) => field.value?.includes(bp.id))
                                   .map((bp) => bp.name)
                                   .join(", ")
-                              : "Select business partners"}
+                              : "Select customers"}
                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -810,40 +883,55 @@ export default function FinishedGoods() {
               <div className="flex gap-6 pt-2">
                 <FormField
                   control={finishedGoodForm.control}
-                  name="is_active"
+                  name="type"
                   render={({ field }) => (
-                    <FormItem className="flex items-center gap-2">
+                    <FormItem>
+                      <FormLabel>ประเภท</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) =>
-                            field.onChange(checked === true)
-                          }
-                        />
+                        <Select
+                          value={field.value}
+                          onValueChange={field.onChange}
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue placeholder="เลือกประเภท" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="grade">Grade</SelectItem>
+                            <SelectItem value="OEM">OEM</SelectItem>
+                            <SelectItem value="undergrade">
+                              Undergrade
+                            </SelectItem>
+                            <SelectItem value="own">Own Brand</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
-                      <FormLabel className="!mt-0 cursor-pointer">
-                        ใช้งาน
-                      </FormLabel>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />
-
                 <FormField
                   control={finishedGoodForm.control}
-                  name="is_undergrade"
+                  name="is_active"
                   render={({ field }) => (
-                    <FormItem className="flex items-center gap-2">
+                    <FormItem>
+                      <FormLabel>สถานะ</FormLabel>
                       <FormControl>
-                        <Checkbox
-                          checked={field.value}
-                          onCheckedChange={(checked) =>
-                            field.onChange(checked === true)
+                        <Select
+                          value={field.value ? "active" : "inactive"}
+                          onValueChange={(val) =>
+                            field.onChange(val === "active")
                           }
-                        />
+                        >
+                          <SelectTrigger className="w-[200px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="active">ใช้งาน</SelectItem>
+                            <SelectItem value="inactive">ไม่ใช้งาน</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </FormControl>
-                      <FormLabel className="!mt-0 cursor-pointer">
-                        Undergrade
-                      </FormLabel>
+                      <FormMessage />
                     </FormItem>
                   )}
                 />

@@ -5,10 +5,12 @@ import { api } from "@shared/routes";
 import { z } from "zod";
 import { authRouter } from "./auth/routes";
 import finishedGoodsRoutes from "./routes/finishedGoods";
+import itemsRoutes from "./routes/items";
 import businessPartnersRoutes from "./routes/businessPartners";
 import suppliersRoutes from "./routes/suppliers";
 import driversRoutes from "./routes/drivers";
 import vehiclesRoutes from "./routes/vehicles";
+import orderRoutes from "./routes/orders";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -18,10 +20,12 @@ export async function registerRoutes(
   app.use("/api/auth", authRouter);
 
   app.use("/api/finished-goods", finishedGoodsRoutes);
+  app.use("/api/items", itemsRoutes);
   app.use("/api/business-partners", businessPartnersRoutes);
   app.use("/api/suppliers", suppliersRoutes);
   app.use("/api/drivers", driversRoutes);
   app.use("/api/vehicles", vehiclesRoutes);
+  app.use("/api/orders", orderRoutes);
   // app.use("/api/customer-accounts", customerAccountsRoutes);
   // app.use("/api/delivery-sites", deliverySitesRoutes);
 

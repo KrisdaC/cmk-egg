@@ -3,18 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, ShoppingCart, Eye, Edit, Printer } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useLocation } from "wouter";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
-
-const sampleOrders = [
-  { id: "ORD-20260102-001", customer: "Fresh Mart Supermarket", deliveryDate: "2026-01-03", items: 5, totalQty: 150, status: "pending" },
-  { id: "ORD-20260102-002", customer: "Green Valley Restaurant", deliveryDate: "2026-01-03", items: 3, totalQty: 90, status: "confirmed" },
-  { id: "ORD-20260102-003", customer: "Sunrise Bakery", deliveryDate: "2026-01-03", items: 2, totalQty: 60, status: "in_production" },
-  { id: "ORD-20260101-004", customer: "City Hotel Chain", deliveryDate: "2026-01-02", items: 8, totalQty: 300, status: "ready" },
-  { id: "ORD-20260101-005", customer: "Quick Bite Cafe", deliveryDate: "2026-01-02", items: 1, totalQty: 30, status: "delivered" },
-];
+import { useEffect, useState } from "react";
 
 const statusColors: Record<string, string> = {
   pending: "outline",
@@ -25,42 +30,109 @@ const statusColors: Record<string, string> = {
 };
 
 export default function OrderInput() {
+  const [, setLocation] = useLocation();
+
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("");
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch("/api/orders");
+        const data = await res.json();
+        setOrders(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error("Failed to fetch orders", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
+  const filteredOrders = orders.filter((order) => {
+    const matchesSearch =
+      order.orderNumber?.toLowerCase().includes(search.toLowerCase()) ||
+      order.partner?.businessName?.toLowerCase().includes(search.toLowerCase());
+
+    const matchesStatus =
+      statusFilter === "all" || order.status === statusFilter;
+
+    const matchesDate =
+      !dateFilter ||
+      (order.deliveryDate && order.deliveryDate.startsWith(dateFilter));
+
+    return matchesSearch && matchesStatus && matchesDate;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Order Input</h1>
-          <p className="text-muted-foreground">Create and manage customer orders</p>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">
+            บันทึกใบสั่งขาย
+          </h1>
+          <p className="text-muted-foreground">สร้างและจัดการใบสั่งขายลูกค้า</p>
         </div>
-        <Button data-testid="button-new-order">
-          <Plus className="w-4 h-4 mr-2" />
-          New Order
-        </Button>
+        <div className="flex justify-end gap-2">
+          <Button
+            data-testid="button-upload-order"
+            variant="outline"
+            onClick={() => setLocation("/orders/upload")}
+          >
+            อัปโหลดใบสั่งขาย
+          </Button>
+          <Button
+            data-testid="button-new-order"
+            onClick={() => setLocation("/orders/new")}
+          >
+            สร้างใบสั่งขาย
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold" data-testid="text-pending-count">12</div>
-            <p className="text-sm text-muted-foreground">Pending Orders</p>
+            <div
+              className="text-2xl font-bold"
+              data-testid="text-pending-count"
+            >
+              12
+            </div>
+            <p className="text-sm text-muted-foreground">รอดำเนินการ</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold" data-testid="text-today-count">28</div>
-            <p className="text-sm text-muted-foreground">Today's Orders</p>
+            <div className="text-2xl font-bold" data-testid="text-today-count">
+              28
+            </div>
+            <p className="text-sm text-muted-foreground">ออเดอร์วันนี้</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold" data-testid="text-production-count">8</div>
-            <p className="text-sm text-muted-foreground">In Production</p>
+            <div
+              className="text-2xl font-bold"
+              data-testid="text-production-count"
+            >
+              8
+            </div>
+            <p className="text-sm text-muted-foreground">กำลังผลิต</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-4">
-            <div className="text-2xl font-bold" data-testid="text-ready-count">15</div>
-            <p className="text-sm text-muted-foreground">Ready for Delivery</p>
+            <div className="text-2xl font-bold" data-testid="text-ready-count">
+              15
+            </div>
+            <p className="text-sm text-muted-foreground">พร้อมจัดส่ง</p>
           </CardContent>
         </Card>
       </div>
@@ -70,24 +142,43 @@ export default function OrderInput() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search orders..." 
-                className="pl-9" 
+              <Input
+                placeholder="ค้นหาใบสั่งขาย..."
+                className="pl-9"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 data-testid="input-search"
               />
             </div>
-            <Input type="date" className="w-[160px]" data-testid="input-date-filter" />
-            <Select>
+            <div className="relative w-[160px]">
+              <Input
+                type="date"
+                className="pr-8"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                data-testid="input-date-filter"
+              />
+              {dateFilter && (
+                <button
+                  type="button"
+                  onClick={() => setDateFilter("")}
+                  className="absolute right-1 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-[150px]" data-testid="select-status">
-                <SelectValue placeholder="All Status" />
+                <SelectValue placeholder="ทุกสถานะ" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="in_production">In Production</SelectItem>
-                <SelectItem value="ready">Ready</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="all">ทุกสถานะ</SelectItem>
+                <SelectItem value="pending">รอดำเนินการ</SelectItem>
+                <SelectItem value="confirmed">ยืนยันแล้ว</SelectItem>
+                <SelectItem value="in_production">กำลังผลิต</SelectItem>
+                <SelectItem value="ready">พร้อมจัดส่ง</SelectItem>
+                <SelectItem value="delivered">จัดส่งแล้ว</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -96,48 +187,93 @@ export default function OrderInput() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Customer</TableHead>
-                <TableHead>Delivery Date</TableHead>
-                <TableHead>Items</TableHead>
-                <TableHead>Total Qty</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[120px]">Actions</TableHead>
+                <TableHead>เลขที่ใบสั่งขาย</TableHead>
+                <TableHead>ลูกค้า</TableHead>
+                <TableHead>วันที่จัดส่ง</TableHead>
+                <TableHead>จำนวนรายการ</TableHead>
+                <TableHead>จำนวนรวม (ฟอง)</TableHead>
+                <TableHead>สถานะ</TableHead>
+                <TableHead className="w-[120px]">จัดการ</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {sampleOrders.map((order) => (
-                <TableRow key={order.id} data-testid={`row-order-${order.id}`}>
-                  <TableCell className="font-mono font-medium">
-                    <div className="flex items-center gap-2">
-                      <ShoppingCart className="w-4 h-4 text-muted-foreground" />
-                      {order.id}
-                    </div>
-                  </TableCell>
-                  <TableCell>{order.customer}</TableCell>
-                  <TableCell>{order.deliveryDate}</TableCell>
-                  <TableCell>{order.items} SKUs</TableCell>
-                  <TableCell>{order.totalQty} trays</TableCell>
-                  <TableCell>
-                    <Badge variant={statusColors[order.status] as any} className="capitalize">
-                      {order.status.replace("_", " ")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" data-testid={`button-view-${order.id}`}>
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" data-testid={`button-edit-${order.id}`}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" data-testid={`button-print-${order.id}`}>
-                        <Printer className="w-4 h-4" />
-                      </Button>
-                    </div>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6">
+                    กำลังโหลดข้อมูล...
                   </TableCell>
                 </TableRow>
-              ))}
+              ) : filteredOrders.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center py-6">
+                    ไม่พบข้อมูลใบสั่งขาย
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredOrders.map((order) => (
+                  <TableRow
+                    key={order.orderNumber}
+                    data-testid={`row-order-${order.orderNumber}`}
+                  >
+                    <TableCell className="font-mono font-medium">
+                      <div className="flex items-center gap-2">
+                        <ShoppingCart className="w-4 h-4 text-muted-foreground" />
+                        {order.orderNumber}
+                      </div>
+                    </TableCell>
+                    <TableCell>{order.partner?.businessName || "-"}</TableCell>
+                    <TableCell>{order.deliveryDate}</TableCell>
+                    <TableCell>{order.items?.length || 0} รายการ</TableCell>
+                    <TableCell>
+                      {order.items?.reduce(
+                        (sum: number, item: any) =>
+                          sum + Number(item.quantity || 0),
+                        0,
+                      ) || 0}{" "}
+                      ถาด
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={statusColors[order.status] as any}
+                        className="capitalize"
+                      >
+                        {order.status.replace("_", " ")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setLocation(`/orders/${order.orderNumber}`)
+                          }
+                          data-testid={`button-view-${order.orderNumber}`}
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setLocation(`/orders/${order.orderNumber}/edit`)
+                          }
+                          data-testid={`button-edit-${order.orderNumber}`}
+                        >
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          data-testid={`button-print-${order.orderNumber}`}
+                        >
+                          <Printer className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
             </TableBody>
           </Table>
         </CardContent>

@@ -3,7 +3,7 @@ import { db } from "../db";
 import { products } from "@shared/schema";
 import { productBusinessPartners } from "@shared/schema";
 import { businessPartners } from "@shared/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 const router = Router();
 
 router.get("/", async (req, res) => {
@@ -17,12 +17,10 @@ router.get("/", async (req, res) => {
         sellingUnits: products.sellingUnits,
         packingUnits: products.packingUnits,
         paletteUnits: products.paletteUnits,
-        packsPerSellingUnit: products.packsPerSellingUnit,
         eggsPerPack: products.eggsPerPack,
-        eggsPerSellingUnit: products.eggsPerSellingUnit,
         isActive: products.isActive,
-        isUndergrade: products.isUndergrade,
         partnerName: businessPartners.businessName,
+        type: products.type,
       })
       .from(products)
       .leftJoin(
@@ -47,11 +45,12 @@ router.get("/", async (req, res) => {
           sellingUnits: row.sellingUnits,
           packingUnits: row.packingUnits,
           paletteUnits: row.paletteUnits,
-          packsPerSellingUnit: row.packsPerSellingUnit,
+          //packsPerSellingUnit: row.packsPerSellingUnit,
           eggsPerPack: row.eggsPerPack,
-          eggsPerSellingUnit: row.eggsPerSellingUnit,
+          //eggsPerSellingUnit: row.eggsPerSellingUnit,
           isActive: row.isActive,
-          isUndergrade: row.isUndergrade,
+          //isUndergrade: row.isUndergrade,
+          type: row.type,
           business_partner_names: [],
         });
       }
@@ -115,20 +114,20 @@ router.post("/", async (req, res) => {
       packingUnits: data.packing_units,
       paletteUnits: data.palette_units,
 
-      packsPerSellingUnit: data.packs_per_selling_unit,
-      eggsPerPack: data.eggs_per_pack,
       eggsPerSellingUnit: data.eggs_per_selling_unit,
+      eggsPerPack: data.eggs_per_pack,
+      packsPerBasket: data.packs_per_basket,
+      basketsPerPalette: data.baskets_per_palette,
 
       skuSizeCategory: data.sku_size_category,
       packBase: data.pack_base,
       lidCover: data.lid_cover,
-      barcodeLabel: data.barcode_label,
+      barcodeLabel: data.barcode,
       stickerLabel: data.sticker_label,
 
       businessPartnerIds: data.business_partner_ids,
-
+      type: data.type,
       isActive: data.is_active,
-      isUndergrade: data.is_undergrade,
     };
 
     // UPDATE
@@ -234,6 +233,59 @@ router.delete("/:id", async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// server/routes/products.ts
+router.get("/barcode/:barcode", async (req, res) => {
+  try {
+    const { barcode } = req.params;
+
+    const product = await db.query.products.findFirst({
+      where: (p, { eq }) => eq(p.barcodeLabel, barcode),
+    });
+
+    if (!product) {
+      return res.status(404).json({ message: "ไม่พบสินค้า" });
+    }
+
+    res.json({
+      id: product.id,
+      sellingUnits: product.sellingUnits,
+      price: Number(product.price),
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+router.post("/barcodes", async (req, res) => {
+  try {
+    const { barcodes } = req.body;
+
+    if (!Array.isArray(barcodes) || barcodes.length === 0) {
+      return res.status(400).json({ message: "Invalid barcode list" });
+    }
+
+    const existingProducts = await db
+      .select({ barcode: products.barcodeLabel })
+      .from(products)
+      .where(inArray(products.barcodeLabel, barcodes));
+
+    const existingBarcodes = existingProducts.map((p) => p.barcode);
+
+    const missingBarcodes = barcodes.filter(
+      (barcode) => !existingBarcodes.includes(barcode),
+    );
+
+    return res.json({
+      existingBarcodes,
+      missingBarcodes,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
