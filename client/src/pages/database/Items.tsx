@@ -77,7 +77,11 @@ interface Item {
   itemNumber: string | null;
   barcodeLabel: string | null;
   itemType: string | null;
-  partners?: { partnerId: number; partnerCode: string | null; partnerName: string | null }[];
+  partners?: {
+    partnerId: number;
+    partnerCode: string | null;
+    partnerName: string | null;
+  }[];
   itemRole: string | null;
   sellingUnit: string | null;
   baseUnit: string | null;
@@ -228,7 +232,9 @@ export default function Items() {
       eggs_per_palette: editingItemData.eggsPerPalette ?? null,
       is_active: editingItemData.isActive ?? "active",
       is_sellable: editingItemData.isSellable ?? false,
-      partner_ids: (editingItemData.partners ?? []).map((p: any) => p.partnerId),
+      partner_ids: (editingItemData.partners ?? []).map(
+        (p: any) => p.partnerId,
+      ),
     });
   }, [editingItemData, form]);
 
@@ -375,15 +381,21 @@ export default function Items() {
                       {item.itemNumber || "-"}
                     </TableCell>
                     <TableCell>
-                      {(item.partners && item.partners.length > 0) ? (
+                      {item.partners && item.partners.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {item.partners.map((p: any) => (
-                            <Badge key={p.partnerId} variant="outline" className="text-xs">
+                            <Badge
+                              key={p.partnerId}
+                              variant="outline"
+                              className="text-xs"
+                            >
                               {p.partner?.code ?? p.partnerId}
                             </Badge>
                           ))}
                         </div>
-                      ) : "-"}
+                      ) : (
+                        "-"
+                      )}
                     </TableCell>
                     <TableCell className="text-sm">
                       {item.itemType || "-"}
@@ -532,7 +544,10 @@ export default function Items() {
               {/* Linked Customers — single Popover field */}
               <FormItem>
                 <FormLabel>ลูกค้า</FormLabel>
-                <Popover open={linkedCustomersOpen} onOpenChange={setLinkedCustomersOpen}>
+                <Popover
+                  open={linkedCustomersOpen}
+                  onOpenChange={setLinkedCustomersOpen}
+                >
                   <PopoverTrigger asChild>
                     <button
                       type="button"
@@ -542,7 +557,9 @@ export default function Items() {
                       )}
                     >
                       {(form.watch("partner_ids") ?? []).length === 0 ? (
-                        <span className="text-muted-foreground">เลือกลูกค้า...</span>
+                        <span className="text-muted-foreground">
+                          เลือกลูกค้า...
+                        </span>
                       ) : (
                         (form.watch("partner_ids") ?? []).map((pid) => {
                           const bp = businessPartners.find((b) => b.id === pid);
@@ -560,10 +577,14 @@ export default function Items() {
                                   e.stopPropagation();
                                   form.setValue(
                                     "partner_ids",
-                                    (form.getValues("partner_ids") ?? []).filter((id) => id !== pid),
+                                    (
+                                      form.getValues("partner_ids") ?? []
+                                    ).filter((id) => id !== pid),
                                   );
                                 }}
-                                onKeyDown={(e) => e.key === "Enter" && e.currentTarget.click()}
+                                onKeyDown={(e) =>
+                                  e.key === "Enter" && e.currentTarget.click()
+                                }
                                 className="cursor-pointer hover:text-destructive"
                               >
                                 <X className="h-3 w-3" />
@@ -581,13 +602,18 @@ export default function Items() {
                       <CommandEmpty>ไม่พบลูกค้า</CommandEmpty>
                       <CommandGroup>
                         {businessPartners.map((bp) => {
-                          const selected = (form.watch("partner_ids") ?? []).includes(bp.id);
+                          const selected = (
+                            form.watch("partner_ids") ?? []
+                          ).includes(bp.id);
                           return (
                             <CommandItem
                               key={bp.id}
-                              value={bp.code + " " + (bp.businessName ?? bp.nickname)}
+                              value={
+                                bp.code + " " + (bp.businessName ?? bp.nickname)
+                              }
                               onSelect={() => {
-                                const current = form.getValues("partner_ids") ?? [];
+                                const current =
+                                  form.getValues("partner_ids") ?? [];
                                 form.setValue(
                                   "partner_ids",
                                   selected
@@ -597,7 +623,10 @@ export default function Items() {
                               }}
                             >
                               <Check
-                                className={cn("mr-2 h-4 w-4", selected ? "opacity-100" : "opacity-0")}
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selected ? "opacity-100" : "opacity-0",
+                                )}
                               />
                               {bp.code} — {bp.businessName ?? bp.nickname}
                             </CommandItem>
@@ -712,41 +741,12 @@ export default function Items() {
 
               {isSellable && (
                 <>
-                <FormField
-                  control={form.control}
-                  name="selling_unit"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>หน่วยขาย (Selling Unit)</FormLabel>
-                      <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="เลือกหน่วย" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="ฟอง">ฟอง</SelectItem>
-                          <SelectItem value="แพ็ค">แพ็ค</SelectItem>
-                          <SelectItem value="ถาด">ถาด</SelectItem>
-                          <SelectItem value="ตะกร้า">ตะกร้า</SelectItem>
-                          <SelectItem value="มัด">มัด</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </FormItem>
-                  )}
-                />
-
-                <div className={`grid gap-4 ${hasBasket ? "grid-cols-4" : "grid-cols-3"}`}>
-                  {/* Col 1 — Base Unit */}
                   <FormField
                     control={form.control}
-                    name="base_unit"
+                    name="selling_unit"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>หน่วยฐาน (Base Unit)</FormLabel>
+                        <FormLabel>หน่วยขาย (Selling Unit)</FormLabel>
                         <Select
                           value={field.value}
                           onValueChange={field.onChange}
@@ -757,25 +757,29 @@ export default function Items() {
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="ฟอง">ฟอง</SelectItem>
-                            <SelectItem value="แพ็ค">แพ็ค</SelectItem>
                             <SelectItem value="ถาด">ถาด</SelectItem>
-                            <SelectItem value="ตะกร้า">ตะกร้า</SelectItem>
-                            <SelectItem value="มัด">มัด</SelectItem>
+                            <SelectItem value="แพ็ค4">แพ็ค 4</SelectItem>
+                            <SelectItem value="แพ็ค10">แพ็ค 10</SelectItem>
+                            <SelectItem value="แพ็ค12">แพ็ค 12</SelectItem>
+                            <SelectItem value="แพ็ค15">แพ็ค 15</SelectItem>
+                            <SelectItem value="มัด4">มัด 4</SelectItem>
+                            <SelectItem value="มัด5">มัด 5</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormItem>
                     )}
                   />
 
-                  {/* Col 2 — Pack Unit + Eggs/Pack + Basket switch */}
-                  <div className="space-y-4">
+                  <div
+                    className={`grid gap-4 ${hasBasket ? "grid-cols-4" : "grid-cols-3"}`}
+                  >
+                    {/* Col 1 — Base Unit */}
                     <FormField
                       control={form.control}
-                      name="pack_unit"
+                      name="base_unit"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>หน่วยแพ็ค (Pack Unit)</FormLabel>
+                          <FormLabel>หน่วยฐาน (Base Unit)</FormLabel>
                           <Select
                             value={field.value}
                             onValueChange={field.onChange}
@@ -786,105 +790,194 @@ export default function Items() {
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
+                              <SelectItem value="ฟอง">ฟอง</SelectItem>
+                              <SelectItem value="แพ็ค">แพ็ค</SelectItem>
                               <SelectItem value="ถาด">ถาด</SelectItem>
-                              <SelectItem value="แพ็ค4">แพ็ค 4</SelectItem>
-                              <SelectItem value="แพ็ค10">แพ็ค 10</SelectItem>
-                              <SelectItem value="แพ็ค12">แพ็ค 12</SelectItem>
-                              <SelectItem value="แพ็ค15">แพ็ค 15</SelectItem>
-                              <SelectItem value="มัด4">มัด 4</SelectItem>
-                              <SelectItem value="มัด5">มัด 5</SelectItem>
+                              <SelectItem value="ตะกร้า">ตะกร้า</SelectItem>
+                              <SelectItem value="มัด">มัด</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
                       )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="eggs_per_pack"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>ไข่ต่อแพ็ค (Eggs / Pack)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min={1}
-                              placeholder="เช่น 10"
-                              value={field.value ?? ""}
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value),
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="has_basket"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>มีตะกร้า (Basket)</FormLabel>
-                          <div className="flex items-center h-10">
-                            <FormControl>
-                              <Switch
-                                checked={field.value}
-                                onCheckedChange={(checked) => {
-                                  field.onChange(checked);
-                                  if (!checked)
-                                    form.setValue("basket_unit", null);
-                                }}
-                              />
-                            </FormControl>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
-                  </div>
 
-                  {/* Col 3 — Basket size + Eggs/Basket (only when toggled on) */}
-                  {hasBasket && (
+                    {/* Col 2 — Pack Unit + Eggs/Pack + Basket switch */}
                     <div className="space-y-4">
                       <FormField
                         control={form.control}
-                        name="basket_unit"
+                        name="pack_unit"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>ขนาดตะกร้า</FormLabel>
+                            <FormLabel>หน่วยแพ็ค (Pack Unit)</FormLabel>
                             <Select
-                              value={field.value ?? ""}
+                              value={field.value}
                               onValueChange={field.onChange}
                             >
                               <FormControl>
                                 <SelectTrigger>
-                                  <SelectValue placeholder="เลือกขนาด" />
+                                  <SelectValue placeholder="เลือกหน่วย" />
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                <SelectItem value="S">S</SelectItem>
-                                <SelectItem value="M">M</SelectItem>
-                                <SelectItem value="L">L</SelectItem>
+                                <SelectItem value="ถาด">ถาด</SelectItem>
+                                <SelectItem value="แพ็ค4">แพ็ค 4</SelectItem>
+                                <SelectItem value="แพ็ค10">แพ็ค 10</SelectItem>
+                                <SelectItem value="แพ็ค12">แพ็ค 12</SelectItem>
+                                <SelectItem value="แพ็ค15">แพ็ค 15</SelectItem>
+                                <SelectItem value="มัด4">มัด 4</SelectItem>
+                                <SelectItem value="มัด5">มัด 5</SelectItem>
                               </SelectContent>
                             </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="eggs_per_pack"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ไข่ต่อแพ็ค (Eggs / Pack)</FormLabel>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                min={1}
+                                placeholder="เช่น 10"
+                                value={field.value ?? ""}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    e.target.value === ""
+                                      ? null
+                                      : Number(e.target.value),
+                                  )
+                                }
+                              />
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                       <FormField
                         control={form.control}
-                        name="eggs_per_basket"
+                        name="has_basket"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>ไข่ต่อตะกร้า (Eggs / Basket)</FormLabel>
+                            <FormLabel>มีตะกร้า (Basket)</FormLabel>
+                            <div className="flex items-center h-10">
+                              <FormControl>
+                                <Switch
+                                  checked={field.value}
+                                  onCheckedChange={(checked) => {
+                                    field.onChange(checked);
+                                    if (!checked)
+                                      form.setValue("basket_unit", null);
+                                  }}
+                                />
+                              </FormControl>
+                            </div>
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    {/* Col 3 — Basket size + Eggs/Basket (only when toggled on) */}
+                    {hasBasket && (
+                      <div className="space-y-4">
+                        <FormField
+                          control={form.control}
+                          name="basket_unit"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>ขนาดตะกร้า</FormLabel>
+                              <Select
+                                value={field.value ?? ""}
+                                onValueChange={field.onChange}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="เลือกขนาด" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  <SelectItem value="S">S</SelectItem>
+                                  <SelectItem value="M">M</SelectItem>
+                                  <SelectItem value="L">L</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="eggs_per_basket"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>
+                                ไข่ต่อตะกร้า (Eggs / Basket)
+                              </FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  min={1}
+                                  placeholder="เช่น 360"
+                                  value={field.value ?? ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      e.target.value === ""
+                                        ? null
+                                        : Number(e.target.value),
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    )}
+
+                    {/* Col 3/4 — Palette Unit + Eggs/Palette */}
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="palette_unit"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>หน่วย Palette</FormLabel>
+                            <Select
+                              value={field.value}
+                              onValueChange={field.onChange}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="เลือกหน่วย" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="แพ็ค4">แพ็ค4</SelectItem>
+                                <SelectItem value="ถาด">ถาด</SelectItem>
+                                <SelectItem value="ถาด/ครอบ">
+                                  ถาด/ครอบ
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="eggs_per_palette"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>
+                              ไข่ต่อ Palette (Eggs / Palette)
+                            </FormLabel>
                             <FormControl>
                               <Input
                                 type="number"
                                 min={1}
-                                placeholder="เช่น 360"
+                                placeholder="เช่น 3600"
                                 value={field.value ?? ""}
                                 onChange={(e) =>
                                   field.onChange(
@@ -900,61 +993,7 @@ export default function Items() {
                         )}
                       />
                     </div>
-                  )}
-
-                  {/* Col 3/4 — Palette Unit + Eggs/Palette */}
-                  <div className="space-y-4">
-                    <FormField
-                      control={form.control}
-                      name="palette_unit"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>หน่วย Palette</FormLabel>
-                          <Select
-                            value={field.value}
-                            onValueChange={field.onChange}
-                          >
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="เลือกหน่วย" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="แพ็ค4">แพ็ค4</SelectItem>
-                              <SelectItem value="ถาด">ถาด</SelectItem>
-                              <SelectItem value="ถาด/ครอบ">ถาด/ครอบ</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="eggs_per_palette"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>ไข่ต่อ Palette (Eggs / Palette)</FormLabel>
-                          <FormControl>
-                            <Input
-                              type="number"
-                              min={1}
-                              placeholder="เช่น 3600"
-                              value={field.value ?? ""}
-                              onChange={(e) =>
-                                field.onChange(
-                                  e.target.value === ""
-                                    ? null
-                                    : Number(e.target.value),
-                                )
-                              }
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
                   </div>
-                </div>
                 </>
               )}
 
