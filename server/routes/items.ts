@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { db } from "../db";
 import { items, itemBusinessPartners, businessPartners } from "@shared/schema";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 
 const router = Router();
 
@@ -53,6 +53,103 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+/**
+ * POST /api/items/lookup-customer-codes
+ * Batch lookup: given a partnerId and an array of customer item codes (or barcodes),
+ * returns the matching internal item for each code.
+ * Searches item_business_partners.customer_item_number and barcode_label.
+ */
+router.post("/lookup-customer-codes", async (req, res) => {
+  try {
+    const { partnerId, codes } = req.body as { partnerId: number; codes: string[] };
+    if (!partnerId || !Array.isArray(codes) || codes.length === 0) {
+      return res.status(400).json({ message: "partnerId and codes[] required" });
+    }
+
+    const rows = await db.execute(sql`
+      SELECT
+        ibp.customer_item_number,
+        ibp.barcode_label    AS ibp_barcode,
+        i.id,
+        i.sku,
+        i.name,
+        i.primary_size,
+        i.secondary_size,
+        i.eggs_per_pack,
+        i.selling_unit,
+        i.barcode_label      AS item_barcode,
+        i.item_number
+      FROM item_business_partners ibp
+      JOIN items i ON i.id = ibp.item_id
+      WHERE ibp.partner_id = ${partnerId}
+        AND ibp.is_active = true
+    `);
+
+    // Build lookup map: code (normalised) → item
+    const codeMap: Record<string, any> = {};
+    for (const row of rows.rows as any[]) {
+      const keys = [
+        row.customer_item_number,
+        row.ibp_barcode,
+        row.item_barcode,
+        row.item_number,
+        row.sku,
+      ].filter(Boolean).map((k: string) => String(k).trim());
+      for (const k of keys) {
+        codeMap[k] = row;
+      }
+    }
+
+    // Fallback 1: search items.barcode_label / item_number for the specific partner
+    const barcodeRows = await db.execute(sql`
+      SELECT
+        i.id, i.sku, i.name,
+        i.primary_size, i.secondary_size, i.eggs_per_pack, i.selling_unit,
+        i.barcode_label, i.item_number
+      FROM items i
+      WHERE (i.barcode_label IS NOT NULL OR i.item_number IS NOT NULL)
+        AND (i.partner_id = ${partnerId} OR i.partner_id IS NULL)
+        AND i.is_active = 'active'
+    `);
+    for (const row of barcodeRows.rows as any[]) {
+      if (row.barcode_label) codeMap[String(row.barcode_label).trim()] = row;
+      if (row.item_number) codeMap[String(row.item_number).trim()] = row;
+    }
+
+    // Fallback 2: global search by barcode_label or item_number
+    const unmatchedCodes = codes.filter((c) => !codeMap[String(c).trim()]);
+    if (unmatchedCodes.length > 0) {
+      const globalRows = await db.execute(sql`
+        SELECT
+          i.id, i.sku, i.name,
+          i.primary_size, i.secondary_size, i.eggs_per_pack, i.selling_unit,
+          i.barcode_label, i.item_number
+        FROM items i
+        WHERE (i.barcode_label IS NOT NULL OR i.item_number IS NOT NULL)
+          AND i.is_active = 'active'
+      `);
+      for (const row of globalRows.rows as any[]) {
+        if (row.barcode_label && !codeMap[String(row.barcode_label).trim()])
+          codeMap[String(row.barcode_label).trim()] = row;
+        if (row.item_number && !codeMap[String(row.item_number).trim()])
+          codeMap[String(row.item_number).trim()] = row;
+      }
+    }
+
+    // Resolve each requested code
+    const result: Record<string, any> = {};
+    for (const code of codes) {
+      const normalised = String(code).trim();
+      result[normalised] = codeMap[normalised] ?? null;
+    }
+
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Lookup failed" });
+  }
+});
+
 router.post("/", async (req, res) => {
   try {
     const data = req.body;
@@ -74,8 +171,26 @@ router.post("/", async (req, res) => {
       eggsPerBasket: data.eggs_per_basket ?? null,
       eggsPerPack: data.eggs_per_pack ?? null,
       eggsPerPalette: data.eggs_per_palette ?? null,
+      packPerBasket: data.pack_per_basket ?? null,
+      basketPerPalette: data.basket_per_palette ?? null,
+      isEgg: data.is_egg ?? false,
+      primarySize: data.primary_size ?? null,
+      secondarySize: data.secondary_size ?? null,
+      minPrimary: data.min_primary ?? null,
       isActive: data.is_active,
       isSellable: data.is_sellable ?? false,
+      isProducable: data.is_producable ?? false,
+      isConsumable: data.is_consumable ?? false,
+      storageUnit: data.storage_unit ?? null,
+      basePerStorage: data.base_per_storage ?? null,
+      basketSku: data.basket_sku ?? null,
+      packagingProfile: data.packaging_profile ?? null,
+      additionalMaterials: data.additional_materials ?? null,
+      isEggItem: data.is_egg_item ?? data.is_egg ?? false,
+      eggContentType: data.egg_content_type ?? null,
+      primaryGrade: data.primary_grade ?? null,
+      secondaryGrade: data.secondary_grade ?? null,
+      minPrimaryGrade: data.min_primary_grade ?? null,
     };
 
     let savedItem: typeof items.$inferSelect;

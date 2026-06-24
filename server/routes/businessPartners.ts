@@ -15,6 +15,7 @@ router.get("/", async (req, res) => {
       .select({
         id: businessPartners.id,
         code: businessPartners.code,
+        nickname: businessPartners.nickname,
         name: businessPartners.businessName,
         isActive: businessPartners.isActive,
       })

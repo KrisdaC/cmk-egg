@@ -655,7 +655,7 @@ export default function OrderFormPage() {
                               const unitOptions = [
                                 selectedItem?.baseUnit,
                                 selectedItem?.packUnit,
-                                selectedItem?.paletteUnit,
+                                selectedItem?.storageUnit ?? selectedItem?.paletteUnit,
                               ].filter(Boolean) as string[];
 
                               return (

@@ -192,7 +192,7 @@ export default function Vehicles() {
               <TableRow>
                 <TableHead>License Plate</TableHead>
                 <TableHead>Vehicle Type</TableHead>
-                <TableHead>Capacity (trays)</TableHead>
+                <TableHead>Capacity (m³)</TableHead>
                 <TableHead>Temp Control</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="w-[100px]">Actions</TableHead>
@@ -211,7 +211,7 @@ export default function Vehicles() {
                     </div>
                   </TableCell>
                   <TableCell>{vehicle.vehicleType}</TableCell>
-                  <TableCell>{vehicle.capacity} trays</TableCell>
+                  <TableCell>{vehicle.capacity} m³</TableCell>
                   <TableCell>
                     {vehicle.tempControl ? (
                       <div className="flex items-center gap-1 text-blue-600">
@@ -349,7 +349,7 @@ export default function Vehicles() {
                   name="capacity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Capacity</FormLabel>
+                      <FormLabel>Capacity (m³)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"

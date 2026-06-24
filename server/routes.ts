@@ -11,6 +11,8 @@ import suppliersRoutes from "./routes/suppliers";
 import driversRoutes from "./routes/drivers";
 import vehiclesRoutes from "./routes/vehicles";
 import orderRoutes from "./routes/orders";
+import priceAdjustmentRoutes from "./routes/priceAdjustment";
+import materialCostsRoutes from "./routes/materialCosts";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -26,6 +28,8 @@ export async function registerRoutes(
   app.use("/api/drivers", driversRoutes);
   app.use("/api/vehicles", vehiclesRoutes);
   app.use("/api/orders", orderRoutes);
+  app.use("/api/pricing", priceAdjustmentRoutes);
+  app.use("/api/material-costs", materialCostsRoutes);
   // app.use("/api/customer-accounts", customerAccountsRoutes);
   // app.use("/api/delivery-sites", deliverySitesRoutes);
 

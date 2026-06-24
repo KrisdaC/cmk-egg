@@ -47,15 +47,15 @@
   
   --radius: 0.5rem;                 /* 8px rounded corners */
 
-  /* Sidebar - Dark Theme */
-  --sidebar-background: 222 47% 11%;   /* #111827 */
-  --sidebar-foreground: 220 13% 91%;   /* #E5E7EB */
-  --sidebar-primary: 0 100% 36%;       /* #B70000 */
+  /* Sidebar - CMK Light Theme */
+  --sidebar-background: 0 0% 100%;     /* #fff */
+  --sidebar-foreground: 0 0% 40%;      /* #666 */
+  --sidebar-primary: 0 0% 10%;         /* #1a1a1a */
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 222 47% 15%;
-  --sidebar-accent-foreground: 220 13% 91%;
-  --sidebar-border: 222 47% 20%;
-  --sidebar-ring: 0 100% 36%;
+  --sidebar-accent: 220 11% 97%;       /* #f6f7f9 */
+  --sidebar-accent-foreground: 0 0% 10%; /* #1a1a1a */
+  --sidebar-border: 220 3% 85%;        /* #d6d8dc */
+  --sidebar-ring: 0 0% 10%;
 
   /* Status Colors */
   --status-draft: 220 9% 64%;          /* #9CA3AF - ร่าง */

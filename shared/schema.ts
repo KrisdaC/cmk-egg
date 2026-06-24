@@ -10,6 +10,7 @@ import {
   time,
   varchar,
   uniqueIndex,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
@@ -57,6 +58,22 @@ export const vehicles = pgTable("vehicles", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// Trips — delivery runs grouping orders for a date
+export const trips = pgTable("trips", {
+  id: serial("id").primaryKey(),
+  deliveryDate: date("delivery_date").notNull(),
+  productionRound: integer("production_round"),
+  tripNumber: integer("trip_number").notNull().default(1),
+  name: text("name"),
+  vehicleId: integer("vehicle_id").references(() => vehicles.id),
+  driverId: integer("driver_id").references(() => drivers.id),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type Trip = typeof trips.$inferSelect;
+export type InsertTrip = typeof trips.$inferInsert;
 
 // Business Partners - Unified entity for customers and vendors/brands
 // Level 1: Partner (who we do business with - billing/branding entity)
@@ -501,9 +518,28 @@ export const items = pgTable("items", {
   eggsPerBasket: integer("eggs_per_basket"),
   eggsPerPack: integer("eggs_per_pack"),
   eggsPerPalette: integer("eggs_per_palette"),
+  packPerBasket: integer("pack_per_basket"),
+  basketPerPalette: integer("basket_per_palette"),
+  isEgg: boolean("is_egg").default(false),
+  primarySize: varchar("primary_size"),
+  secondarySize: varchar("secondary_size"),
+  minPrimary: integer("min_primary"),
   barcodeLabel: varchar("barcode_label"),
   isActive: varchar("is_active").default("active"),
   isSellable: boolean("is_sellable").default(false),
+  isProducable: boolean("is_producable").default(false),
+  isConsumable: boolean("is_consumable").default(false),
+  storageUnit: varchar("storage_unit"),
+  basePerStorage: integer("base_per_storage"),
+  basketSku: varchar("basket_sku"),
+  packagingProfile: text("packaging_profile").$type<Record<string, unknown>>(),
+  additionalMaterials: text("additional_materials").$type<unknown[]>(),
+  // BOM / Egg inputs
+  isEggItem: boolean("is_egg_item").default(false),
+  eggContentType: varchar("egg_content_type"),
+  primaryGrade: integer("primary_grade"),
+  secondaryGrade: integer("secondary_grade"),
+  minPrimaryGrade: decimal("min_primary_grade"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -590,6 +626,144 @@ export const priceAdjustments = pgTable("price_adjustments", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+// =============================================
+// PRICING MODULE - Weekly Price Workflow
+// =============================================
+
+// Pricing Weeks - Weekly pricing workspace
+export const pricingWeeks = pgTable("pricing_weeks", {
+  id: serial("id").primaryKey(),
+  weekCode: text("week_code").notNull().unique(), // "2026-W18"
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  benchmarkPartnerId: integer("benchmark_partner_id").references(
+    () => businessPartners.id,
+  ),
+  status: text("status").default("draft"), // draft, approved, active, archived
+  notes: text("notes"),
+  createdBy: text("created_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Pricing Assumption Components - Cost inputs per week
+export const pricingAssumptions = pgTable("pricing_assumptions", {
+  id: serial("id").primaryKey(),
+  pricingWeekId: integer("pricing_week_id")
+    .references(() => pricingWeeks.id, { onDelete: "cascade" })
+    .notNull(),
+  partnerId: integer("partner_id").references(() => businessPartners.id),
+  component: text("component").notNull(), // labor, logistics, dc_cost, tta, packaging
+  value: decimal("value", { precision: 12, scale: 4 }).notNull(),
+  unit: text("unit"), // baht/egg, baht/pack, %
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Delivery Site Groups - Named groups of sites for pricing scope overrides
+export const deliverySiteGroups = pgTable("delivery_site_groups", {
+  id: serial("id").primaryKey(),
+  partnerId: integer("partner_id")
+    .references(() => businessPartners.id)
+    .notNull(),
+  name: text("name").notNull(), // e.g. "Makro North Zone"
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Delivery Site Group Members - Which sites belong to a group
+export const deliverySiteGroupMembers = pgTable("delivery_site_group_members", {
+  id: serial("id").primaryKey(),
+  groupId: integer("group_id")
+    .references(() => deliverySiteGroups.id, { onDelete: "cascade" })
+    .notNull(),
+  deliverySiteId: integer("delivery_site_id")
+    .references(() => deliverySites.id, { onDelete: "cascade" })
+    .notNull(),
+});
+
+// Price Proposals - Per-partner negotiation package
+export const priceProposals = pgTable("price_proposals", {
+  id: serial("id").primaryKey(),
+  proposalNumber: text("proposal_number").unique(), // PP-2026W18-001
+  pricingWeekId: integer("pricing_week_id")
+    .references(() => pricingWeeks.id)
+    .notNull(),
+  partnerId: integer("partner_id")
+    .references(() => businessPartners.id)
+    .notNull(),
+  scopeType: text("scope_type").default("customer"), // customer, site_group, delivery_site
+  siteGroupId: integer("site_group_id").references(() => deliverySiteGroups.id),
+  deliverySiteId: integer("delivery_site_id").references(() => deliverySites.id),
+  status: text("status").default("draft"), // draft, submitted, counter_pending, approved, rejected
+  submittedBy: text("submitted_by"),
+  approvedBy: text("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// Price Proposal Lines - Per-SKU prices within a proposal
+export const priceProposalLines = pgTable("price_proposal_lines", {
+  id: serial("id").primaryKey(),
+  proposalId: integer("proposal_id")
+    .references(() => priceProposals.id, { onDelete: "cascade" })
+    .notNull(),
+  itemId: integer("item_id")
+    .references(() => items.id)
+    .notNull(),
+  referencePrice: decimal("reference_price", { precision: 10, scale: 2 }),
+  proposalPrice: decimal("proposal_price", { precision: 10, scale: 2 }),
+  counterPrice: decimal("counter_price", { precision: 10, scale: 2 }),
+  finalLockedPrice: decimal("final_locked_price", { precision: 10, scale: 2 }),
+  notes: text("notes"),
+});
+
+// Active Prices - Live price list consumed by PO Intake
+export const activePrices = pgTable("active_prices", {
+  id: serial("id").primaryKey(),
+  itemId: integer("item_id")
+    .references(() => items.id)
+    .notNull(),
+  partnerId: integer("partner_id").references(() => businessPartners.id),
+  deliverySiteId: integer("delivery_site_id").references(
+    () => deliverySites.id,
+  ),
+  scopeType: text("scope_type").default("customer"), // customer, site_group, delivery_site
+  siteGroupId: integer("site_group_id").references(() => deliverySiteGroups.id),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  effectiveDate: date("effective_date").notNull(),
+  expiryDate: date("expiry_date"),
+  status: text("status").default("draft"), // draft, approved, active, replaced
+  sourceProposalLineId: integer("source_proposal_line_id").references(
+    () => priceProposalLines.id,
+  ),
+  approvedBy: text("approved_by"),
+  approvedAt: timestamp("approved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Material cost rates: packaging/sticker purchase price list from suppliers
+export const materialCostRates = pgTable("material_cost_rates", {
+  id: serial("id").primaryKey(),
+  sku: text("sku").references(() => items.sku, { onDelete: "set null" }),
+  effectiveDate: date("effective_date").notNull(),
+  supplierName: text("supplier_name").notNull(),
+  partner: text("partner").notNull().default("ALL"),
+  itemDescription: text("item_description"),
+  tieredPrices: jsonb("tiered_prices").notNull().default({}),
+  notes: text("notes"),
+  isCurrent: boolean("is_current").notNull().default(true),
+  uploadedAt: timestamp("uploaded_at").defaultNow(),
+  uploadedBy: text("uploaded_by"),
+});
+
+// =============================================
+// END PRICING MODULE
+// =============================================
 
 // Grading Lots (Raw egg batches received and graded - matches real data)
 export const gradingLots = pgTable("grading_lots", {
@@ -693,13 +867,25 @@ export const orders = pgTable("orders", {
   orderDate: date("order_date").defaultNow(),
   deliveryDate: date("delivery_date"),
   deliveryTime: text("delivery_time"), // Preferred time slot
-  status: text("status").default("pending"), // draft, confirmed, in_production, ready, shipped, delivered, cancelled
+  status: text("status").default("pending"), // pending, confirmed, in_production, ready, shipped, delivered, cancelled
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }),
-  logisticsStatus: text("logistics_status").default("pending"), // pending, scheduled, dispatched, delivered
+  logisticsStatus: text("logistics_status").default("pending"),
   driverId: integer("driver_id").references(() => drivers.id),
   vehicleId: integer("vehicle_id").references(() => vehicles.id),
   loadingZone: text("loading_zone"),
   notes: text("notes"),
+  // PO Intake fields
+  poNumber: text("po_number"),
+  source: text("source").default("manual"), // manual, upload
+  adjustmentReason: text("adjustment_reason"),
+  adjustmentApproved: boolean("adjustment_approved").default(false),
+  adjustmentApprovedBy: text("adjustment_approved_by"),
+  adjustmentApprovedAt: timestamp("adjustment_approved_at"),
+  productionRound: integer("production_round"), // 1-4, null = not yet assigned to a round
+  pickupDate: date("pickup_date"),
+  pickupTime: text("pickup_time"),
+  tripId: integer("trip_id").references(() => trips.id),
+  stopOrder: integer("stop_order"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -715,6 +901,12 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   unitPrice: decimal("unit_price", { precision: 10, scale: 2 }).notNull(),
   totalPrice: decimal("total_price", { precision: 10, scale: 2 }).notNull(),
+  // PO Intake fields
+  acceptedQty: integer("accepted_qty"),
+  planningQty: integer("planning_qty"), // adjustable qty for production planning rounds
+  poPrice: decimal("po_price", { precision: 10, scale: 2 }),
+  priceStatus: text("price_status"), // match, mismatch, missing
+  customerItemCode: text("customer_item_code"),
 });
 
 export const orderStatusHistory = pgTable("order_status_history", {
@@ -1484,6 +1676,158 @@ export const insertItemSchema = createInsertSchema(items).omit({
 export type Item = typeof items.$inferSelect;
 export type InsertItem = z.infer<typeof insertItemSchema>;
 
+// === PRICING MODULE RELATIONS ===
+
+export const deliverySiteGroupsRelations = relations(deliverySiteGroups, ({ one, many }) => ({
+  partner: one(businessPartners, {
+    fields: [deliverySiteGroups.partnerId],
+    references: [businessPartners.id],
+  }),
+  members: many(deliverySiteGroupMembers),
+}));
+
+export const deliverySiteGroupMembersRelations = relations(deliverySiteGroupMembers, ({ one }) => ({
+  group: one(deliverySiteGroups, {
+    fields: [deliverySiteGroupMembers.groupId],
+    references: [deliverySiteGroups.id],
+  }),
+  deliverySite: one(deliverySites, {
+    fields: [deliverySiteGroupMembers.deliverySiteId],
+    references: [deliverySites.id],
+  }),
+}));
+
+export const pricingWeeksRelations = relations(pricingWeeks, ({ one, many }) => ({
+  benchmarkPartner: one(businessPartners, {
+    fields: [pricingWeeks.benchmarkPartnerId],
+    references: [businessPartners.id],
+  }),
+  assumptions: many(pricingAssumptions),
+  proposals: many(priceProposals),
+}));
+
+export const pricingAssumptionsRelations = relations(pricingAssumptions, ({ one }) => ({
+  pricingWeek: one(pricingWeeks, {
+    fields: [pricingAssumptions.pricingWeekId],
+    references: [pricingWeeks.id],
+  }),
+  partner: one(businessPartners, {
+    fields: [pricingAssumptions.partnerId],
+    references: [businessPartners.id],
+  }),
+}));
+
+export const priceProposalsRelations = relations(priceProposals, ({ one, many }) => ({
+  pricingWeek: one(pricingWeeks, {
+    fields: [priceProposals.pricingWeekId],
+    references: [pricingWeeks.id],
+  }),
+  partner: one(businessPartners, {
+    fields: [priceProposals.partnerId],
+    references: [businessPartners.id],
+  }),
+  siteGroup: one(deliverySiteGroups, {
+    fields: [priceProposals.siteGroupId],
+    references: [deliverySiteGroups.id],
+  }),
+  deliverySite: one(deliverySites, {
+    fields: [priceProposals.deliverySiteId],
+    references: [deliverySites.id],
+  }),
+  lines: many(priceProposalLines),
+}));
+
+export const priceProposalLinesRelations = relations(priceProposalLines, ({ one, many }) => ({
+  proposal: one(priceProposals, {
+    fields: [priceProposalLines.proposalId],
+    references: [priceProposals.id],
+  }),
+  item: one(items, {
+    fields: [priceProposalLines.itemId],
+    references: [items.id],
+  }),
+  activePrices: many(activePrices),
+}));
+
+export const activePricesRelations = relations(activePrices, ({ one }) => ({
+  item: one(items, {
+    fields: [activePrices.itemId],
+    references: [items.id],
+  }),
+  partner: one(businessPartners, {
+    fields: [activePrices.partnerId],
+    references: [businessPartners.id],
+  }),
+  deliverySite: one(deliverySites, {
+    fields: [activePrices.deliverySiteId],
+    references: [deliverySites.id],
+  }),
+  siteGroup: one(deliverySiteGroups, {
+    fields: [activePrices.siteGroupId],
+    references: [deliverySiteGroups.id],
+  }),
+  sourceProposalLine: one(priceProposalLines, {
+    fields: [activePrices.sourceProposalLineId],
+    references: [priceProposalLines.id],
+  }),
+}));
+
+// === PRICING MODULE INSERT SCHEMAS & TYPES ===
+
+export const insertDeliverySiteGroupSchema = createInsertSchema(deliverySiteGroups).omit({
+  id: true,
+  createdAt: true,
+});
+export const insertDeliverySiteGroupMemberSchema = createInsertSchema(deliverySiteGroupMembers).omit({
+  id: true,
+});
+export type DeliverySiteGroup = typeof deliverySiteGroups.$inferSelect;
+export type InsertDeliverySiteGroup = z.infer<typeof insertDeliverySiteGroupSchema>;
+export type DeliverySiteGroupMember = typeof deliverySiteGroupMembers.$inferSelect;
+
+export const insertPricingWeekSchema = createInsertSchema(pricingWeeks).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertPricingAssumptionSchema = createInsertSchema(pricingAssumptions).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertPriceProposalSchema = createInsertSchema(priceProposals).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  approvedAt: true,
+});
+
+export const insertPriceProposalLineSchema = createInsertSchema(priceProposalLines).omit({
+  id: true,
+});
+
+export const insertActivePriceSchema = createInsertSchema(activePrices).omit({
+  id: true,
+  createdAt: true,
+  approvedAt: true,
+});
+
+export type PricingWeek = typeof pricingWeeks.$inferSelect;
+export type InsertPricingWeek = z.infer<typeof insertPricingWeekSchema>;
+
+export type PricingAssumption = typeof pricingAssumptions.$inferSelect;
+export type InsertPricingAssumption = z.infer<typeof insertPricingAssumptionSchema>;
+
+export type PriceProposal = typeof priceProposals.$inferSelect;
+export type InsertPriceProposal = z.infer<typeof insertPriceProposalSchema>;
+
+export type PriceProposalLine = typeof priceProposalLines.$inferSelect;
+export type InsertPriceProposalLine = z.infer<typeof insertPriceProposalLineSchema>;
+
+export type ActivePrice = typeof activePrices.$inferSelect;
+export type InsertActivePrice = z.infer<typeof insertActivePriceSchema>;
+
 // === BACKWARD COMPATIBILITY ALIASES ===
 // These aliases allow existing code to work while transitioning to new names
 export type CustomerAccount = BusinessPartner;
@@ -1495,3 +1839,11 @@ export type InsertVendor = InsertBusinessPartner;
 export const insertCustomerAccountSchema = insertBusinessPartnerSchema;
 export const insertCustomerContactSchema = insertPartnerContactSchema;
 export const insertVendorSchema = insertBusinessPartnerSchema;
+
+// Production Round States
+export const productionRoundStates = pgTable("production_round_states", {
+  id: serial("id").primaryKey(),
+  deliveryDate: date("delivery_date").notNull(),
+  round: integer("round").notNull(),
+  closedAt: timestamp("closed_at"),
+});

@@ -84,22 +84,18 @@ const getCreditDaysFromPaymentTerms = (paymentTerms: string): number => {
   return option?.creditDays ?? 0;
 };
 
-const getNicknameBadgeStyle = (nickname: string) => {
-  const lower = nickname.toLowerCase();
-  if (lower.includes('makro') || lower === 'mk') {
-    return 'bg-red-600 text-white hover:bg-red-700';
-  }
-  if (lower.includes('bigc') || lower.includes('big c') || lower === 'bc') {
-    return 'bg-green-600 text-white hover:bg-green-700';
-  }
-  if (lower.includes('cj') || lower.includes('ซีเจ')) {
-    return 'bg-pink-400 text-black hover:bg-pink-500';
-  }
-  if (lower.includes('thaifood') || lower.includes('thai food') || lower.includes('ไทยฟู้ด')) {
-    return 'bg-blue-600 text-white hover:bg-blue-700';
-  }
-  return 'bg-primary/90 text-primary-foreground';
-};
+const CUST_HEX: [string, string][] = [
+  ['makro', '#A32D2D'], ['bigc', '#3B6D11'], ['big c', '#3B6D11'],
+  ['thaifood', '#185FA5'], ['thai food', '#185FA5'], ['cj', '#993556'],
+  ['tt', '#854F0B'], ['lotus', '#0A6E56'],
+];
+const getCustColor = (n: string) =>
+  CUST_HEX.find(([k]) => n.toLowerCase().includes(k))?.[1] ?? '#5F5E5A';
+
+const ROW_CLS =
+  '[&>td]:bg-white [&>td]:border-y [&>td]:border-[#d6d8dc] [&>td:first-child]:border-l [&>td:first-child]:rounded-l-lg [&>td:last-child]:border-r [&>td:last-child]:rounded-r-lg [&:hover>td]:bg-[#fafbfc] hover:!bg-transparent';
+const SUB_ROW_CLS =
+  '[&>td]:bg-[#f6f7f9] [&>td]:border-y [&>td]:border-[#ecedf0] [&>td:first-child]:border-l [&>td:first-child]:rounded-l-lg [&>td:last-child]:border-r [&>td:last-child]:rounded-r-lg';
 
 const siteFormSchema = insertDeliverySiteSchema.extend({
   siteCode: z.string().min(1, "กรุณากรอกรหัสสถานที่"),
@@ -641,8 +637,8 @@ export default function Customers() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Customers</h1>
-          <p className="text-muted-foreground">จัดการบัญชีลูกค้าและสถานที่จัดส่ง</p>
+          <h2 className="text-xl font-semibold" data-testid="text-page-title">ลูกค้า</h2>
+          <p className="text-sm text-neutral-500">จัดการบัญชีลูกค้าและสถานที่จัดส่ง</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           <Button onClick={openAddDialog} data-testid="button-add-customer">
@@ -701,7 +697,7 @@ export default function Customers() {
               <p className="text-sm">เพิ่มลูกค้าเพื่อเริ่มต้นใช้งาน</p>
             </div>
           ) : (
-            <Table>
+            <Table className="border-separate border-spacing-y-1.5">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[40px]"></TableHead>
@@ -778,7 +774,7 @@ export default function Customers() {
                   
                   return (
                     <Fragment key={account.id}>
-                        <TableRow data-testid={`row-account-${account.id}`}>
+                        <TableRow data-testid={`row-account-${account.id}`} className={ROW_CLS}>
                           <TableCell>
                             {siteCount > 0 && (
                                 <Button 
@@ -793,9 +789,12 @@ export default function Customers() {
                           </TableCell>
                           <TableCell className="font-mono text-sm">{account.code}</TableCell>
                           <TableCell>
-                            <Badge variant="default" className={getNicknameBadgeStyle(account.nickname ?? '')}>
+                            <span
+                              className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full text-white whitespace-nowrap"
+                              style={{ background: getCustColor(account.nickname ?? '') }}
+                            >
                               {account.nickname}
-                            </Badge>
+                            </span>
                           </TableCell>
                           <TableCell className="font-medium max-w-[200px]">
                             <div className="flex items-center gap-1">
@@ -858,9 +857,9 @@ export default function Customers() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant={account.isActive ? "secondary" : "outline"}>
-                              {account.isActive ? "ใช้งาน" : "ปิดใช้งาน"}
-                            </Badge>
+                            <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border ${account.isActive ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
+                              {account.isActive ? 'ใช้งาน' : 'ปิดใช้งาน'}
+                            </span>
                           </TableCell>
                           <TableCell>
                             <div className="flex gap-1">
@@ -901,9 +900,9 @@ export default function Customers() {
                             (site.deliveryZone ?? '').toLowerCase().includes(term)
                           );
                         }).map((site) => (
-                              <TableRow 
-                                key={site.id} 
-                                className="bg-muted/30"
+                              <TableRow
+                                key={site.id}
+                                className={SUB_ROW_CLS}
                                 data-testid={`row-site-${site.id}`}
                               >
                                 <TableCell></TableCell>
@@ -926,9 +925,9 @@ export default function Customers() {
                                   </div>
                                 </TableCell>
                                 <TableCell>
-                                  <Badge variant="outline" className="text-xs">
-                                    {site.deliveryType === 'direct_to_store' ? 'ส่งตรง' : 'ศูนย์กระจายสินค้า'}
-                                  </Badge>
+                                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded ${site.deliveryType === 'direct_to_store' ? 'bg-[#F1EFE8] text-[#5F5E5A]' : 'bg-[#E6F1FB] text-[#0C447C]'}`}>
+                                    {site.deliveryType === 'direct_to_store' ? 'ส่งตรง' : 'DC'}
+                                  </span>
                                 </TableCell>
                                 <TableCell>
                                   {site.deliveryZone && (
@@ -937,9 +936,9 @@ export default function Customers() {
                                 </TableCell>
                                 <TableCell></TableCell>
                                 <TableCell>
-                                  <Badge variant={site.isActive ? "secondary" : "outline"} className="text-xs">
-                                    {site.isActive ? "ใช้งาน" : "ปิดใช้งาน"}
-                                  </Badge>
+                                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border ${site.isActive ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
+                                    {site.isActive ? 'ใช้งาน' : 'ปิดใช้งาน'}
+                                  </span>
                                 </TableCell>
                                 <TableCell>
                                   <div className="flex gap-1">

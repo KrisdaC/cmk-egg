@@ -24,6 +24,8 @@ import {
   Receipt,
   RotateCcw,
   Tags,
+  DollarSign,
+  CheckCircle,
   Boxes,
   QrCode,
   MapPin,
@@ -36,6 +38,7 @@ import {
   Settings,
   Globe,
   ChevronDown,
+  FileUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,7 +55,6 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from "@/components/ui/sidebar";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Collapsible,
   CollapsibleContent,
@@ -72,7 +74,11 @@ import Drivers from "@/pages/database/Drivers";
 import Vehicles from "@/pages/database/Vehicles";
 import OrderInput from "@/pages/orders/OrderInput";
 import DailyOrderSummary from "@/pages/orders/DailyOrderSummary";
-import PriceAdjustment from "@/pages/orders/PriceAdjustment";
+import GlobalAssumptions from "@/pages/orders/pricing/GlobalAssumptions";
+import ReferencePrice from "@/pages/orders/pricing/ReferencePrice";
+import Proposals from "@/pages/orders/pricing/Proposals";
+import NewProposal from "@/pages/orders/pricing/NewProposal";
+import ActivePrices from "@/pages/orders/pricing/ActivePrices";
 import Invoices from "@/pages/orders/Invoices";
 import Returns from "@/pages/orders/Returns";
 import PlannedProduction from "@/pages/production/PlannedProduction";
@@ -95,6 +101,11 @@ import NotFound from "@/pages/not-found";
 import { useMe } from "./hooks/useAuth";
 import OrderFormPage from "./pages/orders/OrderFormPage";
 import OrderUploadPage from "./pages/orders/OrderUploadPage";
+import POIntake from "./pages/orders/POIntake";
+import POUploadReview from "./pages/orders/POUploadReview";
+import OrdersGrid from "./pages/orders/OrdersGrid";
+import DailyPlan from "./pages/orders/DailyPlan";
+import MaterialCosts from "./pages/orders/pricing/MaterialCosts";
 
 const navigationGroups = [
   {
@@ -116,16 +127,24 @@ const navigationGroups = [
     ],
   },
   {
+    label: "Price Adjustments",
+    icon: Tags,
+    items: [
+      { title: "Price Assumptions", url: "/orders/pricing/assumptions", icon: Tags },
+      { title: "Reference Price", url: "/orders/pricing/reference", icon: DollarSign },
+      { title: "Price Proposals", url: "/orders/pricing/proposals", icon: FileText },
+      { title: "Active Prices", url: "/orders/pricing/active-prices", icon: CheckCircle },
+      { title: "Material Costs", url: "/orders/pricing/material-costs", icon: FileUp },
+    ],
+  },
+  {
     label: "Order Management",
     icon: ShoppingCart,
     items: [
-      { title: "Order Input", url: "/orders/input", icon: ClipboardList },
+      { title: "Order Intake", url: "/orders/input", icon: ClipboardList },
+      { title: "Daily Plan", url: "/orders/daily-plan", icon: Calendar },
+
       { title: "Daily Summary", url: "/orders/daily-summary", icon: Calendar },
-      {
-        title: "Price Adjustment",
-        url: "/orders/price-adjustment",
-        icon: Tags,
-      },
       { title: "Invoices", url: "/orders/invoices", icon: Receipt },
       { title: "Returns", url: "/orders/returns", icon: RotateCcw },
     ],
@@ -209,12 +228,14 @@ function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4 border-b">
-        <div className="flex items-center gap-2">
-          <Egg className="w-8 h-8 text-primary" />
+      <SidebarHeader className="px-4 py-3 border-b border-[#d6d8dc]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-[#1a1a1a] rounded-lg flex items-center justify-center shrink-0">
+            <Egg className="w-4 h-4 text-white" />
+          </div>
           <div>
-            <h1 className="font-bold text-lg">EggGrade Pro</h1>
-            <p className="text-xs text-muted-foreground">ERP System</p>
+            <h1 className="font-semibold text-[15px] text-[#1a1a1a] leading-tight">ไชยมงคล</h1>
+            <p className="text-[11px] text-[#888]">EggGrade OMS</p>
           </div>
         </div>
       </SidebarHeader>
@@ -250,12 +271,12 @@ function AppSidebar() {
                   ),
                 )}
               >
-                <CollapsibleTrigger className="flex w-full items-center justify-between px-2 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
-                  <div className="flex items-center gap-2">
-                    {group.icon && <group.icon className="w-4 h-4" />}
+                <CollapsibleTrigger className="flex w-full items-center justify-between px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.4px] text-[#888] hover:text-[#1a1a1a] transition-colors">
+                  <div className="flex items-center gap-1.5">
+                    {group.icon && <group.icon className="w-3.5 h-3.5" />}
                     <span>{group.label}</span>
                   </div>
-                  <ChevronDown className="w-4 h-4 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+                  <ChevronDown className="w-3.5 h-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180" />
                 </CollapsibleTrigger>
                 <CollapsibleContent>
                   <SidebarGroupContent>
@@ -284,32 +305,26 @@ function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t">
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarFallback>
-              {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
+      <SidebarFooter className="px-4 py-3 border-t border-[#d6d8dc]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-7 h-7 rounded-full bg-[#1a1a1a] flex items-center justify-center text-white text-[11px] font-semibold shrink-0">
+            {user?.firstName?.[0]?.toUpperCase() || user?.email?.[0]?.toUpperCase() || "U"}
+          </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">
+            <p className="text-[13px] font-medium text-[#1a1a1a] truncate">
               {user?.firstName || user?.email}
             </p>
           </div>
-          <Button
-            variant="ghost"
-            size="icon"
+          <button
             onClick={async () => {
-              await fetch("/api/auth/logout", {
-                method: "POST",
-                credentials: "include",
-              });
+              await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
               window.location.href = "/login";
             }}
+            className="text-[#888] hover:text-[#791F1F] transition-colors p-0.5"
             data-testid="button-logout"
           >
-            <LogOut className="w-4 h-4" />
-          </Button>
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </SidebarFooter>
     </Sidebar>
@@ -318,7 +333,7 @@ function AppSidebar() {
 
 function MainLayout({ children }: { children: React.ReactNode }) {
   const style = {
-    "--sidebar-width": "17rem",
+    "--sidebar-width": "14rem",
     "--sidebar-width-icon": "3rem",
   };
 
@@ -327,10 +342,10 @@ function MainLayout({ children }: { children: React.ReactNode }) {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <main className="flex-1 flex flex-col overflow-hidden">
-          <header className="flex items-center gap-2 p-3 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
+          <header className="flex h-11 shrink-0 items-center gap-2 px-4 border-b border-[#d6d8dc] bg-white">
+            <SidebarTrigger className="text-[#888] hover:text-[#1a1a1a]" data-testid="button-sidebar-toggle" />
           </header>
-          <div className="flex-1 overflow-auto p-6">{children}</div>
+          <div className="flex-1 overflow-auto bg-[#fafbfc] p-6">{children}</div>
         </main>
       </div>
     </SidebarProvider>
@@ -417,16 +432,48 @@ function Router() {
 
       {/* Order Management */}
       <Route
+        path="/orders/po-intake/upload-review"
+        component={() => <ProtectedRoute component={POUploadReview} />}
+      />
+      <Route
+        path="/orders/po-intake"
+        component={() => <ProtectedRoute component={POIntake} />}
+      />
+      <Route
         path="/orders/input"
-        component={() => <ProtectedRoute component={OrderInput} />}
+        component={() => <ProtectedRoute component={OrdersGrid} />}
+      />
+      <Route
+        path="/orders/daily-plan"
+        component={() => <ProtectedRoute component={DailyPlan} />}
       />
       <Route
         path="/orders/daily-summary"
         component={() => <ProtectedRoute component={DailyOrderSummary} />}
       />
       <Route
-        path="/orders/price-adjustment"
-        component={() => <ProtectedRoute component={PriceAdjustment} />}
+        path="/orders/pricing/assumptions"
+        component={() => <ProtectedRoute component={GlobalAssumptions} />}
+      />
+      <Route
+        path="/orders/pricing/reference"
+        component={() => <ProtectedRoute component={ReferencePrice} />}
+      />
+      <Route
+        path="/orders/pricing/proposals/new"
+        component={() => <ProtectedRoute component={NewProposal} />}
+      />
+      <Route
+        path="/orders/pricing/proposals"
+        component={() => <ProtectedRoute component={Proposals} />}
+      />
+      <Route
+        path="/orders/pricing/active-prices"
+        component={() => <ProtectedRoute component={ActivePrices} />}
+      />
+      <Route
+        path="/orders/pricing/material-costs"
+        component={() => <ProtectedRoute component={MaterialCosts} />}
       />
       <Route
         path="/orders/invoices"
