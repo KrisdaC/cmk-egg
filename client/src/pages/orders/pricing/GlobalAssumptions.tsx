@@ -414,13 +414,22 @@ export default function GlobalAssumptionsPage() {
                     {(() => {
                       const partnerSaved = assumptions.filter((a) => a.partnerId === selectedPartnerId);
                       if (partnerSaved.length === 0) return null;
-                      const total = partnerSaved.reduce((sum, a) => sum + parseFloat(a.value || "0"), 0);
+                      const fixedTotal = partnerSaved
+                        .filter((a) => a.unit !== "%")
+                        .reduce((sum, a) => sum + parseFloat(a.value || "0"), 0);
+                      const disty = partnerSaved.find((a) => a.component === "disty_cost");
                       return (
-                        <div className="mt-4 pt-4 border-t">
+                        <div className="mt-4 pt-4 border-t space-y-1">
                           <div className="flex items-center justify-between text-sm">
-                            <span className="text-muted-foreground">Total Cost / ฟอง</span>
-                            <span className="font-bold">฿{total.toFixed(4)}</span>
+                            <span className="text-muted-foreground">ต้นทุนคงที่ / ฟอง</span>
+                            <span className="font-bold">฿{fixedTotal.toFixed(4)}</span>
                           </div>
+                          {disty && (
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-muted-foreground">Disty cost (% ของราคาขาย)</span>
+                              <span className="text-muted-foreground">{parseFloat(disty.value).toFixed(2)}%</span>
+                            </div>
+                          )}
                         </div>
                       );
                     })()}
