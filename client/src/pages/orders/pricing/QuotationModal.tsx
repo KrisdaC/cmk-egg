@@ -54,6 +54,7 @@ interface Props {
   onClose: () => void;
   makerName?: string | null;
   approverName?: string | null;
+  status?: string | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -78,7 +79,7 @@ const SIZE_LABEL: Record<string, string> = {
 
 export default function QuotationModal({
   simItems, siteGroups, partnerId, dateFrom, proposed, notes, pKey, getVal, onClose,
-  makerName, approverName,
+  makerName, approverName, status,
 }: Props) {
   const [partner, setPartner] = useState<PartnerDetail | null>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -115,8 +116,13 @@ export default function QuotationModal({
         .divider { border-top: 2px solid #111; margin: 8px 0; }
         .thin { border-top: 1px solid #ccc; margin: 6px 0; }
         .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-        .meta-row { display: flex; gap: 8px; }
-        .meta-label { color: #666; width: 140px; flex-shrink: 0; }
+        .meta-row { display: flex; justify-content: space-between; gap: 8px; }
+        .meta-label { color: #666; width: 160px; flex-shrink: 0; }
+        .doc-right { text-align: right; }
+        .doc-status { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 12px; font-size: 10px; border: 1px solid #f59e0b; color: #b45309; background: #fffbeb; }
+        .doc-addr { font-size: 10px; color: #6b7280; margin-top: 2px; }
+        .doc-customer-label { font-size: 10px; color: #6b7280; margin-bottom: 4px; }
+        .doc-company { font-weight: 600; font-size: 13px; }
         table { width: 100%; border-collapse: collapse; font-size: 11px; }
         th { background: #f4f4f4; padding: 6px 8px; text-align: right; font-weight: 600; border-bottom: 2px solid #ccc; }
         th:first-child, th:nth-child(2) { text-align: left; }
@@ -132,6 +138,12 @@ export default function QuotationModal({
           font-size: 100px; color: rgba(0,0,0,0.06); font-weight: 900; letter-spacing: 8px; pointer-events: none;
           white-space: nowrap;
         }
+        .sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; border-top: 1px solid #e5e7eb; padding-top: 1rem; margin-top: 0.5rem; font-size: 12px; }
+        .sig-label-top { font-size: 10px; color: #9ca3af; margin-bottom: 24px; }
+        .sig-line { border-bottom: 1px solid #9ca3af; margin-bottom: 4px; padding-bottom: 4px; min-height: 24px; }
+        .sig-name { font-weight: 500; color: #374151; }
+        .sig-role { font-size: 10px; color: #9ca3af; }
+        .footer-note { border-top: 1px solid #e5e7eb; padding-top: 12px; font-size: 10px; color: #6b7280; }
       </style>
     </head><body>${content.innerHTML}<div class="draft-watermark">DRAFT</div></body></html>`);
     w.document.close();
@@ -169,34 +181,34 @@ export default function QuotationModal({
             <div ref={printRef} className="bg-white text-black font-sans text-sm space-y-4" style={{ fontFamily: "'Noto Sans Thai', sans-serif" }}>
 
               {/* Letterhead */}
-              <div className="flex justify-between items-start">
+              <div className="header flex justify-between items-start">
                 <div>
                   <p className="text-lg font-bold">บริษัท ไชยมงคล จำกัด</p>
-                  <p className="text-xs text-gray-500 mt-0.5">เลขที่ 8 หมู่ที่ 8 ตำบลอาษา อำเภอบ้านนา จังหวัดนครนายก 26110</p>
-                  <p className="text-xs text-gray-500">โทร 092-9355526</p>
+                  <p className="doc-addr text-xs text-gray-500 mt-0.5">เลขที่ 8 หมู่ที่ 8 ตำบลอาษา อำเภอบ้านนา จังหวัดนครนายก 26110</p>
+                  <p className="doc-addr text-xs text-gray-500">โทร 092-9355526</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-2xl font-bold tracking-tight">ใบเสนอราคา</p>
-                  <p className="text-xs tracking-widest text-gray-400 uppercase">Quotation</p>
-                  <span className="inline-block mt-1 px-2 py-0.5 rounded-full text-xs border border-amber-400 text-amber-700 bg-amber-50">
+                <div className="doc-right text-right">
+                  <p className="doc-label text-2xl font-bold tracking-tight">ใบเสนอราคา</p>
+                  <p className="quotation-word text-xs tracking-widest text-gray-400 uppercase">Quotation</p>
+                  <span className="doc-status inline-block mt-1 px-2 py-0.5 rounded-full text-xs border border-amber-400 text-amber-700 bg-amber-50">
                     ฉบับร่าง · ยังไม่อนุมัติ
                   </span>
                 </div>
               </div>
 
-              <div className="border-t-2 border-black" />
+              <div className="divider border-t-2 border-black" />
 
               {/* Customer + meta */}
-              <div className="grid grid-cols-2 gap-6">
+              <div className="meta grid grid-cols-2 gap-6">
                 <div>
-                  <p className="text-xs text-gray-500 mb-1">นามลูกค้า</p>
-                  <p className="font-semibold">{partner?.businessName ?? partner?.nickname ?? "—"}</p>
+                  <p className="doc-customer-label text-xs text-gray-500 mb-1">นามลูกค้า</p>
+                  <p className="doc-company font-semibold">{partner?.businessName ?? partner?.nickname ?? "—"}</p>
                   {partner?.addressLine1 && (
-                    <p className="text-xs text-gray-500 mt-0.5">
+                    <p className="doc-addr text-xs text-gray-500 mt-0.5">
                       {partner.addressLine1}{partner.district ? " " + partner.district : ""}{partner.province ? " " + partner.province : ""}{partner.postalCode ? " " + partner.postalCode : ""}
                     </p>
                   )}
-                  {partner?.taxId && <p className="text-xs text-gray-500 mt-0.5">เลขประจำตัวผู้เสียภาษี: {partner.taxId}</p>}
+                  {partner?.taxId && <p className="doc-addr text-xs text-gray-500 mt-0.5">เลขประจำตัวผู้เสียภาษี: {partner.taxId}</p>}
                 </div>
                 <div className="space-y-1.5 text-sm">
                   {[
@@ -204,8 +216,8 @@ export default function QuotationModal({
                     ["วันที่มีผล", fmtDate(dateFrom)],
                     ["เครดิต", partner?.creditDays != null ? `${partner.creditDays} วัน` : "—"],
                   ].map(([label, val]) => (
-                    <div key={label} className="flex justify-between gap-4">
-                      <span className="text-gray-500">{label}</span>
+                    <div key={label} className="meta-row flex justify-between gap-4">
+                      <span className="meta-label text-gray-500">{label}</span>
                       <span className="font-medium tabular-nums">{val}</span>
                     </div>
                   ))}
@@ -296,25 +308,29 @@ export default function QuotationModal({
               </table>
 
               {/* Footer note */}
-              <div className="border-t pt-3 text-xs text-gray-500 space-y-1">
+              <div className="footer-note border-t pt-3 text-xs text-gray-500 space-y-1">
                 <p>ราคานี้มีผลตั้งแต่วันที่ {fmtDate(dateFrom)}</p>
               </div>
 
               {/* Signature */}
-              <div className="border-t pt-4 mt-2 grid grid-cols-2 gap-8 text-sm">
+              <div className="sig-grid border-t pt-4 mt-2 grid grid-cols-2 gap-8 text-sm">
                 <div>
-                  <p className="text-xs text-gray-400 mb-6">ผู้จัดทำ</p>
-                  <div className="border-b border-gray-400 mb-1 pb-1 min-h-[24px]">
-                    {makerName && <p className="font-medium text-gray-700">{makerName}</p>}
+                  <p className="sig-label-top text-xs text-gray-400 mb-6">ผู้จัดทำ</p>
+                  <div className="sig-line border-b border-gray-400 mb-1 pb-1 min-h-[24px]">
+                    {["reviewed", "approved", "active"].includes(status ?? "") && makerName && (
+                      <p className="sig-name font-medium text-gray-700">{makerName}</p>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400">ผู้จัดทำ</p>
+                  <p className="sig-role text-xs text-gray-400">ผู้จัดทำ</p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-6">ผู้อนุมัติ</p>
-                  <div className="border-b border-gray-400 mb-1 pb-1 min-h-[24px]">
-                    {approverName && <p className="font-medium text-gray-700">{approverName}</p>}
+                  <p className="sig-label-top text-xs text-gray-400 mb-6">ผู้อนุมัติ</p>
+                  <div className="sig-line border-b border-gray-400 mb-1 pb-1 min-h-[24px]">
+                    {["approved", "active"].includes(status ?? "") && approverName && (
+                      <p className="sig-name font-medium text-gray-700">{approverName}</p>
+                    )}
                   </div>
-                  <p className="text-xs text-gray-400">ผู้อนุมัติ</p>
+                  <p className="sig-role text-xs text-gray-400">ผู้อนุมัติ</p>
                 </div>
               </div>
 

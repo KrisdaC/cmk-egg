@@ -562,6 +562,7 @@ function ProposalDetailSheet({
           approverName={
             [proposal.approvedByUser?.firstName, proposal.approvedByUser?.lastName].filter(Boolean).join(" ") || proposal.approvedByUser?.email || null
           }
+          status={proposal.status}
           onClose={() => { setShowQuotation(false); }}
         />
       )}
