@@ -3,15 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Edit, Trash2, Phone, Building, Loader2, MapPin, FileText, ChevronDown, ChevronRight, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, Truck, Mail, Users } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Phone, Building, Loader2, MapPin, FileText, ChevronDown, ChevronRight, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown, UserPlus, Truck, Mail, Users, Layers } from "lucide-react";
 import { Link } from "wouter";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
+
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -23,12 +21,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { CustomerAccount, DeliverySite, CustomerContact } from "@shared/schema";
 import { insertCustomerAccountSchema, insertDeliverySiteSchema, insertCustomerContactSchema } from "@shared/schema";
 import { z } from "zod";
+import { SiteGroupManagerDialog } from "@/pages/orders/pricing/SiteGroupManager";
+import type { SiteGroup, Partner } from "@/pages/orders/pricing/_shared";
 
 const VEHICLE_TYPES = [
   { value: "4_wheel", label: "4ล้อ" },
@@ -92,10 +92,6 @@ const CUST_HEX: [string, string][] = [
 const getCustColor = (n: string) =>
   CUST_HEX.find(([k]) => n.toLowerCase().includes(k))?.[1] ?? '#5F5E5A';
 
-const ROW_CLS =
-  '[&>td]:bg-white [&>td]:border-y [&>td]:border-[#d6d8dc] [&>td:first-child]:border-l [&>td:first-child]:rounded-l-lg [&>td:last-child]:border-r [&>td:last-child]:rounded-r-lg [&:hover>td]:bg-[#fafbfc] hover:!bg-transparent';
-const SUB_ROW_CLS =
-  '[&>td]:bg-[#f6f7f9] [&>td]:border-y [&>td]:border-[#ecedf0] [&>td:first-child]:border-l [&>td:first-child]:rounded-l-lg [&>td:last-child]:border-r [&>td:last-child]:rounded-r-lg';
 
 const siteFormSchema = insertDeliverySiteSchema.extend({
   siteCode: z.string().min(1, "กรุณากรอกรหัสสถานที่"),
@@ -137,6 +133,36 @@ export default function Customers() {
   // Delete confirmation state
   const [deleteAccountId, setDeleteAccountId] = useState<number | null>(null);
   const [deleteSiteId, setDeleteSiteId] = useState<number | null>(null);
+
+  // Site group dialog + inline assignment — scoped to one customer at a time
+  const [siteGroupDialogOpen, setSiteGroupDialogOpen] = useState(false);
+  const [siteGroupPartnerId, setSiteGroupPartnerId] = useState<number | null>(null);
+  const [customerGroupsMap, setCustomerGroupsMap] = useState<Record<number, SiteGroup[]>>({});
+
+  const loadCustomerGroups = useCallback(async (partnerId: number) => {
+    const res = await fetch(`/api/pricing/site-groups?partnerId=${partnerId}`);
+    if (res.ok) {
+      const groups: SiteGroup[] = await res.json();
+      setCustomerGroupsMap(prev => ({ ...prev, [partnerId]: groups }));
+    }
+  }, []);
+
+  const openSiteGroupDialog = async (partnerId: number) => {
+    setSiteGroupPartnerId(partnerId);
+    await loadCustomerGroups(partnerId);
+    setSiteGroupDialogOpen(true);
+  };
+
+  const toggleSiteInGroup = async (accountId: number, siteId: number, group: SiteGroup, add: boolean) => {
+    const current = group.memberSiteIds ?? [];
+    const next = add ? [...current, siteId] : current.filter(id => id !== siteId);
+    await fetch(`/api/pricing/site-groups/${group.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: group.name, description: group.description, siteIds: next }),
+    });
+    await loadCustomerGroups(accountId);
+  };
 
   const { data: accounts, isLoading } = useQuery<AccountWithRelations[]>({
     queryKey: ['/api/customer-accounts']
@@ -623,8 +649,12 @@ export default function Customers() {
   const toggleExpanded = (id: number) => {
     setExpandedAccounts(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+        if (!customerGroupsMap[id]) loadCustomerGroups(id);
+      }
       return next;
     });
   };
@@ -697,283 +727,295 @@ export default function Customers() {
               <p className="text-sm">เพิ่มลูกค้าเพื่อเริ่มต้นใช้งาน</p>
             </div>
           ) : (
-            <Table className="border-separate border-spacing-y-1.5">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[40px]"></TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('accountCode')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-account-code"
+            <div className="divide-y divide-border rounded-md border overflow-hidden">
+              <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "32px 100px 130px 1fr 140px 200px 120px 70px 90px 114px"}}>
+                <div />
+                <div>
+                  <button type="button" onClick={() => handleSort('accountCode')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-account-code">
+                    รหัสบัญชี {getSortIcon('accountCode')}
+                  </button>
+                </div>
+                <div>
+                  <button type="button" onClick={() => handleSort('nickname')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-nickname">
+                    ชื่อเรียก {getSortIcon('nickname')}
+                  </button>
+                </div>
+                <div>
+                  <button type="button" onClick={() => handleSort('businessName')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-business-name">
+                    ชื่อธุรกิจ {getSortIcon('businessName')}
+                  </button>
+                </div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สาขา</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ผู้ติดต่อ</div>
+                <div>
+                  <button type="button" onClick={() => handleSort('paymentTerms')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-payment-terms">
+                    เงื่อนไขชำระ {getSortIcon('paymentTerms')}
+                  </button>
+                </div>
+                <div>
+                  <button type="button" onClick={() => handleSort('sites')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-sites">
+                    สถานที่ {getSortIcon('sites')}
+                  </button>
+                </div>
+                <div>
+                  <button type="button" onClick={() => handleSort('isActive')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-status">
+                    สถานะ {getSortIcon('isActive')}
+                  </button>
+                </div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">จัดการ</div>
+              </div>
+              {filteredAndSortedAccounts.map((account, idx) => {
+                const contact = getPrimaryContact(account.contacts);
+                const siteCount = account.deliverySites?.length ?? 0;
+                const isExpanded = expandedAccounts.has(account.id);
+
+                return (
+                  <Fragment key={account.id}>
+                    <div
+                      className={`grid items-start px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                      style={{gridTemplateColumns: "32px 100px 130px 1fr 140px 200px 120px 70px 90px 114px"}}
+                      data-testid={`row-account-${account.id}`}
                     >
-                      รหัสบัญชี {getSortIcon('accountCode')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('nickname')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-nickname"
-                    >
-                      ชื่อเรียก {getSortIcon('nickname')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('businessName')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-business-name"
-                    >
-                      ชื่อธุรกิจ {getSortIcon('businessName')}
-                    </button>
-                  </TableHead>
-                  <TableHead>สาขา</TableHead>
-                  <TableHead>ผู้ติดต่อ</TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('paymentTerms')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-payment-terms"
-                    >
-                      เงื่อนไขชำระ {getSortIcon('paymentTerms')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('sites')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-sites"
-                    >
-                      สถานที่ {getSortIcon('sites')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('isActive')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-status"
-                    >
-                      สถานะ {getSortIcon('isActive')}
-                    </button>
-                  </TableHead>
-                  <TableHead className="w-[100px]">จัดการ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedAccounts.map((account) => {
-                  const contact = getPrimaryContact(account.contacts);
-                  const siteCount = account.deliverySites?.length ?? 0;
-                  const isExpanded = expandedAccounts.has(account.id);
-                  
-                  return (
-                    <Fragment key={account.id}>
-                        <TableRow data-testid={`row-account-${account.id}`} className={ROW_CLS}>
-                          <TableCell>
-                            {siteCount > 0 && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="icon" 
-                                  onClick={() => toggleExpanded(account.id)}
-                                  data-testid={`button-expand-${account.id}`}
-                                >
-                                  {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
-                                </Button>
+                      <div>
+                        {siteCount > 0 && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => toggleExpanded(account.id)}
+                            data-testid={`button-expand-${account.id}`}
+                          >
+                            {isExpanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                          </Button>
+                        )}
+                      </div>
+                      <div className="text-xs font-mono pt-1">{account.code}</div>
+                      <div className="pt-0.5">
+                        <span
+                          className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full text-white whitespace-nowrap"
+                          style={{ background: getCustColor(account.nickname ?? '') }}
+                        >
+                          {account.nickname}
+                        </span>
+                      </div>
+                      <div className="text-xs pt-1">
+                        <div className="flex items-center gap-1 font-medium">
+                          <FileText className="w-3 h-3 text-muted-foreground flex-shrink-0" />
+                          <span className="truncate" title={account.businessName ?? ''}>{account.businessName}</span>
+                        </div>
+                        {account.taxId && (
+                          <div className="text-[10px] text-muted-foreground font-mono mt-0.5">{account.taxId}</div>
+                        )}
+                      </div>
+                      <div className="text-xs pt-1">
+                        {account.branchName ? (
+                          <div className="space-y-0.5">
+                            <div className="truncate">{account.branchName}</div>
+                            {account.branchCode && (
+                              <div className="text-[10px] text-muted-foreground font-mono">{account.branchCode}</div>
                             )}
-                          </TableCell>
-                          <TableCell className="font-mono text-sm">{account.code}</TableCell>
-                          <TableCell>
-                            <span
-                              className="inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full text-white whitespace-nowrap"
-                              style={{ background: getCustColor(account.nickname ?? '') }}
-                            >
-                              {account.nickname}
-                            </span>
-                          </TableCell>
-                          <TableCell className="font-medium max-w-[200px]">
-                            <div className="flex items-center gap-1">
-                              <FileText className="w-3 h-3 text-muted-foreground flex-shrink-0" />
-                              <span className="truncate" title={account.businessName ?? ''}>{account.businessName}</span>
-                            </div>
-                            {account.taxId && (
-                              <div className="text-xs text-muted-foreground font-mono mt-0.5">{account.taxId}</div>
-                            )}
-                          </TableCell>
-                          <TableCell className="max-w-[150px]">
-                            {account.branchName ? (
-                              <div className="space-y-0.5">
-                                <div className="text-sm truncate">{account.branchName}</div>
-                                {account.branchCode && (
-                                  <div className="text-xs text-muted-foreground font-mono">{account.branchCode}</div>
-                                )}
+                          </div>
+                        ) : <span className="text-muted-foreground">-</span>}
+                      </div>
+                      <div className="space-y-1 pt-0.5">
+                        {account.contacts && account.contacts.length > 0 ? (
+                          <>
+                            {account.contacts.slice(0, 2).map((c) => (
+                              <div
+                                key={c.id}
+                                className="flex items-center gap-1 text-xs group cursor-pointer hover:text-foreground"
+                                onClick={() => openEditContactDialog(c)}
+                                data-testid={`contact-${c.id}`}
+                              >
+                                <span className="truncate max-w-[100px]" title={c.fullName}>{c.fullName}</span>
+                                {c.isPrimary && <Badge variant="secondary" className="text-[10px] px-1">หลัก</Badge>}
+                                <Edit className="w-3 h-3 invisible group-hover:visible text-muted-foreground" />
                               </div>
-                            ) : <span className="text-muted-foreground">-</span>}
-                          </TableCell>
-                          <TableCell>
-                            <div className="space-y-1">
-                              {account.contacts && account.contacts.length > 0 ? (
-                                <>
-                                  {account.contacts.slice(0, 2).map((c) => (
-                                    <div 
-                                      key={c.id} 
-                                      className="flex items-center gap-1 text-sm group cursor-pointer hover:text-foreground"
-                                      onClick={() => openEditContactDialog(c)}
-                                      data-testid={`contact-${c.id}`}
-                                    >
-                                      <span className="truncate max-w-[100px]" title={c.fullName}>{c.fullName}</span>
-                                      {c.isPrimary && <Badge variant="secondary" className="text-[10px] px-1">หลัก</Badge>}
-                                      <Edit className="w-3 h-3 invisible group-hover:visible text-muted-foreground" />
-                                    </div>
-                                  ))}
-                                  {account.contacts.length > 2 && (
-                                    <span className="text-xs text-muted-foreground">+{account.contacts.length - 2} more</span>
-                                  )}
-                                </>
-                              ) : null}
-                              <Button 
-                                variant="ghost" 
-                                size="sm" 
-                                className="h-6 px-2 text-xs" 
-                                onClick={() => openAddContactDialog(account.id)}
-                                data-testid={`button-add-contact-${account.id}`}
-                              >
-                                <UserPlus className="w-3 h-3 mr-1" />
-                                เพิ่ม
-                              </Button>
+                            ))}
+                            {account.contacts.length > 2 && (
+                              <span className="text-[10px] text-muted-foreground">+{account.contacts.length - 2} more</span>
+                            )}
+                          </>
+                        ) : null}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => openAddContactDialog(account.id)}
+                          data-testid={`button-add-contact-${account.id}`}
+                        >
+                          <UserPlus className="w-3 h-3 mr-1" />
+                          เพิ่ม
+                        </Button>
+                      </div>
+                      <div className="text-xs pt-1">{account.paymentTerms ?? "เงินสด"}</div>
+                      <div className="pt-0.5">
+                        <Badge variant="secondary" className="text-[10px]">
+                          {siteCount} แห่ง
+                        </Badge>
+                      </div>
+                      <div className="pt-0.5">
+                        <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border ${account.isActive ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
+                          {account.isActive ? 'ใช้งาน' : 'ปิดใช้งาน'}
+                        </span>
+                      </div>
+                      <div className="flex gap-0.5 pt-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          title="จัดการกลุ่มจุดส่ง"
+                          onClick={() => openSiteGroupDialog(account.id)}
+                          data-testid={`button-site-groups-${account.id}`}
+                        >
+                          <Layers className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => openEditDialog(account)}
+                          data-testid={`button-edit-${account.id}`}
+                        >
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => setDeleteAccountId(account.id)}
+                          data-testid={`button-delete-${account.id}`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                    {isExpanded && account.deliverySites?.filter((site) => {
+                      if (!search.trim()) return true;
+                      const searchLower = search.toLowerCase().trim();
+                      const searchTerms = searchLower.split(/\s+/).filter(t => t.length > 0);
+                      return searchTerms.every(term =>
+                        (site.displayName ?? '').toLowerCase().includes(term) ||
+                        (site.branchName ?? '').toLowerCase().includes(term) ||
+                        (site.partnerBranchCode ?? '').toLowerCase().includes(term) ||
+                        (site.siteCode ?? '').toLowerCase().includes(term) ||
+                        (site.addressLine1 ?? '').toLowerCase().includes(term) ||
+                        (site.district ?? '').toLowerCase().includes(term) ||
+                        (site.subDistrict ?? '').toLowerCase().includes(term) ||
+                        (site.province ?? '').toLowerCase().includes(term) ||
+                        (site.deliveryZone ?? '').toLowerCase().includes(term)
+                      );
+                    }).map((site) => (
+                      <div
+                        key={site.id}
+                        className="grid items-start px-3 py-2 bg-muted/10 hover:bg-primary/5 transition-colors"
+                        style={{gridTemplateColumns: "32px 100px 130px 1fr 140px 200px 120px 70px 90px 114px"}}
+                        data-testid={`row-site-${site.id}`}
+                      >
+                        <div />
+                        <div />
+                        <div className="text-[10px] font-mono text-muted-foreground pt-1 pl-2 border-l-2 border-primary/20">
+                          {site.siteCode}
+                        </div>
+                        <div className="flex items-start gap-2 pt-0.5">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <div>
+                            <div className="text-xs font-medium">{site.displayName}</div>
+                            <div className="text-[10px] text-muted-foreground">
+                              {[site.subDistrict, site.district, site.province].filter(Boolean).join(', ')}
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {account.paymentTerms ?? "เงินสด"}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="secondary" className="text-xs">
-                              {siteCount} แห่ง
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border ${account.isActive ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
-                              {account.isActive ? 'ใช้งาน' : 'ปิดใช้งาน'}
-                            </span>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => openEditDialog(account)}
-                                data-testid={`button-edit-${account.id}`}
+                            {site.postalCode && (
+                              <div className="text-[10px] text-muted-foreground">{site.postalCode}</div>
+                            )}
+                          </div>
+                        </div>
+                        {/* col 5: group membership inline assignment */}
+                        <div className="pt-0.5 flex flex-wrap gap-1 items-start min-w-0">
+                          {(customerGroupsMap[account.id] ?? [])
+                            .filter(g => g.memberSiteIds?.includes(site.id))
+                            .map(g => (
+                              <span
+                                key={g.id}
+                                className="inline-flex items-center gap-0.5 text-[10px] bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded px-1.5 py-0.5 leading-none whitespace-nowrap"
                               >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                onClick={() => setDeleteAccountId(account.id)}
-                                data-testid={`button-delete-${account.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                        {isExpanded && account.deliverySites?.filter((site) => {
-                          // When no search, show all sites
-                          if (!search.trim()) return true;
-                          // When searching, only show sites that match search terms
-                          const searchLower = search.toLowerCase().trim();
-                          const searchTerms = searchLower.split(/\s+/).filter(t => t.length > 0);
-                          return searchTerms.every(term => 
-                            (site.displayName ?? '').toLowerCase().includes(term) ||
-                            (site.branchName ?? '').toLowerCase().includes(term) ||
-                            (site.partnerBranchCode ?? '').toLowerCase().includes(term) ||
-                            (site.siteCode ?? '').toLowerCase().includes(term) ||
-                            (site.addressLine1 ?? '').toLowerCase().includes(term) ||
-                            (site.district ?? '').toLowerCase().includes(term) ||
-                            (site.subDistrict ?? '').toLowerCase().includes(term) ||
-                            (site.province ?? '').toLowerCase().includes(term) ||
-                            (site.deliveryZone ?? '').toLowerCase().includes(term)
-                          );
-                        }).map((site) => (
-                              <TableRow
-                                key={site.id}
-                                className={SUB_ROW_CLS}
-                                data-testid={`row-site-${site.id}`}
-                              >
-                                <TableCell></TableCell>
-                                <TableCell></TableCell>
-                                <TableCell className="font-mono text-xs text-muted-foreground">
-                                  {site.siteCode}
-                                </TableCell>
-                                <TableCell colSpan={2}>
-                                  <div className="flex items-start gap-2">
-                                    <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                                    <div>
-                                      <div className="font-medium">{site.displayName}</div>
-                                      <div className="text-xs text-muted-foreground">
-                                        {[site.subDistrict, site.district, site.province].filter(Boolean).join(', ')}
-                                      </div>
-                                      {site.postalCode && (
-                                        <div className="text-xs text-muted-foreground">{site.postalCode}</div>
-                                      )}
-                                    </div>
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded ${site.deliveryType === 'direct_to_store' ? 'bg-[#F1EFE8] text-[#5F5E5A]' : 'bg-[#E6F1FB] text-[#0C447C]'}`}>
-                                    {site.deliveryType === 'direct_to_store' ? 'ส่งตรง' : 'DC'}
-                                  </span>
-                                </TableCell>
-                                <TableCell>
-                                  {site.deliveryZone && (
-                                    <span className="text-xs text-muted-foreground">{site.deliveryZone}</span>
-                                  )}
-                                </TableCell>
-                                <TableCell></TableCell>
-                                <TableCell>
-                                  <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border ${site.isActive ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
-                                    {site.isActive ? 'ใช้งาน' : 'ปิดใช้งาน'}
-                                  </span>
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex gap-1">
-                                    {site.googleMapsUrl && (
-                                      <Button 
-                                        variant="ghost" 
-                                        size="icon" 
-                                        asChild
-                                        data-testid={`button-map-${site.id}`}
-                                      >
-                                        <a href={site.googleMapsUrl} target="_blank" rel="noopener noreferrer">
-                                          <ExternalLink className="w-4 h-4" />
-                                        </a>
-                                      </Button>
-                                    )}
-                                    <Button variant="ghost" size="icon" onClick={() => openEditSiteDialog(site)} data-testid={`button-edit-site-${site.id}`}>
-                                      <Edit className="w-4 h-4" />
-                                    </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="icon" 
-                                      onClick={() => setDeleteSiteId(site.id)}
-                                      data-testid={`button-delete-site-${site.id}`}
-                                    >
-                                      <Trash2 className="w-4 h-4" />
-                                    </Button>
-                                  </div>
-                                </TableCell>
-                              </TableRow>
-                        ))}
-                    </Fragment>
-                  );
-                })}
-              </TableBody>
-            </Table>
+                                {g.name}
+                                <button
+                                  className="ml-0.5 opacity-60 hover:opacity-100 hover:text-red-500 transition-colors"
+                                  title={`นำออกจาก ${g.name}`}
+                                  onClick={() => toggleSiteInGroup(account.id, site.id, g, false)}
+                                >
+                                  ×
+                                </button>
+                              </span>
+                            ))
+                          }
+                          {(customerGroupsMap[account.id] ?? []).some(g => !g.memberSiteIds?.includes(site.id)) && (
+                            <select
+                              className="h-5 text-[10px] border border-dashed border-muted-foreground/30 rounded px-1 bg-transparent text-muted-foreground hover:border-blue-400 hover:text-blue-600 transition-colors cursor-pointer"
+                              value=""
+                              onChange={e => {
+                                const groupId = Number(e.target.value);
+                                const group = (customerGroupsMap[account.id] ?? []).find(g => g.id === groupId);
+                                if (group) toggleSiteInGroup(account.id, site.id, group, true);
+                              }}
+                            >
+                              <option value="" disabled>+ กลุ่ม</option>
+                              {(customerGroupsMap[account.id] ?? [])
+                                .filter(g => !g.memberSiteIds?.includes(site.id))
+                                .map(g => <option key={g.id} value={g.id}>{g.name}</option>)
+                              }
+                            </select>
+                          )}
+                        </div>
+                        <div className="pt-0.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded ${site.deliveryType === 'direct_to_store' ? 'bg-[#F1EFE8] text-[#5F5E5A]' : 'bg-[#E6F1FB] text-[#0C447C]'}`}>
+                            {site.deliveryType === 'direct_to_store' ? 'ส่งตรง' : 'DC'}
+                          </span>
+                        </div>
+                        <div className="pt-1">
+                          {site.deliveryZone && (
+                            <span className="text-[10px] text-muted-foreground">{site.deliveryZone}</span>
+                          )}
+                        </div>
+                        <div />
+                        <div className="pt-0.5">
+                          <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border ${site.isActive ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
+                            {site.isActive ? 'ใช้งาน' : 'ปิดใช้งาน'}
+                          </span>
+                        </div>
+                        <div className="flex gap-0.5">
+                          {site.googleMapsUrl && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-7 w-7"
+                              asChild
+                              data-testid={`button-map-${site.id}`}
+                            >
+                              <a href={site.googleMapsUrl} target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            </Button>
+                          )}
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditSiteDialog(site)} data-testid={`button-edit-site-${site.id}`}>
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => setDeleteSiteId(site.id)}
+                            data-testid={`button-delete-site-${site.id}`}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </Fragment>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>
@@ -1815,6 +1857,18 @@ export default function Customers() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Site Group Manager Dialog — scoped to one customer */}
+      {siteGroupPartnerId && (
+        <SiteGroupManagerDialog
+          open={siteGroupDialogOpen}
+          siteGroups={customerGroupsMap[siteGroupPartnerId] ?? []}
+          partners={(accounts ?? []).map(a => ({ id: a.id, nickname: a.nickname, code: a.code }))}
+          defaultPartnerId={siteGroupPartnerId}
+          onClose={() => setSiteGroupDialogOpen(false)}
+          onRefresh={() => loadCustomerGroups(siteGroupPartnerId)}
+        />
+      )}
 
       <AlertDialog open={deleteAccountId !== null} onOpenChange={() => setDeleteAccountId(null)}>
         <AlertDialogContent>

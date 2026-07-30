@@ -5,6 +5,7 @@ import {
   pricingAssumptions,
   priceProposals,
   priceProposalLines,
+  priceProposalLineExceptions,
   activePrices,
   deliverySiteGroups,
   deliverySiteGroupMembers,
@@ -13,7 +14,8 @@ import {
   items,
   materialCostRates,
 } from "@shared/schema";
-import { desc, eq, and, like } from "drizzle-orm";
+import { users } from "../db/schema/users";
+import { desc, eq, and, like, inArray, isNull, aliasedTable } from "drizzle-orm";
 import { z } from "zod";
 
 const router = Router();
@@ -78,6 +80,7 @@ router.get("/weeks/:id", async (req, res) => {
         id: pricingAssumptions.id,
         pricingWeekId: pricingAssumptions.pricingWeekId,
         partnerId: pricingAssumptions.partnerId,
+        siteGroupId: pricingAssumptions.siteGroupId,
         component: pricingAssumptions.component,
         value: pricingAssumptions.value,
         unit: pricingAssumptions.unit,
@@ -209,8 +212,9 @@ router.get("/weeks/:weekId/assumptions", async (req, res) => {
 });
 
 const upsertAssumptionSchema = z.object({
-  component: z.enum(["transport_in", "transport_out", "disty_cost", "operations", "labor", "maintenance", "egg_loss"]),
+  component: z.enum(["transport_in", "transport_out", "dc_cost", "disty_cost", "operations", "labor", "maintenance", "egg_loss"]),
   partnerId: z.number(),
+  siteGroupId: z.number().optional().nullable(),
   value: z.number(),
   unit: z.string().optional(),
   notes: z.string().optional(),
@@ -221,12 +225,16 @@ router.put("/weeks/:weekId/assumptions/:component", async (req, res) => {
     const weekId = Number(req.params.weekId);
     const component = req.params.component;
     const parsed = upsertAssumptionSchema.parse({ ...req.body, component });
+    const siteGroupId = parsed.siteGroupId ?? null;
 
     const existing = await db.query.pricingAssumptions.findFirst({
       where: and(
         eq(pricingAssumptions.pricingWeekId, weekId),
         eq(pricingAssumptions.partnerId, parsed.partnerId),
         eq(pricingAssumptions.component, component),
+        siteGroupId != null
+          ? eq(pricingAssumptions.siteGroupId, siteGroupId)
+          : isNull(pricingAssumptions.siteGroupId),
       ),
     });
 
@@ -243,6 +251,7 @@ router.put("/weeks/:weekId/assumptions/:component", async (req, res) => {
         .values({
           pricingWeekId: weekId,
           partnerId: parsed.partnerId,
+          siteGroupId,
           component: parsed.component,
           value: parsed.value.toString(),
           unit: parsed.unit,
@@ -259,6 +268,17 @@ router.put("/weeks/:weekId/assumptions/:component", async (req, res) => {
   }
 });
 
+router.delete("/assumptions/:id", async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    await db.delete(pricingAssumptions).where(eq(pricingAssumptions.id, id));
+    return res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to delete assumption" });
+  }
+});
+
 // =============================================
 // COST ANALYSIS (per-size breakdown for a partner/week)
 // =============================================
@@ -271,6 +291,9 @@ router.get("/weeks/:weekId/cost-analysis", async (req, res) => {
     if (!partnerId) {
       return res.status(400).json({ message: "partnerId is required" });
     }
+
+    const refStartDate = req.query.startDate ? String(req.query.startDate) : null;
+    const refEndDate = req.query.endDate ? String(req.query.endDate) : null;
 
     // Fetch assumptions for this week + partner
     const assumptions = await db
@@ -392,6 +415,7 @@ router.get("/weeks/:weekId/cost-analysis", async (req, res) => {
       WHERE o.partner_id = ${partnerId}
         AND i.eggs_per_pack IS NOT NULL
         AND i.eggs_per_pack > 0
+        ${refStartDate && refEndDate ? `AND o.order_date BETWEEN '${refStartDate}' AND '${refEndDate}'` : ""}
       GROUP BY i.id, i.sku, i.name, i.primary_size, i.secondary_size, i.min_primary, i.eggs_per_pack
       ORDER BY i.primary_size, i.secondary_size NULLS LAST, i.sku
     `);
@@ -475,6 +499,7 @@ router.get("/weeks/:weekId/cost-analysis", async (req, res) => {
         secondarySize: null,
         sizeLabel,
         skus: group.skus,
+        totalQuantity: totalQty,
         avgSellPerEgg,
         fixedCostPerEgg,
         materialCostPerEgg,
@@ -509,22 +534,131 @@ router.get("/partner-items", async (req, res) => {
     if (!partnerId) return res.status(400).json({ message: "partnerId is required" });
 
     const rows = await db.execute(`
-      SELECT DISTINCT
+      SELECT DISTINCT ON (i.id)
         i.id, i.sku, i.name, i.primary_size, i.secondary_size,
-        i.min_primary, i.eggs_per_pack, i.selling_unit, i.base_unit
+        i.min_primary, i.eggs_per_pack, i.selling_unit, i.base_unit,
+        i.item_number,
+        ibp.customer_item_number,
+        COALESCE(ibp.barcode_label, i.barcode_label) AS barcode_label
       FROM order_items oi
       JOIN orders o ON o.id = oi.order_id
       JOIN items i ON i.id = oi.item_id
+      LEFT JOIN item_business_partners ibp
+        ON ibp.item_id = i.id AND ibp.partner_id = ${partnerId}
       WHERE o.partner_id = ${partnerId}
         AND i.eggs_per_pack IS NOT NULL
         AND i.eggs_per_pack > 0
-      ORDER BY i.primary_size NULLS LAST, i.sku
+      ORDER BY i.id, i.primary_size NULLS LAST, i.sku
     `);
 
     return res.json(rows.rows);
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch partner items" });
+  }
+});
+
+router.get("/egg-items", async (_req, res) => {
+  try {
+    const rows = await db.execute(`
+      SELECT
+        id, sku, name, primary_size, secondary_size,
+        min_primary, eggs_per_pack, selling_unit, base_unit
+      FROM items
+      WHERE eggs_per_pack IS NOT NULL AND eggs_per_pack > 0
+      ORDER BY primary_size NULLS LAST, sku
+    `);
+    return res.json(rows.rows);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch egg items" });
+  }
+});
+
+// GET /api/pricing/last-prices?partnerId=N
+// Returns the most recent invoiced unit_price per item from order history
+router.get("/last-prices", async (req, res) => {
+  try {
+    const partnerId = req.query.partnerId ? Number(req.query.partnerId) : undefined;
+    if (!partnerId) return res.status(400).json({ message: "partnerId required" });
+
+    const rows = await db.execute(`
+      SELECT DISTINCT ON (oi.item_id)
+        oi.item_id   AS "itemId",
+        oi.unit_price AS "unitPrice",
+        o.order_date  AS "orderDate"
+      FROM order_items oi
+      JOIN orders o ON o.id = oi.order_id
+      WHERE o.partner_id = ${partnerId}
+        AND oi.unit_price > 0
+      ORDER BY oi.item_id, o.order_date DESC, o.id DESC
+    `);
+
+    // Return as { itemId: unitPrice }
+    const map: Record<number, number> = {};
+    for (const r of rows.rows as any[]) {
+      map[Number(r.itemId)] = parseFloat(r.unitPrice);
+    }
+    return res.json(map);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch last prices" });
+  }
+});
+
+// GET /api/pricing/weeks/:weekId/quantities?partnerId=N
+// Returns qty per item per site group for the week's date range
+router.get("/weeks/:weekId/quantities", async (req, res) => {
+  try {
+    const weekId = Number(req.params.weekId);
+    const partnerId = req.query.partnerId ? Number(req.query.partnerId) : undefined;
+    if (!partnerId) return res.status(400).json({ message: "partnerId required" });
+
+    // Use custom date range if provided, otherwise fall back to week dates
+    let startDate: string;
+    let endDate: string;
+    if (req.query.startDate && req.query.endDate) {
+      startDate = String(req.query.startDate);
+      endDate = String(req.query.endDate);
+    } else {
+      const [week] = await db.select().from(pricingWeeks).where(eq(pricingWeeks.id, weekId)).limit(1);
+      if (!week) return res.status(404).json({ message: "Week not found" });
+      startDate = week.startDate as string;
+      endDate = week.endDate as string;
+    }
+
+    const result = await db.execute(`
+      SELECT
+        oi.item_id,
+        sgm.group_id AS site_group_id,
+        SUM(oi.quantity)::integer AS quantity
+      FROM order_items oi
+      JOIN orders o ON o.id = oi.order_id
+      JOIN items i ON i.id = oi.item_id
+      LEFT JOIN delivery_site_group_members sgm
+        ON sgm.delivery_site_id = o.delivery_site_id
+        AND EXISTS (
+          SELECT 1 FROM delivery_site_groups dsg
+          WHERE dsg.id = sgm.group_id AND dsg.partner_id = ${partnerId}
+        )
+      WHERE o.partner_id = ${partnerId}
+        AND o.order_date BETWEEN '${startDate}' AND '${endDate}'
+        AND i.eggs_per_pack IS NOT NULL AND i.eggs_per_pack > 0
+      GROUP BY oi.item_id, sgm.group_id
+    `);
+
+    // Build { itemId: { "default": qty, "siteGroupId": qty } }
+    const qtyMap: Record<number, Record<string, number>> = {};
+    for (const row of result.rows as any[]) {
+      const itemId = Number(row.item_id);
+      const key = row.site_group_id != null ? String(row.site_group_id) : "default";
+      if (!qtyMap[itemId]) qtyMap[itemId] = {};
+      qtyMap[itemId][key] = Number(row.quantity);
+    }
+    return res.json(qtyMap);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch quantities" });
   }
 });
 
@@ -536,14 +670,29 @@ router.get("/proposals", async (req, res) => {
   try {
     const weekId = req.query.weekId ? Number(req.query.weekId) : undefined;
 
+    const reviewerAlias = aliasedTable(users, "reviewer");
+    const approverAlias = aliasedTable(users, "approver");
     const rows = await db
       .select({
         id: priceProposals.id,
         proposalNumber: priceProposals.proposalNumber,
         status: priceProposals.status,
         submittedBy: priceProposals.submittedBy,
+        reviewedBy: priceProposals.reviewedBy,
+        reviewedByUser: {
+          email: reviewerAlias.email,
+          firstName: reviewerAlias.first_name,
+          lastName: reviewerAlias.last_name,
+        },
         approvedBy: priceProposals.approvedBy,
+        approvedByUser: {
+          email: approverAlias.email,
+          firstName: approverAlias.first_name,
+          lastName: approverAlias.last_name,
+        },
         approvedAt: priceProposals.approvedAt,
+        effectiveDate: priceProposals.effectiveDate,
+        effectiveDateTo: priceProposals.effectiveDateTo,
         notes: priceProposals.notes,
         createdAt: priceProposals.createdAt,
         partner: {
@@ -560,6 +709,8 @@ router.get("/proposals", async (req, res) => {
       .from(priceProposals)
       .leftJoin(businessPartners, eq(priceProposals.partnerId, businessPartners.id))
       .leftJoin(pricingWeeks, eq(priceProposals.pricingWeekId, pricingWeeks.id))
+      .leftJoin(reviewerAlias, eq(priceProposals.reviewedBy, reviewerAlias.id))
+      .leftJoin(approverAlias, eq(priceProposals.approvedBy, approverAlias.id))
       .where(weekId ? eq(priceProposals.pricingWeekId, weekId) : undefined)
       .orderBy(desc(priceProposals.id));
 
@@ -574,14 +725,29 @@ router.get("/proposals/:id", async (req, res) => {
   try {
     const id = Number(req.params.id);
 
+    const reviewerAlias = aliasedTable(users, "reviewer");
+    const approverAlias = aliasedTable(users, "approver");
     const [proposal] = await db
       .select({
         id: priceProposals.id,
         proposalNumber: priceProposals.proposalNumber,
         status: priceProposals.status,
         submittedBy: priceProposals.submittedBy,
+        reviewedBy: priceProposals.reviewedBy,
+        reviewedByUser: {
+          email: reviewerAlias.email,
+          firstName: reviewerAlias.first_name,
+          lastName: reviewerAlias.last_name,
+        },
         approvedBy: priceProposals.approvedBy,
+        approvedByUser: {
+          email: approverAlias.email,
+          firstName: approverAlias.first_name,
+          lastName: approverAlias.last_name,
+        },
         approvedAt: priceProposals.approvedAt,
+        effectiveDate: priceProposals.effectiveDate,
+        effectiveDateTo: priceProposals.effectiveDateTo,
         notes: priceProposals.notes,
         createdAt: priceProposals.createdAt,
         partner: {
@@ -598,6 +764,8 @@ router.get("/proposals/:id", async (req, res) => {
       .from(priceProposals)
       .leftJoin(businessPartners, eq(priceProposals.partnerId, businessPartners.id))
       .leftJoin(pricingWeeks, eq(priceProposals.pricingWeekId, pricingWeeks.id))
+      .leftJoin(reviewerAlias, eq(priceProposals.reviewedBy, reviewerAlias.id))
+      .leftJoin(approverAlias, eq(priceProposals.approvedBy, approverAlias.id))
       .where(eq(priceProposals.id, id));
 
     if (!proposal) return res.status(404).json({ message: "Proposal not found" });
@@ -606,9 +774,7 @@ router.get("/proposals/:id", async (req, res) => {
       .select({
         id: priceProposalLines.id,
         referencePrice: priceProposalLines.referencePrice,
-        proposalPrice: priceProposalLines.proposalPrice,
-        counterPrice: priceProposalLines.counterPrice,
-        finalLockedPrice: priceProposalLines.finalLockedPrice,
+        basePrice: priceProposalLines.basePrice,
         notes: priceProposalLines.notes,
         item: {
           id: items.id,
@@ -616,13 +782,39 @@ router.get("/proposals/:id", async (req, res) => {
           name: items.name,
           baseUnit: items.baseUnit,
           eggsPerPack: items.eggsPerPack,
+          primarySize: items.primarySize,
+          secondarySize: items.secondarySize,
         },
       })
       .from(priceProposalLines)
       .leftJoin(items, eq(priceProposalLines.itemId, items.id))
       .where(eq(priceProposalLines.proposalId, id));
 
-    return res.json({ ...proposal, lines });
+    // Fetch exceptions for all lines
+    const lineIds = lines.map((l) => l.id);
+    const exceptions = lineIds.length > 0
+      ? await db
+          .select({
+            proposalLineId: priceProposalLineExceptions.proposalLineId,
+            siteGroupId: priceProposalLineExceptions.siteGroupId,
+            price: priceProposalLineExceptions.price,
+          })
+          .from(priceProposalLineExceptions)
+          .where(inArray(priceProposalLineExceptions.proposalLineId, lineIds))
+      : [];
+
+    const exceptionsByLine: Record<number, { siteGroupId: number; price: string }[]> = {};
+    for (const ex of exceptions) {
+      if (!exceptionsByLine[ex.proposalLineId]) exceptionsByLine[ex.proposalLineId] = [];
+      exceptionsByLine[ex.proposalLineId].push({ siteGroupId: ex.siteGroupId, price: ex.price });
+    }
+
+    const linesWithExceptions = lines.map((l) => ({
+      ...l,
+      exceptions: exceptionsByLine[l.id] ?? [],
+    }));
+
+    return res.json({ ...proposal, lines: linesWithExceptions });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch proposal" });
@@ -632,18 +824,18 @@ router.get("/proposals/:id", async (req, res) => {
 const createProposalSchema = z.object({
   pricingWeekId: z.number(),
   partnerId: z.number(),
-  scopeType: z.enum(["customer", "site_group", "delivery_site"]).default("customer"),
-  siteGroupId: z.number().optional(),
-  deliverySiteId: z.number().optional(),
-  submittedBy: z.string().optional(),
+  effectiveDate: z.string().optional(),
+  effectiveDateTo: z.string().optional(),
   notes: z.string().optional(),
   lines: z.array(
     z.object({
       itemId: z.number(),
       referencePrice: z.number().optional(),
-      proposalPrice: z.number().optional(),
-      counterPrice: z.number().optional(),
-      finalLockedPrice: z.number().optional(),
+      basePrice: z.number().optional(),
+      exceptions: z.array(z.object({
+        siteGroupId: z.number(),
+        price: z.number(),
+      })).optional(),
       notes: z.string().optional(),
     }),
   ),
@@ -683,27 +875,40 @@ router.post("/proposals", async (req, res) => {
           proposalNumber,
           pricingWeekId: parsed.pricingWeekId,
           partnerId: parsed.partnerId,
-          scopeType: parsed.scopeType,
-          siteGroupId: parsed.siteGroupId,
-          deliverySiteId: parsed.deliverySiteId,
-          submittedBy: parsed.submittedBy,
+          scopeType: "customer",
+          effectiveDate: parsed.effectiveDate ?? null,
+          effectiveDateTo: parsed.effectiveDateTo ?? null,
           notes: parsed.notes,
           status: "draft",
         })
         .returning();
 
       if (parsed.lines.length > 0) {
-        await tx.insert(priceProposalLines).values(
+        const insertedLines = await tx.insert(priceProposalLines).values(
           parsed.lines.map((l) => ({
             proposalId: createdProposal.id,
             itemId: l.itemId,
             referencePrice: l.referencePrice?.toString(),
-            proposalPrice: l.proposalPrice?.toString(),
-            counterPrice: l.counterPrice?.toString(),
-            finalLockedPrice: l.finalLockedPrice?.toString(),
+            basePrice: l.basePrice?.toString(),
             notes: l.notes,
           })),
-        );
+        ).returning();
+
+        // Insert exceptions
+        const exceptionRows: { proposalLineId: number; siteGroupId: number; price: string }[] = [];
+        for (let i = 0; i < insertedLines.length; i++) {
+          const lineExceptions = parsed.lines[i].exceptions ?? [];
+          for (const ex of lineExceptions) {
+            exceptionRows.push({
+              proposalLineId: insertedLines[i].id,
+              siteGroupId: ex.siteGroupId,
+              price: ex.price.toString(),
+            });
+          }
+        }
+        if (exceptionRows.length > 0) {
+          await tx.insert(priceProposalLineExceptions).values(exceptionRows);
+        }
       }
     });
 
@@ -716,6 +921,8 @@ router.post("/proposals", async (req, res) => {
 });
 
 const updateProposalSchema = z.object({
+  effectiveDate: z.string().optional(),
+  effectiveDateTo: z.string().optional(),
   notes: z.string().optional(),
   lines: z
     .array(
@@ -723,6 +930,11 @@ const updateProposalSchema = z.object({
         id: z.number().optional(),
         itemId: z.number(),
         referencePrice: z.number().optional(),
+        basePrice: z.number().optional(),
+        exceptions: z.array(z.object({
+          siteGroupId: z.number(),
+          price: z.number(),
+        })).optional(),
         proposalPrice: z.number().optional(),
         counterPrice: z.number().optional(),
         finalLockedPrice: z.number().optional(),
@@ -746,24 +958,39 @@ router.put("/proposals/:id", async (req, res) => {
     }
 
     await db.transaction(async (tx) => {
-      if (parsed.notes !== undefined) {
-        await tx.update(priceProposals).set({ notes: parsed.notes }).where(eq(priceProposals.id, id));
+      if (parsed.notes !== undefined || parsed.effectiveDate !== undefined || parsed.effectiveDateTo !== undefined) {
+        await tx.update(priceProposals).set({
+          ...(parsed.notes !== undefined ? { notes: parsed.notes } : {}),
+          ...(parsed.effectiveDate !== undefined ? { effectiveDate: parsed.effectiveDate } : {}),
+          ...(parsed.effectiveDateTo !== undefined ? { effectiveDateTo: parsed.effectiveDateTo } : {}),
+        }).where(eq(priceProposals.id, id));
       }
 
       if (parsed.lines) {
         await tx.delete(priceProposalLines).where(eq(priceProposalLines.proposalId, id));
         if (parsed.lines.length > 0) {
-          await tx.insert(priceProposalLines).values(
+          const insertedLines = await tx.insert(priceProposalLines).values(
             parsed.lines.map((l) => ({
               proposalId: id,
               itemId: l.itemId,
               referencePrice: l.referencePrice?.toString(),
+              basePrice: l.basePrice?.toString(),
               proposalPrice: l.proposalPrice?.toString(),
               counterPrice: l.counterPrice?.toString(),
               finalLockedPrice: l.finalLockedPrice?.toString(),
               notes: l.notes,
             })),
-          );
+          ).returning();
+
+          const exceptionRows: { proposalLineId: number; siteGroupId: number; price: string }[] = [];
+          for (let i = 0; i < insertedLines.length; i++) {
+            for (const ex of parsed.lines[i].exceptions ?? []) {
+              exceptionRows.push({ proposalLineId: insertedLines[i].id, siteGroupId: ex.siteGroupId, price: ex.price.toString() });
+            }
+          }
+          if (exceptionRows.length > 0) {
+            await tx.insert(priceProposalLineExceptions).values(exceptionRows);
+          }
         }
       }
     });
@@ -783,11 +1010,13 @@ router.patch("/proposals/:proposalId/lines/:lineId", async (req, res) => {
 
     const parsed = z
       .object({
-        counterPrice: z.number().optional(),
-        finalLockedPrice: z.number().optional(),
-        proposalPrice: z.number().optional(),
+        basePrice: z.number().nullable().optional(),
         referencePrice: z.number().optional(),
         notes: z.string().optional(),
+        exceptions: z.array(z.object({
+          siteGroupId: z.number(),
+          price: z.number().nullable(),
+        })).optional(),
       })
       .parse(req.body);
 
@@ -799,21 +1028,37 @@ router.patch("/proposals/:proposalId/lines/:lineId", async (req, res) => {
       return res.status(400).json({ message: "Approved proposals cannot be edited" });
     }
 
-    const updatePayload: Record<string, string | undefined> = {};
-    if (parsed.counterPrice !== undefined) updatePayload.counterPrice = parsed.counterPrice.toString();
-    if (parsed.finalLockedPrice !== undefined) updatePayload.finalLockedPrice = parsed.finalLockedPrice.toString();
-    if (parsed.proposalPrice !== undefined) updatePayload.proposalPrice = parsed.proposalPrice.toString();
-    if (parsed.referencePrice !== undefined) updatePayload.referencePrice = parsed.referencePrice.toString();
-    if (parsed.notes !== undefined) updatePayload.notes = parsed.notes;
+    await db.transaction(async (tx) => {
+      const updatePayload: Record<string, string | null | undefined> = {};
+      if (parsed.basePrice !== undefined) updatePayload.basePrice = parsed.basePrice?.toString() ?? null;
+      if (parsed.referencePrice !== undefined) updatePayload.referencePrice = parsed.referencePrice.toString();
+      if (parsed.notes !== undefined) updatePayload.notes = parsed.notes;
 
-    const [updated] = await db
-      .update(priceProposalLines)
-      .set(updatePayload)
-      .where(and(eq(priceProposalLines.id, lineId), eq(priceProposalLines.proposalId, proposalId)))
-      .returning();
+      if (Object.keys(updatePayload).length > 0) {
+        await tx
+          .update(priceProposalLines)
+          .set(updatePayload)
+          .where(and(eq(priceProposalLines.id, lineId), eq(priceProposalLines.proposalId, proposalId)));
+      }
 
-    if (!updated) return res.status(404).json({ message: "Line not found" });
-    return res.json(updated);
+      if (parsed.exceptions !== undefined) {
+        // Upsert exceptions: delete then re-insert
+        await tx.delete(priceProposalLineExceptions)
+          .where(eq(priceProposalLineExceptions.proposalLineId, lineId));
+        const toInsert = parsed.exceptions.filter((e) => e.price != null);
+        if (toInsert.length > 0) {
+          await tx.insert(priceProposalLineExceptions).values(
+            toInsert.map((e) => ({
+              proposalLineId: lineId,
+              siteGroupId: e.siteGroupId,
+              price: e.price!.toString(),
+            }))
+          );
+        }
+      }
+    });
+
+    return res.json({ id: lineId, message: "Line updated" });
   } catch (err: any) {
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     console.error(err);
@@ -833,6 +1078,16 @@ router.patch("/proposals/:id/status", async (req, res) => {
     });
     if (!proposal) return res.status(404).json({ message: "Proposal not found" });
 
+    const VALID_TRANSITIONS: Record<string, string[]> = {
+      draft: ["reviewed"],
+      reviewed: ["approved", "draft"],
+      approved: [],
+    };
+    const allowed = VALID_TRANSITIONS[proposal.status ?? ""] ?? [];
+    if (!allowed.includes(status)) {
+      return res.status(400).json({ message: `Cannot transition from "${proposal.status}" to "${status}"` });
+    }
+
     if (status === "approved") {
       const lines = await db
         .select()
@@ -843,18 +1098,25 @@ router.patch("/proposals/:id/status", async (req, res) => {
         return res.status(400).json({ message: "Cannot approve: proposal has no SKU lines" });
       }
 
-      const missingFinalPrice = lines.filter((l) => !l.finalLockedPrice);
-      if (missingFinalPrice.length > 0) {
+      const missingBasePrice = lines.filter((l) => !l.basePrice);
+      if (missingBasePrice.length > 0) {
         return res.status(400).json({
-          message: `Cannot approve: ${missingFinalPrice.length} SKU(s) missing final locked price`,
+          message: `Cannot approve: ${missingBasePrice.length} SKU(s) missing base price`,
         });
       }
     }
 
+    const sessionUserId = (req.session as any).userId as string | undefined;
     const updateValues: any = { status };
+    if (status === "reviewed") {
+      updateValues.reviewedBy = sessionUserId ?? null;
+    }
     if (status === "approved") {
-      updateValues.approvedBy = approvedBy;
+      updateValues.approvedBy = sessionUserId ?? null;
       updateValues.approvedAt = new Date();
+    }
+    if (status === "draft") {
+      updateValues.reviewedBy = null;
     }
 
     const [updated] = await db
@@ -882,6 +1144,8 @@ router.get("/active-prices", async (req, res) => {
     const rows = await db
       .select({
         id: activePrices.id,
+        itemId: activePrices.itemId,
+        siteGroupId: activePrices.siteGroupId,
         scopeType: activePrices.scopeType,
         price: activePrices.price,
         effectiveDate: activePrices.effectiveDate,
@@ -935,76 +1199,75 @@ router.post("/proposals/:id/activate", async (req, res) => {
       .from(priceProposalLines)
       .where(eq(priceProposalLines.proposalId, proposalId));
 
-    const scopeType = proposal.scopeType ?? "customer";
+    if (lines.length === 0) return res.status(400).json({ message: "No lines to activate" });
+    const lineIds = lines.map((l) => l.id);
 
-    // For site_group scope, resolve all member sites so we can replace their existing prices
-    let memberSiteIds: number[] = [];
-    if (scopeType === "site_group" && proposal.siteGroupId) {
-      const members = await db
-        .select({ deliverySiteId: deliverySiteGroupMembers.deliverySiteId })
-        .from(deliverySiteGroupMembers)
-        .where(eq(deliverySiteGroupMembers.groupId, proposal.siteGroupId));
-      memberSiteIds = members.map((m) => m.deliverySiteId);
-    }
+    // Load all exceptions for these lines
+    const allExceptions = await db
+      .select()
+      .from(priceProposalLineExceptions)
+      .where(inArray(priceProposalLineExceptions.proposalLineId, lineIds));
 
     await db.transaction(async (tx) => {
       for (const line of lines) {
-        if (!line.finalLockedPrice) continue;
+        if (!line.basePrice) continue;
 
-        // Replace existing active prices at the same scope
-        if (scopeType === "customer") {
-          await tx
-            .update(activePrices)
-            .set({ status: "replaced" })
-            .where(
-              and(
-                eq(activePrices.itemId, line.itemId),
-                eq(activePrices.partnerId, proposal.partnerId),
-                eq(activePrices.scopeType, "customer"),
-                eq(activePrices.status, "active"),
-              ),
-            );
-        } else if (scopeType === "site_group" && proposal.siteGroupId) {
-          await tx
-            .update(activePrices)
-            .set({ status: "replaced" })
-            .where(
-              and(
-                eq(activePrices.itemId, line.itemId),
-                eq(activePrices.siteGroupId, proposal.siteGroupId),
-                eq(activePrices.status, "active"),
-              ),
-            );
-        } else if (scopeType === "delivery_site" && proposal.deliverySiteId) {
-          await tx
-            .update(activePrices)
-            .set({ status: "replaced" })
-            .where(
-              and(
-                eq(activePrices.itemId, line.itemId),
-                eq(activePrices.deliverySiteId, proposal.deliverySiteId),
-                eq(activePrices.status, "active"),
-              ),
-            );
-        }
+        // Replace existing customer-scope active prices
+        await tx
+          .update(activePrices)
+          .set({ status: "replaced" })
+          .where(
+            and(
+              eq(activePrices.itemId, line.itemId),
+              eq(activePrices.partnerId, proposal.partnerId),
+              eq(activePrices.scopeType, "customer"),
+              eq(activePrices.status, "active"),
+            ),
+          );
 
+        // Insert base price (all branches)
         await tx.insert(activePrices).values({
           itemId: line.itemId,
           partnerId: proposal.partnerId,
-          scopeType,
-          siteGroupId: proposal.siteGroupId ?? undefined,
-          deliverySiteId: proposal.deliverySiteId ?? undefined,
-          price: line.finalLockedPrice,
+          scopeType: "customer",
+          price: line.basePrice,
           effectiveDate,
           status: "active",
           sourceProposalLineId: line.id,
           approvedBy,
           approvedAt: new Date(),
         });
+
+        // Insert site-group exception prices
+        const lineExceptions = allExceptions.filter((e) => e.proposalLineId === line.id);
+        for (const ex of lineExceptions) {
+          await tx
+            .update(activePrices)
+            .set({ status: "replaced" })
+            .where(
+              and(
+                eq(activePrices.itemId, line.itemId),
+                eq(activePrices.siteGroupId, ex.siteGroupId),
+                eq(activePrices.status, "active"),
+              ),
+            );
+          await tx.insert(activePrices).values({
+            itemId: line.itemId,
+            partnerId: proposal.partnerId,
+            scopeType: "site_group",
+            siteGroupId: ex.siteGroupId,
+            price: ex.price,
+            effectiveDate,
+            status: "active",
+            sourceProposalLineId: line.id,
+            approvedBy,
+            approvedAt: new Date(),
+          });
+        }
       }
     });
 
-    return res.json({ message: "Prices activated successfully", scopeType, memberSiteIds });
+    return res.json({ message: "Prices activated successfully" });
   } catch (err: any) {
     if (err instanceof z.ZodError) return res.status(400).json({ error: err.errors });
     console.error(err);
@@ -1069,7 +1332,21 @@ router.get("/site-groups", async (req, res) => {
       .leftJoin(businessPartners, eq(deliverySiteGroups.partnerId, businessPartners.id))
       .where(partnerId ? eq(deliverySiteGroups.partnerId, partnerId) : undefined)
       .orderBy(deliverySiteGroups.name);
-    return res.json(rows);
+
+    // Attach member site IDs in one extra query (avoids N+1)
+    let memberSiteIdMap: Map<number, number[]> = new Map();
+    if (rows.length > 0) {
+      const memberRows = await db
+        .select({ groupId: deliverySiteGroupMembers.groupId, siteId: deliverySiteGroupMembers.deliverySiteId })
+        .from(deliverySiteGroupMembers)
+        .where(inArray(deliverySiteGroupMembers.groupId, rows.map(r => r.id)));
+      for (const m of memberRows) {
+        if (!memberSiteIdMap.has(m.groupId)) memberSiteIdMap.set(m.groupId, []);
+        memberSiteIdMap.get(m.groupId)!.push(m.siteId);
+      }
+    }
+
+    return res.json(rows.map(r => ({ ...r, memberSiteIds: memberSiteIdMap.get(r.id) ?? [] })));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Failed to fetch site groups" });

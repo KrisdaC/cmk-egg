@@ -48,6 +48,7 @@ interface PlanTrip {
   vehicleId: number | null;
   vehiclePlate: string | null;
   vehicleType: string | null;
+  vehicleCapacityEggs: number | null;
   driverId: number | null;
   driverName: string | null;
 }
@@ -66,7 +67,7 @@ interface DailyData {
 }
 
 type SubTab = "demand" | "bom" | "trip";
-type Round = 1 | 2 | 3 | 4;
+type Round = number;
 
 // ── Colour maps ────────────────────────────────────────────────────────────────
 
@@ -233,6 +234,7 @@ function PlanningGrid({
   roundClosed,
   roundStates,
   trips,
+  rounds,
   onRefresh,
 }: {
   partners: PlanPartner[];
@@ -240,6 +242,7 @@ function PlanningGrid({
   roundClosed: boolean;
   roundStates: Record<number, RoundState>;
   trips: PlanTrip[];
+  rounds: Round[];
   onRefresh: () => void;
 }) {
   const [pending, setPending] = useState<Record<number, string>>({});
@@ -508,7 +511,7 @@ function PlanningGrid({
                             <div className="flex items-center gap-0 ml-auto">
                               {switchingRound[o.id]
                                 ? <Loader2 className="w-3 h-3 animate-spin text-[#aaa]" />
-                                : ([1, 2, 3, 4] as Round[]).map(r => {
+                                : rounds.map(r => {
                                   const isCurrent = o.productionRound === r;
                                   const targetClosed = roundStates[r]?.closed ?? false;
                                   const disabled = roundClosed || targetClosed;
@@ -926,7 +929,24 @@ function TripManager({
                 )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
-                <span className="text-[11px] text-[#888] tabular-nums">{stops.length} stops · {fmtNum(tripEggs)} ฟอง</span>
+                <span className="text-[11px] text-[#888] tabular-nums">
+                  {stops.length} stops · {fmtNum(tripEggs)} ฟอง
+                  {trip.vehicleCapacityEggs != null && (
+                    <>
+                      {" / "}{fmtNum(trip.vehicleCapacityEggs)} ฟอง
+                      {" · "}
+                      <span className={`font-semibold ${
+                        tripEggs / trip.vehicleCapacityEggs > 0.9
+                          ? "text-red-500"
+                          : tripEggs / trip.vehicleCapacityEggs > 0.75
+                            ? "text-amber-500"
+                            : "text-green-600"
+                      }`}>
+                        {Math.round((tripEggs / trip.vehicleCapacityEggs) * 100)}%
+                      </span>
+                    </>
+                  )}
+                </span>
                 {!isEditing && (
                   <>
                     <button
@@ -1400,6 +1420,21 @@ export default function DailyPlan() {
   const [subtab, setSubtab] = useState<SubTab>("demand");
   const [data, setData] = useState<DailyData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [numRounds, setNumRounds] = useState(3);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(r => r.ok ? r.json() : [])
+      .then((rows: { key: string; value: string | null }[]) => {
+        const nr = rows.find(r => r.key === "num_rounds");
+        if (nr?.value) setNumRounds(Number(nr.value));
+      });
+  }, []);
+
+  const rounds = useMemo<Round[]>(
+    () => Array.from({ length: numRounds }, (_, i) => i + 1),
+    [numRounds],
+  );
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -1427,12 +1462,12 @@ export default function DailyPlan() {
     [allConfirmedOrders]);
 
   const roundCounts: Record<number, number> = useMemo(() => {
-    const m: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0 };
+    const m: Record<number, number> = Object.fromEntries(rounds.map(r => [r, 0]));
     for (const o of allConfirmedOrders) {
       if (o.productionRound != null) m[o.productionRound] = (m[o.productionRound] ?? 0) + 1;
     }
     return m;
-  }, [allConfirmedOrders]);
+  }, [allConfirmedOrders, rounds]);
 
   const filteredPartners = useMemo((): PlanPartner[] => {
     if (!data) return [];
@@ -1506,7 +1541,7 @@ export default function DailyPlan() {
         {/* Round tabs */}
         <div className="flex items-center gap-1 flex-wrap">
           <span className="text-[11px] font-semibold text-[#888] uppercase tracking-wide mr-2">รอบวางแผน:</span>
-          {([1, 2, 3, 4] as Round[]).map(r => {
+          {rounds.map(r => {
             const active = activeRound === r;
             const count = roundCounts[r] ?? 0;
             const isClosed = data?.roundStates?.[r]?.closed ?? false;
@@ -1607,6 +1642,7 @@ export default function DailyPlan() {
                 roundClosed={typeof activeRound === "number" ? (data?.roundStates?.[activeRound]?.closed ?? false) : false}
                 roundStates={data?.roundStates ?? {}}
                 trips={data?.trips ?? []}
+                rounds={rounds}
                 onRefresh={fetchData}
               />
             ) : subtab === "trip" ? (

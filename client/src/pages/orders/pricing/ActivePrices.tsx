@@ -8,18 +8,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { RefreshCw } from "lucide-react";
 import {
   StatusBadge,
-  ScopeBadge,
   PricingStepNav,
   fmt,
   type ActivePriceRow,
@@ -49,25 +40,25 @@ export default function ActivePricesPage() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold">Active Prices</h1>
-        <p className="text-muted-foreground">The current live price list — prices activated from approved proposals.</p>
+        <h1 className="text-2xl font-bold">ราคาที่ใช้งาน</h1>
+        <p className="text-muted-foreground">รายการราคาปัจจุบัน — ราคาที่เปิดใช้งานจากข้อเสนอที่อนุมัติแล้ว</p>
       </div>
 
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <CardTitle className="text-base">Active Price List</CardTitle>
+            <CardTitle className="text-base">รายการราคาที่ใช้งาน</CardTitle>
             <div className="flex items-center gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="approved">Approved</SelectItem>
-                  <SelectItem value="replaced">Replaced</SelectItem>
+                  <SelectItem value="all">ทุกสถานะ</SelectItem>
+                  <SelectItem value="active">ใช้งาน</SelectItem>
+                  <SelectItem value="draft">ร่าง</SelectItem>
+                  <SelectItem value="approved">อนุมัติแล้ว</SelectItem>
+                  <SelectItem value="replaced">ถูกแทนที่</SelectItem>
                 </SelectContent>
               </Select>
               <Button size="sm" variant="outline" onClick={fetchActivePrices}>
@@ -78,40 +69,41 @@ export default function ActivePricesPage() {
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-4 text-center">No prices found.</p>
+            <p className="text-sm text-muted-foreground py-8 text-center">ยังไม่มีราคา</p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Item</TableHead>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>Partner</TableHead>
-                  <TableHead>Scope</TableHead>
-                  <TableHead className="text-right">Price</TableHead>
-                  <TableHead>Effective Date</TableHead>
-                  <TableHead>Expiry</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Approved By</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filtered.map((p) => (
-                  <TableRow key={p.id}>
-                    <TableCell className="font-medium">{p.item?.name ?? "—"}</TableCell>
-                    <TableCell className="font-mono text-xs">{p.item?.sku ?? "—"}</TableCell>
-                    <TableCell>{p.partner?.nickname ?? "—"}</TableCell>
-                    <TableCell><ScopeBadge scopeType={p.scopeType} /></TableCell>
-                    <TableCell className="text-right font-medium">฿{fmt(p.price)}</TableCell>
-                    <TableCell className="text-sm">{p.effectiveDate}</TableCell>
-                    <TableCell className="text-sm">{p.expiryDate ?? "—"}</TableCell>
-                    <TableCell>
-                      <StatusBadge status={p.status} />
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{p.approvedBy ?? "—"}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="divide-y divide-border">
+              {/* Header */}
+              <div className="grid grid-cols-[1fr_100px_140px_100px_110px_110px_100px_120px] gap-x-4 px-4 py-2 text-[11px] font-medium text-muted-foreground uppercase tracking-wide">
+                <span>รายการ</span>
+                <span>SKU</span>
+                <span>ลูกค้า</span>
+                <span className="text-right">ราคา</span>
+                <span>วันที่มีผล</span>
+                <span>วันหมดอายุ</span>
+                <span>สถานะ</span>
+                <span>อนุมัติโดย</span>
+              </div>
+              {filtered.map((p, i) => {
+                const rowBg = i % 2 === 0
+                  ? "bg-white dark:bg-background"
+                  : "bg-slate-50/60 dark:bg-slate-900/30";
+                return (
+                  <div
+                    key={p.id}
+                    className={`grid grid-cols-[1fr_100px_140px_100px_110px_110px_100px_120px] gap-x-4 items-center px-4 py-3 ${rowBg}`}
+                  >
+                    <span className="text-xs font-medium text-foreground truncate">{p.item?.name ?? "—"}</span>
+                    <span className="font-mono text-[11px] text-muted-foreground">{p.item?.sku ?? "—"}</span>
+                    <span className="text-xs text-foreground truncate">{p.partner?.nickname ?? <span className="text-muted-foreground">—</span>}</span>
+                    <span className="text-xs font-semibold text-foreground tabular-nums text-right">฿{fmt(p.price)}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{p.effectiveDate}</span>
+                    <span className="text-xs text-muted-foreground tabular-nums">{p.expiryDate ?? "—"}</span>
+                    <span><StatusBadge status={p.status} /></span>
+                    <span className="text-xs text-muted-foreground truncate">{p.approvedBy ?? "—"}</span>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </CardContent>
       </Card>

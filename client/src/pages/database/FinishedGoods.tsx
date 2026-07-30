@@ -10,14 +10,6 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { z } from "zod";
@@ -368,82 +360,58 @@ export default function FinishedGoods() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>SKU</TableHead>
-                  <TableHead>ชื่อสินค้า</TableHead>
-                  <TableHead>ลูกค้า</TableHead>
-                  <TableHead>หน่วยขาย</TableHead>
-                  <TableHead>หน่วยแพ๊ค</TableHead>
-                  <TableHead>ประเภท</TableHead>
-                  <TableHead className="w-[100px]">จัดการ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredProducts.map((product) => (
-                  <TableRow
-                    key={product.id}
-                    data-testid={`row-product-${product.id}`}
-                  >
-                    <TableCell className="font-mono text-sm">
-                      {product.sku}
-                    </TableCell>
-                    <TableCell className="font-medium max-w-[300px]">
-                      <div className="truncate" title={product.name}>
-                        {product.name}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className="text-xs">
-                        {product.businessPartnerNames || "-"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {product.sellingUnits || "-"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {product.packingUnits || "-"}
-                    </TableCell>
-                    <TableCell>{product.type || "-"}</TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          data-testid={`button-edit-${product.id}`}
-                          onClick={() => {
-                            console.log(product);
-                            setEditingItem(product);
-                            setDialogOpen(true);
-                          }}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          data-testid={`button-delete-${product.id}`}
-                          onClick={() => setDeleteFGId(product.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredProducts.length === 0 && (
-                  <TableRow>
-                    <TableCell
-                      colSpan={8}
-                      className="text-center py-8 text-muted-foreground"
+            <div className="divide-y divide-border rounded-md border overflow-hidden">
+              <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "120px 1fr 150px 110px 110px 90px 80px"}}>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">SKU</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อสินค้า</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ลูกค้า</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">หน่วยขาย</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">หน่วยแพ๊ค</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ประเภท</div>
+                <div />
+              </div>
+              {filteredProducts.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">No products found</div>
+              ) : filteredProducts.map((product, idx) => (
+                <div
+                  key={product.id}
+                  className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                  style={{gridTemplateColumns: "120px 1fr 150px 110px 110px 90px 80px"}}
+                  data-testid={`row-product-${product.id}`}
+                >
+                  <div className="text-xs font-mono">{product.sku}</div>
+                  <div className="text-xs font-medium truncate pr-2" title={product.name}>{product.name}</div>
+                  <div>
+                    <Badge variant="outline" className="text-[10px]">
+                      {product.businessPartnerNames || "-"}
+                    </Badge>
+                  </div>
+                  <div className="text-xs">{product.sellingUnits || "-"}</div>
+                  <div className="text-xs">{product.packingUnits || "-"}</div>
+                  <div className="text-xs">{product.type || "-"}</div>
+                  <div className="flex gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      data-testid={`button-edit-${product.id}`}
+                      onClick={() => { setEditingItem(product); setDialogOpen(true); }}
                     >
-                      No products found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      data-testid={`button-delete-${product.id}`}
+                      onClick={() => setDeleteFGId(product.id)}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

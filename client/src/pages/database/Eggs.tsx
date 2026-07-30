@@ -749,65 +749,52 @@ export default function Eggs() {
                   ไม่พบรายการ
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-32">รหัส</TableHead>
-                      <TableHead>ชื่อรายการ</TableHead>
-                      <TableHead className="w-32">ประเภท</TableHead>
-                      <TableHead className="w-32">เบอร์/ไซส์</TableHead>
-                      <TableHead className="w-32">ลูกค้า</TableHead>
-                      <TableHead className="w-24">สถานะ</TableHead>
-                      <TableHead className="w-20"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredItems.map((item) => (
-                      <TableRow key={item.id} data-testid={`row-item-${item.id}`}>
-                        <TableCell className="font-mono text-sm">{item.itemCode}</TableCell>
-                        <TableCell className="font-medium">{item.itemName}</TableCell>
-                        <TableCell>{getTypeBadge(item.eggType)}</TableCell>
-                        <TableCell>
-                          {item.gradeCode ? (
-                            <Badge variant="outline">{item.gradeCode}</Badge>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell>
-                          {item.partner ? (
-                            <Badge variant="secondary" className="text-xs">
-                              {item.partner.nickname}
-                            </Badge>
-                          ) : '-'}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={item.isActive ? "secondary" : "outline"}>
-                            {item.isActive ? "ใช้งาน" : "ปิด"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-1">
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => openEditDialog(item)}
-                              data-testid={`button-edit-${item.id}`}
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button 
-                              size="icon" 
-                              variant="ghost" 
-                              onClick={() => setDeleteId(item.id)}
-                              data-testid={`button-delete-${item.id}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="divide-y divide-border rounded-md border overflow-hidden">
+                  <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "120px 1fr 120px 100px 120px 80px 80px"}}>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">รหัส</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อรายการ</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ประเภท</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">เบอร์/ไซส์</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ลูกค้า</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
+                    <div />
+                  </div>
+                  {filteredItems.map((item, idx) => (
+                    <div
+                      key={item.id}
+                      className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                      style={{gridTemplateColumns: "120px 1fr 120px 100px 120px 80px 80px"}}
+                      data-testid={`row-item-${item.id}`}
+                    >
+                      <div className="text-xs font-mono">{item.itemCode}</div>
+                      <div className="text-xs font-medium">{item.itemName}</div>
+                      <div>{getTypeBadge(item.eggType)}</div>
+                      <div>
+                        {item.gradeCode ? (
+                          <Badge variant="outline" className="text-[10px]">{item.gradeCode}</Badge>
+                        ) : <span className="text-xs text-muted-foreground">-</span>}
+                      </div>
+                      <div>
+                        {item.partner ? (
+                          <Badge variant="secondary" className="text-[10px]">{item.partner.nickname}</Badge>
+                        ) : <span className="text-xs text-muted-foreground">-</span>}
+                      </div>
+                      <div>
+                        <Badge variant={item.isActive ? "secondary" : "outline"} className="text-[10px]">
+                          {item.isActive ? "ใช้งาน" : "ปิด"}
+                        </Badge>
+                      </div>
+                      <div className="flex gap-0.5">
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditDialog(item)} data-testid={`button-edit-${item.id}`}>
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeleteId(item.id)} data-testid={`button-delete-${item.id}`}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -850,74 +837,61 @@ export default function Eggs() {
                   <p className="text-sm">กดปุ่ม "เพิ่ม Spec" เพื่อเพิ่มข้อกำหนดใหม่</p>
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-28">รหัส Spec</TableHead>
-                      <TableHead>ชื่อ Spec</TableHead>
-                      <TableHead className="w-32">ประเภทบรรจุ</TableHead>
-                      <TableHead className="w-28 text-right">น้ำหนักขั้นต่ำ</TableHead>
-                      <TableHead>สัดส่วนเบอร์</TableHead>
-                      <TableHead className="w-24">สถานะ</TableHead>
-                      <TableHead className="w-20"></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {packSpecs?.map((spec) => {
-                      const packType = packTypes?.find(p => p.id === spec.packTypeId);
-                      return (
-                        <TableRow key={spec.id} data-testid={`row-spec-${spec.id}`}>
-                          <TableCell>
-                            <Badge variant="outline" className="font-mono">{spec.specCode}</Badge>
-                          </TableCell>
-                          <TableCell className="font-medium">{spec.specName}</TableCell>
-                          <TableCell>
-                            {packType ? (
-                              <Badge variant="secondary">{packType.thaiName} ({packType.eggsPerPack}ฟอง)</Badge>
-                            ) : '-'}
-                          </TableCell>
-                          <TableCell className="text-right font-mono">
-                            {spec.minTotalWeightG ? `${parseFloat(spec.minTotalWeightG).toLocaleString()}g` : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1 flex-wrap">
-                              {spec.grades?.map((g: { gradeCode: string; percentage: string }, idx: number) => (
-                                <Badge key={idx} variant="secondary" className="text-xs">
-                                  {g.gradeCode}: {g.percentage}%
-                                </Badge>
-                              ))}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant={spec.isActive ? "secondary" : "outline"}>
-                              {spec.isActive ? "ใช้งาน" : "ปิด"}
+                <div className="divide-y divide-border rounded-md border overflow-hidden">
+                  <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "110px 1fr 160px 120px 1fr 80px 80px"}}>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">รหัส Spec</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อ Spec</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ประเภทบรรจุ</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide text-right">น้ำหนักขั้นต่ำ</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สัดส่วนเบอร์</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
+                    <div />
+                  </div>
+                  {packSpecs?.map((spec, idx) => {
+                    const packType = packTypes?.find(p => p.id === spec.packTypeId);
+                    return (
+                      <div
+                        key={spec.id}
+                        className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                        style={{gridTemplateColumns: "110px 1fr 160px 120px 1fr 80px 80px"}}
+                        data-testid={`row-spec-${spec.id}`}
+                      >
+                        <div>
+                          <Badge variant="outline" className="font-mono text-[10px]">{spec.specCode}</Badge>
+                        </div>
+                        <div className="text-xs font-medium">{spec.specName}</div>
+                        <div>
+                          {packType ? (
+                            <Badge variant="secondary" className="text-[10px]">{packType.thaiName} ({packType.eggsPerPack}ฟอง)</Badge>
+                          ) : <span className="text-xs text-muted-foreground">-</span>}
+                        </div>
+                        <div className="text-xs font-mono text-right">
+                          {spec.minTotalWeightG ? `${parseFloat(spec.minTotalWeightG).toLocaleString()}g` : '-'}
+                        </div>
+                        <div className="flex gap-1 flex-wrap">
+                          {spec.grades?.map((g: { gradeCode: string; percentage: string }, gIdx: number) => (
+                            <Badge key={gIdx} variant="secondary" className="text-[10px]">
+                              {g.gradeCode}: {g.percentage}%
                             </Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-1">
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                onClick={() => openEditSpecDialog(spec)}
-                                data-testid={`button-edit-spec-${spec.id}`}
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button 
-                                size="icon" 
-                                variant="ghost" 
-                                onClick={() => setDeleteSpecId(spec.id)}
-                                data-testid={`button-delete-spec-${spec.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
+                          ))}
+                        </div>
+                        <div>
+                          <Badge variant={spec.isActive ? "secondary" : "outline"} className="text-[10px]">
+                            {spec.isActive ? "ใช้งาน" : "ปิด"}
+                          </Badge>
+                        </div>
+                        <div className="flex gap-0.5">
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEditSpecDialog(spec)} data-testid={`button-edit-spec-${spec.id}`}>
+                            <Edit className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeleteSpecId(spec.id)} data-testid={`button-delete-spec-${spec.id}`}>
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </CardContent>
           </Card>
@@ -940,38 +914,35 @@ export default function Eggs() {
                   <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
                 </div>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-24">รหัสเบอร์</TableHead>
-                      <TableHead>ชื่อเบอร์</TableHead>
-                      <TableHead className="w-32 text-right">น้ำหนักต่ำสุด</TableHead>
-                      <TableHead className="w-32 text-right">น้ำหนักสูงสุด</TableHead>
-                      <TableHead className="w-24">สถานะ</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {gradeRules?.map((rule) => (
-                      <TableRow key={rule.id} data-testid={`row-grade-${rule.id}`}>
-                        <TableCell>
-                          <Badge variant="outline" className="font-mono">{rule.gradeCode}</Badge>
-                        </TableCell>
-                        <TableCell className="font-medium">{rule.gradeName}</TableCell>
-                        <TableCell className="text-right font-mono">
-                          {formatWeight(rule.minWeightG)}
-                        </TableCell>
-                        <TableCell className="text-right font-mono">
-                          {formatWeight(rule.maxWeightG)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={rule.isActive ? "secondary" : "outline"}>
-                            {rule.isActive ? "ใช้งาน" : "ปิด"}
-                          </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <div className="divide-y divide-border rounded-md border overflow-hidden">
+                  <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "100px 1fr 130px 130px 90px"}}>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">รหัสเบอร์</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อเบอร์</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide text-right">น้ำหนักต่ำสุด</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide text-right">น้ำหนักสูงสุด</div>
+                    <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
+                  </div>
+                  {gradeRules?.map((rule, idx) => (
+                    <div
+                      key={rule.id}
+                      className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                      style={{gridTemplateColumns: "100px 1fr 130px 130px 90px"}}
+                      data-testid={`row-grade-${rule.id}`}
+                    >
+                      <div>
+                        <Badge variant="outline" className="font-mono text-[10px]">{rule.gradeCode}</Badge>
+                      </div>
+                      <div className="text-xs font-medium">{rule.gradeName}</div>
+                      <div className="text-xs font-mono text-right">{formatWeight(rule.minWeightG)}</div>
+                      <div className="text-xs font-mono text-right">{formatWeight(rule.maxWeightG)}</div>
+                      <div>
+                        <Badge variant={rule.isActive ? "secondary" : "outline"} className="text-[10px]">
+                          {rule.isActive ? "ใช้งาน" : "ปิด"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </CardContent>
           </Card>

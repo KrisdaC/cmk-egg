@@ -53,7 +53,8 @@ export const vehicles = pgTable("vehicles", {
   code: text("code").unique(), // VHC-0001
   plateNumber: text("plate_number").notNull().unique(),
   vehicleType: text("vehicle_type").notNull(), // truck, van, refrigerated
-  capacity: decimal("capacity", { precision: 10, scale: 2 }), // in eggs or pallets
+  capacity: decimal("capacity", { precision: 10, scale: 2 }), // in m³
+  capacityEggs: integer("capacity_eggs"), // max eggs this vehicle can carry
   costPerKm: decimal("cost_per_km", { precision: 10, scale: 2 }),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -654,6 +655,7 @@ export const pricingAssumptions = pgTable("pricing_assumptions", {
     .references(() => pricingWeeks.id, { onDelete: "cascade" })
     .notNull(),
   partnerId: integer("partner_id").references(() => businessPartners.id),
+  siteGroupId: integer("site_group_id"), // NULL = customer-level; set = site-group override
   component: text("component").notNull(), // labor, logistics, dc_cost, tta, packaging
   value: decimal("value", { precision: 12, scale: 4 }).notNull(),
   unit: text("unit"), // baht/egg, baht/pack, %
@@ -699,8 +701,11 @@ export const priceProposals = pgTable("price_proposals", {
   deliverySiteId: integer("delivery_site_id").references(() => deliverySites.id),
   status: text("status").default("draft"), // draft, submitted, counter_pending, approved, rejected
   submittedBy: text("submitted_by"),
+  reviewedBy: text("reviewed_by"),
   approvedBy: text("approved_by"),
   approvedAt: timestamp("approved_at"),
+  effectiveDate: date("effective_date"),
+  effectiveDateTo: date("effective_date_to"),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -716,10 +721,24 @@ export const priceProposalLines = pgTable("price_proposal_lines", {
     .references(() => items.id)
     .notNull(),
   referencePrice: decimal("reference_price", { precision: 10, scale: 2 }),
+  basePrice: decimal("base_price", { precision: 10, scale: 2 }), // final price for all branches
+  // Legacy columns kept for DB compatibility
   proposalPrice: decimal("proposal_price", { precision: 10, scale: 2 }),
   counterPrice: decimal("counter_price", { precision: 10, scale: 2 }),
   finalLockedPrice: decimal("final_locked_price", { precision: 10, scale: 2 }),
   notes: text("notes"),
+});
+
+// Exception prices per site group (overrides base_price for specific branch groups)
+export const priceProposalLineExceptions = pgTable("price_proposal_line_exceptions", {
+  id: serial("id").primaryKey(),
+  proposalLineId: integer("proposal_line_id")
+    .references(() => priceProposalLines.id, { onDelete: "cascade" })
+    .notNull(),
+  siteGroupId: integer("site_group_id")
+    .references(() => deliverySiteGroups.id, { onDelete: "cascade" })
+    .notNull(),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
 });
 
 // Active Prices - Live price list consumed by PO Intake
@@ -1747,6 +1766,18 @@ export const priceProposalLinesRelations = relations(priceProposalLines, ({ one,
     references: [items.id],
   }),
   activePrices: many(activePrices),
+  exceptions: many(priceProposalLineExceptions),
+}));
+
+export const priceProposalLineExceptionsRelations = relations(priceProposalLineExceptions, ({ one }) => ({
+  line: one(priceProposalLines, {
+    fields: [priceProposalLineExceptions.proposalLineId],
+    references: [priceProposalLines.id],
+  }),
+  siteGroup: one(deliverySiteGroups, {
+    fields: [priceProposalLineExceptions.siteGroupId],
+    references: [deliverySiteGroups.id],
+  }),
 }));
 
 export const activePricesRelations = relations(activePrices, ({ one }) => ({
@@ -1846,4 +1877,16 @@ export const productionRoundStates = pgTable("production_round_states", {
   deliveryDate: date("delivery_date").notNull(),
   round: integer("round").notNull(),
   closedAt: timestamp("closed_at"),
+});
+
+// System / App-level settings (key-value store)
+export const systemSettings = pgTable("system_settings", {
+  id: serial("id").primaryKey(),
+  key: varchar("key", { length: 100 }).notNull().unique(),
+  value: text("value"),
+  label: varchar("label", { length: 255 }),
+  description: text("description"),
+  valueType: varchar("value_type", { length: 20 }).default("string"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  updatedBy: varchar("updated_by", { length: 100 }),
 });

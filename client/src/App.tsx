@@ -39,6 +39,7 @@ import {
   Globe,
   ChevronDown,
   FileUp,
+  Calculator,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -106,6 +107,7 @@ import POUploadReview from "./pages/orders/POUploadReview";
 import OrdersGrid from "./pages/orders/OrdersGrid";
 import DailyPlan from "./pages/orders/DailyPlan";
 import MaterialCosts from "./pages/orders/pricing/MaterialCosts";
+import PriceSimulation from "./pages/orders/pricing/PriceSimulation";
 
 const navigationGroups = [
   {
@@ -127,14 +129,14 @@ const navigationGroups = [
     ],
   },
   {
-    label: "Price Adjustments",
+    label: "การปรับราคา",
     icon: Tags,
     items: [
-      { title: "Price Assumptions", url: "/orders/pricing/assumptions", icon: Tags },
-      { title: "Reference Price", url: "/orders/pricing/reference", icon: DollarSign },
-      { title: "Price Proposals", url: "/orders/pricing/proposals", icon: FileText },
-      { title: "Active Prices", url: "/orders/pricing/active-prices", icon: CheckCircle },
-      { title: "Material Costs", url: "/orders/pricing/material-costs", icon: FileUp },
+      { title: "ต้นทุนรวม", url: "/orders/pricing/assumptions", icon: Tags },
+      { title: "สร้างใบเสนอราคา", url: "/orders/pricing/simulation", icon: Calculator },
+      { title: "ข้อเสนอราคา", url: "/orders/pricing/proposals", icon: FileText },
+      { title: "ราคาที่ใช้งาน", url: "/orders/pricing/active-prices", icon: CheckCircle },
+      { title: "ราคาอ้างอิง", url: "/orders/pricing/reference", icon: BarChart3 },
     ],
   },
   {
@@ -143,7 +145,6 @@ const navigationGroups = [
     items: [
       { title: "Order Intake", url: "/orders/input", icon: ClipboardList },
       { title: "Daily Plan", url: "/orders/daily-plan", icon: Calendar },
-
       { title: "Daily Summary", url: "/orders/daily-summary", icon: Calendar },
       { title: "Invoices", url: "/orders/invoices", icon: Receipt },
       { title: "Returns", url: "/orders/returns", icon: RotateCcw },
@@ -458,6 +459,10 @@ function Router() {
       <Route
         path="/orders/pricing/reference"
         component={() => <ProtectedRoute component={ReferencePrice} />}
+      />
+      <Route
+        path="/orders/pricing/simulation"
+        component={() => <ProtectedRoute component={PriceSimulation} />}
       />
       <Route
         path="/orders/pricing/proposals/new"

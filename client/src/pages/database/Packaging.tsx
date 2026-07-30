@@ -3,9 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, Loader2, Package } from "lucide-react";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
@@ -221,57 +218,56 @@ export default function Packaging() {
               ไม่พบรายการ
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-32">รหัส</TableHead>
-                  <TableHead>ชื่อรายการ</TableHead>
-                  <TableHead className="w-24">หน่วย</TableHead>
-                  <TableHead className="w-40">ลูกค้าเฉพาะ</TableHead>
-                  <TableHead className="w-24">Track Lot</TableHead>
-                  <TableHead className="w-24">สถานะ</TableHead>
-                  <TableHead className="w-24"></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredItems.map((item) => (
-                  <TableRow key={item.id} data-testid={`row-packaging-${item.id}`}>
-                    <TableCell className="font-mono text-sm">{item.itemCode}</TableCell>
-                    <TableCell className="font-medium">{item.itemName}</TableCell>
-                    <TableCell>{item.baseUom}</TableCell>
-                    <TableCell>
-                      {item.partner ? (
-                        <Badge variant="outline">{item.partner.nickname}</Badge>
-                      ) : (
-                        <span className="text-muted-foreground">ใช้ร่วม</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {item.lotTracked ? (
-                        <Badge className="bg-blue-100 text-blue-800">Track</Badge>
-                      ) : (
-                        <Badge variant="outline">ไม่ Track</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={item.isActive ? "secondary" : "outline"}>
-                        {item.isActive ? "ใช้งาน" : "ปิด"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => openEditDialog(item)} data-testid={`button-edit-${item.id}`}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteId(item.id)} data-testid={`button-delete-${item.id}`}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <div className="divide-y divide-border rounded-md border overflow-hidden">
+              <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "120px 1fr 80px 150px 90px 80px 80px"}}>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">รหัส</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อรายการ</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">หน่วย</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ลูกค้าเฉพาะ</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Track Lot</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
+                <div />
+              </div>
+              {filteredItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                  style={{gridTemplateColumns: "120px 1fr 80px 150px 90px 80px 80px"}}
+                  data-testid={`row-packaging-${item.id}`}
+                >
+                  <div className="text-xs font-mono">{item.itemCode}</div>
+                  <div className="text-xs font-medium">{item.itemName}</div>
+                  <div className="text-xs">{item.baseUom}</div>
+                  <div>
+                    {item.partner ? (
+                      <Badge variant="outline" className="text-[10px]">{item.partner.nickname}</Badge>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">ใช้ร่วม</span>
+                    )}
+                  </div>
+                  <div>
+                    {item.lotTracked ? (
+                      <Badge className="bg-blue-100 text-blue-800 text-[10px]">Track</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px]">ไม่ Track</Badge>
+                    )}
+                  </div>
+                  <div>
+                    <Badge variant={item.isActive ? "secondary" : "outline"} className="text-[10px]">
+                      {item.isActive ? "ใช้งาน" : "ปิด"}
+                    </Badge>
+                  </div>
+                  <div className="flex gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(item)} data-testid={`button-edit-${item.id}`}>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteId(item.id)} data-testid={`button-delete-${item.id}`}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

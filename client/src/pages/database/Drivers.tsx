@@ -11,14 +11,6 @@ import {
   UserCircle,
   Loader2,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
 import { deleteDriver, getDrivers } from "@/lib/api/drivers";
 import {
@@ -378,74 +370,60 @@ export default function Drivers() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Driver Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>License No.</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDrivers.map((driver: any) => (
-                <TableRow
-                  key={driver.id}
-                  data-testid={`row-driver-${driver.id}`}
-                >
-                  <TableCell className="font-mono">{driver.code}</TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <UserCircle className="w-4 h-4 text-muted-foreground" />
-                      {driver.name}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Phone className="w-3 h-3 text-muted-foreground" />
-                      {driver.phone}
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-mono">
-                    {driver.licenseNumber}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={driver.isActive ? "secondary" : "outline"}
-                      className="capitalize"
-                    >
-                      {driver.isActive ? "active" : "inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        data-testid={`button-edit-${driver.id}`}
-                        onClick={() => {
-                          setEditingItem(driver);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        data-testid={`button-delete-${driver.id}`}
-                        onClick={() => setDeleteDriverId(driver.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="divide-y divide-border rounded-md border overflow-hidden">
+            <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "100px 1fr 140px 160px 90px 80px"}}>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Code</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Driver Name</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Phone</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">License No.</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+              <div />
+            </div>
+            {filteredDrivers.map((driver: any, idx: number) => (
+              <div
+                key={driver.id}
+                className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                style={{gridTemplateColumns: "100px 1fr 140px 160px 90px 80px"}}
+                data-testid={`row-driver-${driver.id}`}
+              >
+                <div className="text-xs font-mono">{driver.code}</div>
+                <div className="text-xs font-medium flex items-center gap-1.5">
+                  <UserCircle className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {driver.name}
+                </div>
+                <div className="text-xs flex items-center gap-1">
+                  <Phone className="w-3 h-3 text-muted-foreground" />
+                  {driver.phone}
+                </div>
+                <div className="text-xs font-mono">{driver.licenseNumber}</div>
+                <div>
+                  <Badge variant={driver.isActive ? "secondary" : "outline"} className="capitalize text-[10px]">
+                    {driver.isActive ? "active" : "inactive"}
+                  </Badge>
+                </div>
+                <div className="flex gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    data-testid={`button-edit-${driver.id}`}
+                    onClick={() => { setEditingItem(driver); setDialogOpen(true); }}
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    data-testid={`button-delete-${driver.id}`}
+                    onClick={() => setDeleteDriverId(driver.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

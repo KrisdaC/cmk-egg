@@ -22,12 +22,26 @@ const uploadBodySchema = z.object({
   rows: z.array(uploadRowSchema).min(1).max(500),
 });
 
-// GET /api/material-costs - list all rates
+// GET /api/material-costs - list all rates (joined with item type)
 router.get("/", async (_req, res) => {
   try {
     const rates = await db
-      .select()
+      .select({
+        id: materialCostRates.id,
+        sku: materialCostRates.sku,
+        effectiveDate: materialCostRates.effectiveDate,
+        supplierName: materialCostRates.supplierName,
+        partner: materialCostRates.partner,
+        itemDescription: materialCostRates.itemDescription,
+        tieredPrices: materialCostRates.tieredPrices,
+        notes: materialCostRates.notes,
+        isCurrent: materialCostRates.isCurrent,
+        uploadedAt: materialCostRates.uploadedAt,
+        itemType: items.itemType,
+        itemName: items.name,
+      })
       .from(materialCostRates)
+      .leftJoin(items, eq(materialCostRates.sku, items.sku))
       .orderBy(desc(materialCostRates.effectiveDate));
     res.json(rates);
   } catch (err) {

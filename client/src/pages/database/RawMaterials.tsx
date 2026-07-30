@@ -3,9 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Box, Edit, Trash2 } from "lucide-react";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
 
 const sampleMaterials = [
   { id: 1, code: "RM-EGG-UNG", name: "Ungraded Eggs", category: "Raw Eggs", unit: "pcs", minStock: 10000, status: "active" },
@@ -47,43 +44,42 @@ export default function RawMaterials() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Code</TableHead>
-                <TableHead>Material Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Unit</TableHead>
-                <TableHead>Min Stock</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {sampleMaterials.map((material) => (
-                <TableRow key={material.id} data-testid={`row-material-${material.id}`}>
-                  <TableCell className="font-mono">{material.code}</TableCell>
-                  <TableCell className="font-medium">{material.name}</TableCell>
-                  <TableCell>{material.category}</TableCell>
-                  <TableCell>{material.unit}</TableCell>
-                  <TableCell>{material.minStock.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <Badge variant="secondary" className="capitalize">{material.status}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" data-testid={`button-edit-${material.id}`}>
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" data-testid={`button-delete-${material.id}`}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <div className="divide-y divide-border rounded-md border overflow-hidden">
+            <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "130px 1fr 130px 70px 110px 90px 80px"}}>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Code</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Material Name</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Category</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Unit</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Min Stock</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+              <div />
+            </div>
+            {sampleMaterials.map((material, idx) => (
+              <div
+                key={material.id}
+                className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                style={{gridTemplateColumns: "130px 1fr 130px 70px 110px 90px 80px"}}
+                data-testid={`row-material-${material.id}`}
+              >
+                <div className="text-xs font-mono">{material.code}</div>
+                <div className="text-xs font-medium">{material.name}</div>
+                <div className="text-xs">{material.category}</div>
+                <div className="text-xs">{material.unit}</div>
+                <div className="text-xs">{material.minStock.toLocaleString()}</div>
+                <div>
+                  <Badge variant="secondary" className="capitalize text-[10px]">{material.status}</Badge>
+                </div>
+                <div className="flex gap-0.5">
+                  <Button variant="ghost" size="icon" className="h-7 w-7" data-testid={`button-edit-${material.id}`}>
+                    <Edit className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" className="h-7 w-7" data-testid={`button-delete-${material.id}`}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
     </div>

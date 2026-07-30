@@ -17,19 +17,22 @@ import {
   ArrowLeft,
   AlertTriangle,
   Loader2,
-  MapPin,
   Search,
   RefreshCw,
   Plus,
   ChevronRight,
+  Settings2,
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
 import {
   PricingStepNav,
   type Partner,
   type PricingWeek,
-  type DeliverySite,
   type SiteGroup,
 } from "./_shared";
+import { SiteGroupManagerDialog } from "./SiteGroupManager";
 
 // =============================================
 // TYPES
@@ -44,12 +47,18 @@ interface PartnerItem {
   min_primary: number | null;
   eggs_per_pack: number | null;
   selling_unit: string | null;
+  item_number: string | null;
+  customer_item_number: string | null;
+  barcode_label: string | null;
 }
+
+type SortKey = "name" | "sku" | "item_number" | "barcode";
 
 interface LineState {
   checked: boolean;
   referencePrice: string;
-  proposalPrice: string;
+  basePrice: string;
+  exceptions: Record<number, string>; // siteGroupId → price string
 }
 
 interface CostAnalysisData {
@@ -87,36 +96,73 @@ function SizePill({ item }: { item: PartnerItem }) {
 }
 
 // =============================================
+// SORT HEADER
+// =============================================
+
+function SortTh({
+  label,
+  sortK,
+  current,
+  dir,
+  onSort,
+  className = "",
+}: {
+  label: string;
+  sortK: SortKey;
+  current: SortKey | null;
+  dir: "asc" | "desc";
+  onSort: (k: SortKey) => void;
+  className?: string;
+}) {
+  const active = current === sortK;
+  return (
+    <th
+      className={`px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide cursor-pointer select-none hover:text-foreground transition-colors ${className}`}
+      onClick={() => onSort(sortK)}
+    >
+      <span className="inline-flex items-center gap-1">
+        {label}
+        {active ? (
+          dir === "asc" ? (
+            <ChevronUp className="w-3 h-3 text-foreground" />
+          ) : (
+            <ChevronDown className="w-3 h-3 text-foreground" />
+          )
+        ) : (
+          <ChevronsUpDown className="w-3 h-3 opacity-30" />
+        )}
+      </span>
+    </th>
+  );
+}
+
+// =============================================
 // PAGE
 // =============================================
 
 export default function NewProposalPage() {
   const [, navigate] = useLocation();
 
-  // Form state
   const [weekId, setWeekId] = useState("");
   const [partnerId, setPartnerId] = useState("");
-  const [scopeType, setScopeType] = useState<"customer" | "site_group" | "delivery_site">("customer");
-  const [siteGroupId, setSiteGroupId] = useState("");
-  const [deliverySiteId, setDeliverySiteId] = useState("");
   const [notes, setNotes] = useState("");
 
-  // Remote data
   const [weeks, setWeeks] = useState<PricingWeek[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [partnerItems, setPartnerItems] = useState<PartnerItem[]>([]);
-  const [deliverySites, setDeliverySites] = useState<DeliverySite[]>([]);
   const [siteGroups, setSiteGroups] = useState<SiteGroup[]>([]);
   const [loadingItems, setLoadingItems] = useState(false);
 
-  // SKU line states: itemId → { checked, referencePrice, proposalPrice }
+  // lineId → state
   const [lines, setLines] = useState<Record<number, LineState>>({});
 
-  // UI state
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [refPriceLoading, setRefPriceLoading] = useState(false);
+  const [siteGroupManagerOpen, setSiteGroupManagerOpen] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey | null>(null);
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
 
   // ── fetch helpers ──────────────────────────────────────────────────────────
 
@@ -141,19 +187,6 @@ export default function NewProposalPage() {
     fetchSiteGroups();
   }, [fetchWeeks, fetchPartners, fetchSiteGroups]);
 
-  useEffect(() => {
-    if (!partnerId) {
-      setDeliverySites([]);
-      setPartnerItems([]);
-      setLines({});
-      return;
-    }
-    fetch(`/api/pricing/delivery-sites?partnerId=${partnerId}`)
-      .then((r) => r.json())
-      .then((d) => setDeliverySites(Array.isArray(d) ? d : []))
-      .catch(() => setDeliverySites([]));
-  }, [partnerId]);
-
   const loadPartnerItems = useCallback(async () => {
     if (!partnerId) return;
     setLoadingItems(true);
@@ -162,9 +195,10 @@ export default function NewProposalPage() {
       if (r.ok) {
         const data: PartnerItem[] = await r.json();
         setPartnerItems(data);
-        // Pre-check all items and clear prices
         const initial: Record<number, LineState> = {};
-        data.forEach((i) => { initial[i.id] = { checked: true, referencePrice: "", proposalPrice: "" }; });
+        data.forEach((i) => {
+          initial[i.id] = { checked: true, referencePrice: "", basePrice: "", exceptions: {} };
+        });
         setLines(initial);
       }
     } finally {
@@ -173,7 +207,14 @@ export default function NewProposalPage() {
   }, [partnerId]);
 
   useEffect(() => {
-    if (partnerId) loadPartnerItems();
+    if (partnerId) {
+      setPartnerItems([]);
+      setLines({});
+      loadPartnerItems();
+    } else {
+      setPartnerItems([]);
+      setLines({});
+    }
   }, [partnerId, loadPartnerItems]);
 
   // ── reference price auto-computation ──────────────────────────────────────
@@ -197,9 +238,7 @@ export default function NewProposalPage() {
       ]);
 
       const makroRaw: Record<string, number> = {};
-      for (const s of makroData.sizes) {
-        makroRaw[s.primarySize] = s.eggRawCostPerEgg;
-      }
+      for (const s of makroData.sizes) makroRaw[s.primarySize] = s.eggRawCostPerEgg;
 
       const customerFixed = customerData.fixedCostPerEgg;
       const customerDisty = customerData.distyCostPct;
@@ -214,13 +253,12 @@ export default function NewProposalPage() {
           let baseEgg: number;
           if (item.secondary_size && item.min_primary != null) {
             const primaryRatio = item.min_primary / 100;
-            const primaryRaw = makroRaw[item.primary_size] ?? 0;
-            const secondaryRaw = makroRaw[item.secondary_size] ?? 0;
-            baseEgg = primaryRaw * primaryRatio + secondaryRaw * (1 - primaryRatio);
+            baseEgg =
+              (makroRaw[item.primary_size] ?? 0) * primaryRatio +
+              (makroRaw[item.secondary_size] ?? 0) * (1 - primaryRatio);
           } else {
             baseEgg = makroRaw[item.primary_size] ?? 0;
           }
-
           if (baseEgg <= 0) continue;
 
           const refPricePerEgg = (baseEgg + customerFixed) / (1 - customerDisty);
@@ -230,7 +268,7 @@ export default function NewProposalPage() {
         return next;
       });
     } catch {
-      // silently fail — user can enter manually
+      // silently fail
     } finally {
       setRefPriceLoading(false);
     }
@@ -244,15 +282,44 @@ export default function NewProposalPage() {
 
   // ── derived ───────────────────────────────────────────────────────────────
 
-  const approvedWeeks = weeks.filter((w) => w.status === "approved" || w.status === "active" || w.status === "draft");
-  const partnerSiteGroups = siteGroups.filter((g) => partnerId && g.partner?.id === Number(partnerId));
+  const approvedWeeks = weeks.filter(
+    (w) => w.status === "approved" || w.status === "active" || w.status === "draft",
+  );
+
+  const partnerSiteGroups = useMemo(
+    () => siteGroups.filter((g) => partnerId && g.partner?.id === Number(partnerId)),
+    [siteGroups, partnerId],
+  );
+
+  const sortVal = (item: PartnerItem, key: SortKey): string => {
+    if (key === "name") return item.name.toLowerCase();
+    if (key === "sku") return (item.sku ?? "").toLowerCase();
+    if (key === "item_number") return (item.customer_item_number ?? item.item_number ?? "").toLowerCase();
+    if (key === "barcode") return (item.barcode_label ?? "").toLowerCase();
+    return "";
+  };
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setSortKey(key); setSortDir("asc"); }
+  };
 
   const filteredItems = useMemo(() => {
     const q = search.toLowerCase();
-    return partnerItems.filter(
-      (i) => !q || i.name.toLowerCase().includes(q) || (i.sku ?? "").toLowerCase().includes(q),
+    let result = partnerItems.filter(
+      (i) => !q || i.name.toLowerCase().includes(q) || (i.sku ?? "").toLowerCase().includes(q)
+        || (i.customer_item_number ?? "").toLowerCase().includes(q)
+        || (i.barcode_label ?? "").toLowerCase().includes(q),
     );
-  }, [partnerItems, search]);
+    if (sortKey) {
+      result = [...result].sort((a, b) => {
+        const va = sortVal(a, sortKey);
+        const vb = sortVal(b, sortKey);
+        return sortDir === "asc" ? va.localeCompare(vb) : vb.localeCompare(va);
+      });
+    }
+    return result;
+  }, [partnerItems, search, sortKey, sortDir]);
 
   const checkedCount = Object.values(lines).filter((l) => l.checked).length;
 
@@ -261,15 +328,31 @@ export default function NewProposalPage() {
   const toggleItem = (id: number) => {
     setLines((prev) => ({
       ...prev,
-      [id]: { ...(prev[id] ?? { checked: false, referencePrice: "", proposalPrice: "" }), checked: !prev[id]?.checked },
+      [id]: {
+        ...(prev[id] ?? { checked: false, referencePrice: "", basePrice: "", exceptions: {} }),
+        checked: !prev[id]?.checked,
+      },
     }));
   };
 
-  const updateLinePrice = (id: number, field: "referencePrice" | "proposalPrice", value: string) => {
+  const setBasePrice = (id: number, value: string) => {
     setLines((prev) => ({
       ...prev,
-      [id]: { ...(prev[id] ?? { checked: true, referencePrice: "", proposalPrice: "" }), [field]: value },
+      [id]: { ...(prev[id] ?? { checked: true, referencePrice: "", basePrice: "", exceptions: {} }), basePrice: value },
     }));
+  };
+
+  const setException = (itemId: number, siteGroupId: number, value: string) => {
+    setLines((prev) => {
+      const line = prev[itemId] ?? { checked: true, referencePrice: "", basePrice: "", exceptions: {} };
+      return {
+        ...prev,
+        [itemId]: {
+          ...line,
+          exceptions: { ...line.exceptions, [siteGroupId]: value },
+        },
+      };
+    });
   };
 
   const toggleAll = () => {
@@ -277,7 +360,10 @@ export default function NewProposalPage() {
     setLines((prev) => {
       const next = { ...prev };
       filteredItems.forEach((i) => {
-        next[i.id] = { ...(next[i.id] ?? { checked: false, referencePrice: "", proposalPrice: "" }), checked: !allChecked };
+        next[i.id] = {
+          ...(next[i.id] ?? { checked: false, referencePrice: "", basePrice: "", exceptions: {} }),
+          checked: !allChecked,
+        };
       });
       return next;
     });
@@ -290,23 +376,19 @@ export default function NewProposalPage() {
       setError("กรุณาเลือก Pricing Week และ Partner");
       return;
     }
-    if (scopeType === "site_group" && !siteGroupId) {
-      setError("กรุณาเลือก Site Group");
-      return;
-    }
-    if (scopeType === "delivery_site" && !deliverySiteId) {
-      setError("กรุณาเลือก Delivery Site");
-      return;
-    }
 
     const selectedLines = partnerItems
       .filter((i) => lines[i.id]?.checked)
       .map((i) => {
         const l = lines[i.id];
+        const exceptions = Object.entries(l.exceptions ?? {})
+          .filter(([, v]) => v !== "")
+          .map(([sgId, v]) => ({ siteGroupId: Number(sgId), price: parseFloat(v) }));
         return {
           itemId: i.id,
           referencePrice: l.referencePrice ? parseFloat(l.referencePrice) : undefined,
-          proposalPrice: l.proposalPrice ? parseFloat(l.proposalPrice) : undefined,
+          basePrice: l.basePrice ? parseFloat(l.basePrice) : undefined,
+          exceptions,
         };
       });
 
@@ -319,9 +401,6 @@ export default function NewProposalPage() {
         body: JSON.stringify({
           pricingWeekId: Number(weekId),
           partnerId: Number(partnerId),
-          scopeType,
-          siteGroupId: scopeType === "site_group" && siteGroupId ? Number(siteGroupId) : undefined,
-          deliverySiteId: scopeType === "delivery_site" && deliverySiteId ? Number(deliverySiteId) : undefined,
           notes: notes || undefined,
           lines: selectedLines,
         }),
@@ -346,7 +425,6 @@ export default function NewProposalPage() {
         <PricingStepNav />
       </div>
 
-      {/* Page header */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => navigate("/orders/pricing/proposals")}
@@ -362,7 +440,7 @@ export default function NewProposalPage() {
       <div>
         <h1 className="text-2xl font-bold">New Price Proposal</h1>
         <p className="text-muted-foreground text-sm">
-          เลือก week, customer, และกรอกราคาสำหรับแต่ละ SKU
+          เลือก week และ customer จากนั้นกรอกราคาฐาน และราคาพิเศษตามกลุ่มสาขา
         </p>
       </div>
 
@@ -373,14 +451,13 @@ export default function NewProposalPage() {
         </div>
       )}
 
-      {/* ── Section 1: Header fields ── */}
+      {/* Header fields */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">รายละเอียด Proposal</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Week */}
             <div className="space-y-1.5">
               <Label className="text-sm">
                 Pricing Week <span className="text-destructive">*</span>
@@ -407,12 +484,14 @@ export default function NewProposalPage() {
               )}
             </div>
 
-            {/* Partner */}
             <div className="space-y-1.5">
               <Label className="text-sm">
                 Partner <span className="text-destructive">*</span>
               </Label>
-              <Select value={partnerId} onValueChange={(v) => { setPartnerId(v); setScopeType("customer"); setSiteGroupId(""); setDeliverySiteId(""); }}>
+              <Select
+                value={partnerId}
+                onValueChange={(v) => { setPartnerId(v); }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="เลือก customer…" />
                 </SelectTrigger>
@@ -428,83 +507,6 @@ export default function NewProposalPage() {
             </div>
           </div>
 
-          {/* Scope */}
-          <div className="space-y-2">
-            <Label className="text-sm">ขอบเขตราคา</Label>
-            <div className="grid grid-cols-3 gap-2 max-w-sm">
-              {[
-                { value: "customer", label: "ทุกสาขา" },
-                { value: "site_group", label: "Site Group" },
-                { value: "delivery_site", label: "สาขาเดียว" },
-              ].map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => { setScopeType(opt.value as typeof scopeType); setSiteGroupId(""); setDeliverySiteId(""); }}
-                  className={`rounded-md border px-3 py-1.5 text-sm transition-colors ${
-                    scopeType === opt.value
-                      ? "border-[#1a1a1a] bg-[#1a1a1a] text-white font-medium"
-                      : "border-border hover:bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-
-            {scopeType === "site_group" && (
-              <div className="max-w-xs">
-                {!partnerId ? (
-                  <p className="text-xs text-muted-foreground">เลือก partner ก่อน</p>
-                ) : partnerSiteGroups.length === 0 ? (
-                  <div className="flex items-center gap-1.5 text-xs text-yellow-700">
-                    <AlertTriangle className="w-3.5 h-3.5" />
-                    ไม่มี site group สำหรับ partner นี้
-                  </div>
-                ) : (
-                  <Select value={siteGroupId} onValueChange={setSiteGroupId}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="เลือก site group…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {partnerSiteGroups.map((g) => (
-                        <SelectItem key={g.id} value={g.id.toString()}>{g.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            )}
-
-            {scopeType === "delivery_site" && (
-              <div className="max-w-xs">
-                {!partnerId ? (
-                  <p className="text-xs text-muted-foreground">เลือก partner ก่อน</p>
-                ) : deliverySites.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">ไม่มีสาขาสำหรับ partner นี้</p>
-                ) : (
-                  <Select value={deliverySiteId} onValueChange={setDeliverySiteId}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="เลือกสาขา…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {deliverySites.map((s) => (
-                        <SelectItem key={s.id} value={s.id.toString()}>
-                          <span className="flex items-center gap-1.5">
-                            <MapPin className="w-3 h-3 text-muted-foreground" />
-                            {s.displayName}
-                            {s.province ? ` (${s.province})` : ""}
-                          </span>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Notes */}
           <div className="space-y-1.5">
             <Label className="text-sm">หมายเหตุ</Label>
             <Textarea
@@ -518,7 +520,7 @@ export default function NewProposalPage() {
         </CardContent>
       </Card>
 
-      {/* ── Section 2: SKU Lines ── */}
+      {/* SKU Lines */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between gap-3 flex-wrap">
@@ -532,19 +534,17 @@ export default function NewProposalPage() {
                 )}
               </CardTitle>
               <p className="text-xs text-muted-foreground mt-0.5">
-                รายการ SKU ที่เคย order — เลือกรายการที่ต้องการใส่ proposal
+                กรอกราคาฐาน (ทุกสาขา) และราคาพิเศษสำหรับกลุ่มสาขาที่ต้องการ
               </p>
             </div>
-            <div className="flex items-center gap-2">
-              {partnerId && (
-                <Button size="sm" variant="outline" onClick={loadPartnerItems} disabled={loadingItems}>
-                  {loadingItems
-                    ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
-                    : <RefreshCw className="w-3.5 h-3.5 mr-1" />}
-                  โหลดใหม่
-                </Button>
-              )}
-            </div>
+            {partnerId && (
+              <Button size="sm" variant="outline" onClick={loadPartnerItems} disabled={loadingItems}>
+                {loadingItems
+                  ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" />
+                  : <RefreshCw className="w-3.5 h-3.5 mr-1" />}
+                โหลดใหม่
+              </Button>
+            )}
           </div>
           {partnerItems.length > 0 && (
             <div className="mt-3 relative max-w-xs">
@@ -571,14 +571,14 @@ export default function NewProposalPage() {
           ) : partnerItems.length === 0 ? (
             <div className="py-12 flex flex-col items-center gap-2 text-sm text-muted-foreground">
               <AlertTriangle className="w-5 h-5 text-yellow-500" />
-              ไม่พบ order ของ partner นี้ — ไม่มีข้อมูล SKU
+              ไม่พบ order ของ partner นี้
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b bg-muted/40">
-                    <th className="w-10 px-3 py-2.5 text-left">
+                    <th className="w-10 px-3 py-2.5 text-left sticky left-0 bg-muted/40 z-10">
                       <input
                         type="checkbox"
                         checked={filteredItems.length > 0 && filteredItems.every((i) => lines[i.id]?.checked)}
@@ -586,37 +586,68 @@ export default function NewProposalPage() {
                         className="rounded"
                       />
                     </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                      SKU / ชื่อสินค้า
-                    </th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-24">
+                    <SortTh label="ชื่อสินค้า" sortK="name" current={sortKey} dir={sortDir} onSort={toggleSort} className="min-w-[180px]" />
+                    <SortTh label="SKU" sortK="sku" current={sortKey} dir={sortDir} onSort={toggleSort} className="min-w-[90px]" />
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-20">
                       ขนาด
                     </th>
-                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-20">
-                      ฟอง/unit
+                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-14">
+                      ฟอง
                     </th>
-                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-36">
-                      <span className="flex items-center justify-end gap-1.5">
+                    {/* External columns */}
+                    <th className="px-0 border-l border-muted" colSpan={2}>
+                      <div className="px-3 pt-1.5 pb-0 text-[9px] font-semibold text-muted-foreground/60 uppercase tracking-widest">External</div>
+                      <div className="flex">
+                        <SortTh label="Item #" sortK="item_number" current={sortKey} dir={sortDir} onSort={toggleSort} className="min-w-[90px] border-0" />
+                        <SortTh label="Barcode" sortK="barcode" current={sortKey} dir={sortDir} onSort={toggleSort} className="min-w-[110px] border-0" />
+                      </div>
+                    </th>
+                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-32">
+                      <span className="flex items-center justify-end gap-1">
                         {refPriceLoading && <Loader2 className="w-3 h-3 animate-spin" />}
                         ราคาอ้างอิง ฿
                       </span>
                     </th>
-                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-36">
-                      ราคาที่เสนอ ฿
+                    {/* Base price — always customer scope */}
+                    <th className="px-3 py-2.5 text-right text-xs font-semibold text-foreground uppercase tracking-wide w-32 bg-amber-50 border-l border-amber-200">
+                      ราคาฐาน (ทุกสาขา) ฿
                     </th>
+                    {/* Exception columns per site group */}
+                    {partnerSiteGroups.map((g) => (
+                      <th
+                        key={g.id}
+                        className="px-3 py-2.5 text-right text-xs font-medium text-blue-700 uppercase tracking-wide w-32 bg-blue-50 border-l border-blue-100"
+                      >
+                        {g.name} ฿
+                      </th>
+                    ))}
+                    {/* Add column button */}
+                    {partnerId && (
+                      <th className="px-2 py-2.5 bg-muted/20 border-l border-dashed border-muted-foreground/20">
+                        <button
+                          type="button"
+                          onClick={() => setSiteGroupManagerOpen(true)}
+                          className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-muted-foreground whitespace-nowrap transition-colors"
+                          title="จัดการกลุ่มสาขา"
+                        >
+                          <Settings2 className="w-3 h-3" />
+                          {partnerSiteGroups.length === 0 ? "เพิ่มกลุ่มสาขา" : "จัดการ"}
+                        </button>
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y">
                   {filteredItems.map((item) => {
-                    const line = lines[item.id] ?? { checked: false, referencePrice: "", proposalPrice: "" };
+                    const line = lines[item.id] ?? { checked: false, referencePrice: "", basePrice: "", exceptions: {} };
                     return (
                       <tr
                         key={item.id}
                         className={`transition-colors ${
-                          line.checked ? "bg-white hover:bg-[#fafbfc]" : "bg-muted/20 opacity-50"
+                          line.checked ? "hover:bg-muted/20" : "bg-muted/10 opacity-50"
                         }`}
                       >
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-2 sticky left-0 bg-white z-10">
                           <input
                             type="checkbox"
                             checked={line.checked}
@@ -624,50 +655,86 @@ export default function NewProposalPage() {
                             className="rounded"
                           />
                         </td>
-                        <td className="px-3 py-2.5">
-                          <div className="font-medium leading-snug">{item.name}</div>
-                          {item.sku && (
-                            <div className="text-xs text-muted-foreground font-mono mt-0.5">{item.sku}</div>
-                          )}
+                        {/* Name */}
+                        <td className="px-3 py-2">
+                          <div className="font-medium leading-snug text-sm">{item.name}</div>
                         </td>
-                        <td className="px-3 py-2.5">
+                        {/* SKU Code */}
+                        <td className="px-3 py-2">
+                          <div className="text-xs text-muted-foreground font-mono">{item.sku ?? "—"}</div>
+                        </td>
+                        {/* Size */}
+                        <td className="px-3 py-2">
                           <SizePill item={item} />
                         </td>
-                        <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">
+                        {/* Eggs */}
+                        <td className="px-3 py-2 text-right tabular-nums text-muted-foreground text-xs">
                           {item.eggs_per_pack ?? "—"}
                         </td>
-                        <td className="px-3 py-2.5">
-                          <Input
-                            type="number"
-                            step="0.01"
-                            disabled={!line.checked}
-                            value={line.referencePrice}
-                            onChange={(e) => updateLinePrice(item.id, "referencePrice", e.target.value)}
-                            placeholder="0.00"
-                            className="h-7 text-sm text-right tabular-nums w-full"
-                          />
-                          {line.referencePrice && item.eggs_per_pack ? (
-                            <div className="text-[10px] text-muted-foreground text-right mt-0.5 tabular-nums">
-                              {(parseFloat(line.referencePrice) / item.eggs_per_pack).toFixed(2)} ฿/ฟอง
-                            </div>
-                          ) : null}
+                        {/* External: Item # */}
+                        <td className="px-3 py-2 border-l border-muted">
+                          <div className="text-xs font-mono text-muted-foreground">
+                            {item.customer_item_number ?? item.item_number ?? <span className="opacity-30">—</span>}
+                          </div>
                         </td>
-                        <td className="px-3 py-2.5">
+                        {/* External: Barcode */}
+                        <td className="px-3 py-2">
+                          <div className="text-xs font-mono text-muted-foreground">
+                            {item.barcode_label ?? <span className="opacity-30">—</span>}
+                          </div>
+                        </td>
+                        {/* Reference price (read-only) */}
+                        <td className="px-3 py-2 text-right">
+                          {line.referencePrice ? (
+                            <div>
+                              <div className="tabular-nums text-sm text-muted-foreground">{parseFloat(line.referencePrice).toFixed(2)}</div>
+                              {item.eggs_per_pack && (
+                                <div className="text-[10px] text-muted-foreground/60 tabular-nums">
+                                  {(parseFloat(line.referencePrice) / item.eggs_per_pack).toFixed(2)}/ฟอง
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground/40">—</span>
+                          )}
+                        </td>
+                        {/* Base price input */}
+                        <td className="px-3 py-2 bg-amber-50/50 border-l border-amber-100">
                           <Input
                             type="number"
                             step="0.01"
                             disabled={!line.checked}
-                            value={line.proposalPrice}
-                            onChange={(e) => updateLinePrice(item.id, "proposalPrice", e.target.value)}
+                            value={line.basePrice}
+                            onChange={(e) => setBasePrice(item.id, e.target.value)}
                             placeholder="0.00"
                             className="h-7 text-sm text-right tabular-nums w-full font-medium"
                           />
-                          {line.proposalPrice && item.eggs_per_pack ? (
+                          {line.basePrice && item.eggs_per_pack ? (
                             <div className="text-[10px] text-muted-foreground text-right mt-0.5 tabular-nums">
-                              {(parseFloat(line.proposalPrice) / item.eggs_per_pack).toFixed(2)} ฿/ฟอง
+                              {(parseFloat(line.basePrice) / item.eggs_per_pack).toFixed(2)}/ฟอง
                             </div>
                           ) : null}
                         </td>
+                        {/* Exception inputs per site group */}
+                        {partnerSiteGroups.map((g) => (
+                          <td key={g.id} className="px-3 py-2 bg-blue-50/30 border-l border-blue-50">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              disabled={!line.checked}
+                              value={line.exceptions[g.id] ?? ""}
+                              onChange={(e) => setException(item.id, g.id, e.target.value)}
+                              placeholder={line.basePrice || "0.00"}
+                              className="h-7 text-sm text-right tabular-nums w-full"
+                            />
+                            {(line.exceptions[g.id] ?? "") && item.eggs_per_pack ? (
+                              <div className="text-[10px] text-muted-foreground text-right mt-0.5 tabular-nums">
+                                {(parseFloat(line.exceptions[g.id]) / item.eggs_per_pack).toFixed(2)}/ฟอง
+                              </div>
+                            ) : null}
+                          </td>
+                        ))}
+                        {partnerId && <td className="bg-muted/10 border-l border-dashed border-muted-foreground/20" />}
                       </tr>
                     );
                   })}
@@ -678,7 +745,19 @@ export default function NewProposalPage() {
         </CardContent>
       </Card>
 
-      {/* ── Sticky footer ── */}
+      <SiteGroupManagerDialog
+        open={siteGroupManagerOpen}
+        siteGroups={partnerSiteGroups}
+        partners={partners}
+        defaultPartnerId={partnerId ? Number(partnerId) : undefined}
+        onClose={() => setSiteGroupManagerOpen(false)}
+        onRefresh={async () => {
+          await fetchSiteGroups();
+          setSiteGroupManagerOpen(false);
+        }}
+      />
+
+      {/* Sticky footer */}
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#d6d8dc] px-6 py-3 flex items-center justify-between gap-4 z-10">
         <div className="text-sm text-muted-foreground">
           {checkedCount > 0 ? (

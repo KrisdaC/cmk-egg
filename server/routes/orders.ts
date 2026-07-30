@@ -516,7 +516,7 @@ router.get("/daily", async (req, res) => {
     // Fetch trips for this date with vehicle and driver names
     const tripRows = await db.execute(sql`
       SELECT t.id, t.delivery_date, t.production_round, t.trip_number, t.name, t.notes,
-             t.vehicle_id, v.plate_number AS vehicle_plate, v.vehicle_type,
+             t.vehicle_id, v.plate_number AS vehicle_plate, v.vehicle_type, v.capacity_eggs,
              t.driver_id,  d.name         AS driver_name
       FROM trips t
       LEFT JOIN vehicles v ON v.id = t.vehicle_id
@@ -534,6 +534,7 @@ router.get("/daily", async (req, res) => {
       vehicleId: r.vehicle_id ?? null,
       vehiclePlate: r.vehicle_plate ?? null,
       vehicleType: r.vehicle_type ?? null,
+      vehicleCapacityEggs: r.capacity_eggs != null ? Number(r.capacity_eggs) : null,
       driverId: r.driver_id ?? null,
       driverName: r.driver_name ?? null,
     }));

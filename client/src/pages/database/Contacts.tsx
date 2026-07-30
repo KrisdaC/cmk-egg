@@ -4,9 +4,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Edit, Trash2, Phone, Mail, Loader2, ArrowUpDown, ArrowUp, ArrowDown, User } from "lucide-react";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import {
@@ -301,117 +298,74 @@ export default function Contacts() {
               <p className="text-sm">เพิ่มผู้ติดต่อเพื่อเริ่มต้นใช้งาน</p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('fullName')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-name"
-                    >
-                      ชื่อ {getSortIcon('fullName')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('account')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-account"
-                    >
-                      ลูกค้า {getSortIcon('account')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('role')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-role"
-                    >
-                      ตำแหน่ง {getSortIcon('role')}
-                    </button>
-                  </TableHead>
-                  <TableHead>โทรศัพท์</TableHead>
-                  <TableHead>อีเมล</TableHead>
-                  <TableHead>ไลน์ไอดี</TableHead>
-                  <TableHead>
-                    <button 
-                      type="button"
-                      onClick={() => handleSort('isPrimary')} 
-                      className="flex items-center hover:text-foreground transition-colors"
-                      data-testid="sort-primary"
-                    >
-                      หลัก {getSortIcon('isPrimary')}
-                    </button>
-                  </TableHead>
-                  <TableHead className="w-[100px]">จัดการ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedContacts.map((contact) => (
-                  <TableRow key={contact.id} data-testid={`row-contact-${contact.id}`}>
-                    <TableCell className="font-medium">{contact.fullName}</TableCell>
-                    <TableCell>
-                      {contact.account ? (
-                        <Badge variant="secondary">{contact.account.nickname}</Badge>
-                      ) : <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell>
-                      {contact.role ? (
-                        <span>{getRoleLabel(contact.role)}</span>
-                      ) : <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell>
-                      {(contact.mobile || contact.phone) ? (
-                        <div className="flex items-center gap-1 text-sm">
-                          <Phone className="w-3 h-3 text-muted-foreground" />
-                          {contact.mobile || contact.phone}
-                        </div>
-                      ) : <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell>
-                      {contact.email ? (
-                        <div className="flex items-center gap-1 text-sm">
-                          <Mail className="w-3 h-3 text-muted-foreground" />
-                          <span className="truncate max-w-[150px]">{contact.email}</span>
-                        </div>
-                      ) : <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell>
-                      {contact.lineId || <span className="text-muted-foreground">-</span>}
-                    </TableCell>
-                    <TableCell>
-                      {contact.isPrimary && (
-                        <Badge variant="default" className="bg-primary/90">หลัก</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => openEditDialog(contact)}
-                          data-testid={`button-edit-${contact.id}`}
-                        >
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => setDeleteContactId(contact.id)}
-                          data-testid={`button-delete-${contact.id}`}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+            <div className="divide-y divide-border rounded-md border overflow-hidden">
+              <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "1fr 130px 130px 130px 170px 90px 60px 80px"}}>
+                <button type="button" onClick={() => handleSort('fullName')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-name">
+                  ชื่อ {getSortIcon('fullName')}
+                </button>
+                <button type="button" onClick={() => handleSort('account')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-account">
+                  ลูกค้า {getSortIcon('account')}
+                </button>
+                <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-role">
+                  ตำแหน่ง {getSortIcon('role')}
+                </button>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">โทรศัพท์</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">อีเมล</div>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ไลน์ไอดี</div>
+                <button type="button" onClick={() => handleSort('isPrimary')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors" data-testid="sort-primary">
+                  หลัก {getSortIcon('isPrimary')}
+                </button>
+                <div />
+              </div>
+              {filteredAndSortedContacts.map((contact, idx) => (
+                <div
+                  key={contact.id}
+                  className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                  style={{gridTemplateColumns: "1fr 130px 130px 130px 170px 90px 60px 80px"}}
+                  data-testid={`row-contact-${contact.id}`}
+                >
+                  <div className="text-xs font-medium">{contact.fullName}</div>
+                  <div>
+                    {contact.account ? (
+                      <Badge variant="secondary" className="text-[10px]">{contact.account.nickname}</Badge>
+                    ) : <span className="text-xs text-muted-foreground">-</span>}
+                  </div>
+                  <div className="text-xs">
+                    {contact.role ? getRoleLabel(contact.role) : <span className="text-muted-foreground">-</span>}
+                  </div>
+                  <div className="text-xs">
+                    {(contact.mobile || contact.phone) ? (
+                      <div className="flex items-center gap-1">
+                        <Phone className="w-3 h-3 text-muted-foreground shrink-0" />
+                        {contact.mobile || contact.phone}
                       </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                    ) : <span className="text-muted-foreground">-</span>}
+                  </div>
+                  <div className="text-xs">
+                    {contact.email ? (
+                      <div className="flex items-center gap-1">
+                        <Mail className="w-3 h-3 text-muted-foreground shrink-0" />
+                        <span className="truncate max-w-[140px]">{contact.email}</span>
+                      </div>
+                    ) : <span className="text-muted-foreground">-</span>}
+                  </div>
+                  <div className="text-xs">{contact.lineId || <span className="text-muted-foreground">-</span>}</div>
+                  <div>
+                    {contact.isPrimary && (
+                      <Badge variant="default" className="bg-primary/90 text-[10px]">หลัก</Badge>
+                    )}
+                  </div>
+                  <div className="flex gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEditDialog(contact)} data-testid={`button-edit-${contact.id}`}>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteContactId(contact.id)} data-testid={`button-delete-${contact.id}`}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>

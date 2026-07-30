@@ -1,8 +1,9 @@
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Users, Globe, Shield, Plus, Edit, Trash2 } from "lucide-react";
+import { Settings, Users, Globe, Shield, Plus, Edit, Trash2, Factory, CheckCircle2, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -27,6 +28,16 @@ const roles = [
   { name: "Driver", permissions: "View deliveries only", users: 8 },
 ];
 
+interface SystemSetting {
+  id: number;
+  key: string;
+  value: string | null;
+  label: string | null;
+  description: string | null;
+  valueType: string | null;
+  updatedAt: string | null;
+}
+
 export default function AppConfig() {
   return (
     <div className="space-y-6">
@@ -35,8 +46,12 @@ export default function AppConfig() {
         <p className="text-muted-foreground">System settings and user management</p>
       </div>
 
-      <Tabs defaultValue="users" className="w-full">
+      <Tabs defaultValue="operations" className="w-full">
         <TabsList>
+          <TabsTrigger value="operations" data-testid="tab-operations">
+            <Factory className="w-4 h-4 mr-2" />
+            Operations
+          </TabsTrigger>
           <TabsTrigger value="users" data-testid="tab-users">
             <Users className="w-4 h-4 mr-2" />
             Users
@@ -54,6 +69,10 @@ export default function AppConfig() {
             Language
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="operations" className="mt-4">
+          <OperationsSettings />
+        </TabsContent>
 
         <TabsContent value="users" className="mt-4">
           <Card>
@@ -272,6 +291,138 @@ export default function AppConfig() {
           </Card>
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// =============================================
+// OPERATIONS SETTINGS TAB
+// =============================================
+
+const OPERATION_KEYS = [
+  {
+    key: "trays_per_m3",
+    label: "จำนวนถาด / m³",
+    description: "จำนวนถาดที่บรรจุในพื้นที่ 1 ลูกบาศก์เมตร ใช้คำนวณพื้นที่จัดเก็บและโลจิสติกส์",
+    unit: "ถาด",
+    valueType: "integer",
+  },
+  {
+    key: "num_rounds",
+    label: "จำนวนรอบการผลิต",
+    description: "จำนวนรอบการผลิตต่อวัน ใช้สำหรับวางแผนการผลิตและจัดสรรทรัพยากร",
+    unit: "รอบ / วัน",
+    valueType: "integer",
+  },
+] as const;
+
+function OperationsSettings() {
+  const [settings, setSettings] = useState<Record<string, string>>({});
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, boolean>>({});
+  const [loading, setLoading] = useState(true);
+
+  const fetchSettings = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/settings");
+      if (res.ok) {
+        const rows: SystemSetting[] = await res.json();
+        const map: Record<string, string> = {};
+        rows.forEach((r) => { map[r.key] = r.value ?? ""; });
+        setSettings(map);
+        setDrafts(map);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { fetchSettings(); }, [fetchSettings]);
+
+  const handleSave = async (key: string) => {
+    setSaving((p) => ({ ...p, [key]: true }));
+    try {
+      await fetch(`/api/settings/${key}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ value: drafts[key] }),
+      });
+      setSettings((p) => ({ ...p, [key]: drafts[key] }));
+      setSaved((p) => ({ ...p, [key]: true }));
+      setTimeout(() => setSaved((p) => ({ ...p, [key]: false })), 2000);
+    } finally {
+      setSaving((p) => ({ ...p, [key]: false }));
+    }
+  };
+
+  const isDirty = (key: string) => drafts[key] !== settings[key];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        <span className="text-sm">กำลังโหลด…</span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg">การตั้งค่าการผลิต</CardTitle>
+          <CardDescription>
+            ค่าคงที่ที่ใช้ในการคำนวณการผลิต โลจิสติกส์ และการวางแผน
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="divide-y">
+            {OPERATION_KEYS.map(({ key, label, description, unit }) => (
+              <div key={key} className="flex items-center justify-between gap-6 py-4 first:pt-0 last:pb-0">
+                <div className="flex-1 min-w-0">
+                  <Label className="text-sm font-medium">{label}</Label>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">{description}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  <div className="relative">
+                    <Input
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={drafts[key] ?? ""}
+                      onChange={(e) =>
+                        setDrafts((p) => ({ ...p, [key]: e.target.value }))
+                      }
+                      className="w-28 text-right tabular-nums pr-1"
+                    />
+                  </div>
+                  <span className="text-sm text-muted-foreground w-16 shrink-0">{unit}</span>
+                  <Button
+                    size="sm"
+                    variant={saved[key] ? "outline" : "default"}
+                    disabled={saving[key] || !isDirty(key)}
+                    onClick={() => handleSave(key)}
+                    className="w-20"
+                  >
+                    {saving[key] ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : saved[key] ? (
+                      <>
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1 text-green-600" />
+                        <span className="text-green-600">Saved</span>
+                      </>
+                    ) : (
+                      "บันทึก"
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

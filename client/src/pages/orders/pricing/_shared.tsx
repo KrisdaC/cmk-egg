@@ -24,6 +24,7 @@ export interface PricingAssumption {
   id: number;
   pricingWeekId: number;
   partnerId: number | null;
+  siteGroupId: number | null;
   component: string;
   value: string;
   unit: string | null;
@@ -44,19 +45,25 @@ export interface PricingWeek {
   assumptions?: PricingAssumption[];
 }
 
+export interface ProposalLineException {
+  siteGroupId: number;
+  price: string;
+}
+
 export interface ProposalLine {
   id: number;
   referencePrice: string | null;
-  proposalPrice: string | null;
-  counterPrice: string | null;
-  finalLockedPrice: string | null;
+  basePrice: string | null;
   notes: string | null;
+  exceptions: ProposalLineException[];
   item: {
     id: number;
     sku: string | null;
     name: string;
     baseUnit: string | null;
     eggsPerPack: number | null;
+    primarySize: string | null;
+    secondarySize: string | null;
   } | null;
 }
 
@@ -68,8 +75,13 @@ export interface ProposalRow {
   siteGroupId: number | null;
   deliverySiteId: number | null;
   submittedBy: string | null;
+  reviewedBy: string | null;
+  reviewedByUser: { email: string; firstName: string | null; lastName: string | null } | null;
   approvedBy: string | null;
+  approvedByUser: { email: string; firstName: string | null; lastName: string | null } | null;
   approvedAt: string | null;
+  effectiveDate: string | null;
+  effectiveDateTo: string | null;
   notes: string | null;
   createdAt: string;
   partner: Partner | null;
@@ -115,15 +127,26 @@ export interface SiteGroup {
   createdAt: string;
   partner: Partner | null;
   members?: SiteGroupMember[];
+  memberSiteIds?: number[];
 }
 
 // =============================================
 // CONSTANTS
 // =============================================
 
+export const SIZE_PILL: Record<string, string> = {
+  "0": "bg-[#FCEBEB] text-[#791F1F]",
+  "1": "bg-[#FAEEDA] text-[#633806]",
+  "2": "bg-[#EAF3DE] text-[#27500A]",
+  "3": "bg-[#E1F5EE] text-[#085041]",
+  "4": "bg-[#E6F1FB] text-[#0C447C]",
+  "5": "bg-[#EEEDFE] text-[#3C3489]",
+};
+
 export const ASSUMPTION_COMPONENTS = [
   { key: "transport_in",  label: "ขนส่งเข้า",   defaultUnit: "บาท" },
   { key: "transport_out", label: "ขนส่งออก",   defaultUnit: "บาท" },
+  { key: "dc_cost",       label: "DC Cost",     defaultUnit: "%"   },
   { key: "disty_cost",    label: "Disty cost",  defaultUnit: "%"   },
   { key: "operations",    label: "ดำเนินงาน",   defaultUnit: "บาท" },
   { key: "labor",         label: "ค่าแรง",      defaultUnit: "บาท" },
@@ -131,27 +154,28 @@ export const ASSUMPTION_COMPONENTS = [
   { key: "egg_loss",      label: "ไข่สูญเสีย",  defaultUnit: "บาท" },
 ];
 
-export const STATUS_COLORS: Record<string, { variant: "default" | "secondary" | "outline" | "destructive"; label: string }> = {
-  draft: { variant: "outline", label: "Draft" },
-  approved: { variant: "secondary", label: "Approved" },
-  active: { variant: "default", label: "Active" },
-  archived: { variant: "outline", label: "Archived" },
-  submitted: { variant: "secondary", label: "Submitted" },
-  counter_pending: { variant: "default", label: "Counter Pending" },
-  rejected: { variant: "destructive", label: "Rejected" },
-  replaced: { variant: "outline", label: "Replaced" },
+const STATUS_TAG: Record<string, { cls: string; label: string }> = {
+  draft:    { cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400",   label: "ร่าง" },
+  reviewed: { cls: "bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-400", label: "ผ่านตรวจสอบ" },
+  approved: { cls: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400",       label: "อนุมัติแล้ว" },
+  active:   { cls: "bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400",   label: "ใช้งาน" },
+  archived: { cls: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",      label: "Archived" },
+  replaced: { cls: "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",      label: "Replaced" },
 };
+
+// keep for any callers that still import STATUS_COLORS
+export const STATUS_COLORS = STATUS_TAG;
 
 // =============================================
 // SHARED COMPONENTS
 // =============================================
 
 export function StatusBadge({ status }: { status: string }) {
-  const cfg = STATUS_COLORS[status] ?? { variant: "outline" as const, label: status };
+  const cfg = STATUS_TAG[status] ?? { cls: "bg-slate-100 text-slate-600", label: status };
   return (
-    <Badge variant={cfg.variant} className="capitalize">
+    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${cfg.cls}`}>
       {cfg.label}
-    </Badge>
+    </span>
   );
 }
 
@@ -190,10 +214,10 @@ export function fmt(val: string | null | undefined): string {
 // =============================================
 
 const PRICING_STEPS = [
-  { step: 1, label: "Global Assumptions", url: "/orders/pricing/assumptions" },
-  { step: 2, label: "Reference Price", url: "/orders/pricing/reference" },
-  { step: 3, label: "Proposals", url: "/orders/pricing/proposals" },
-  { step: 4, label: "Active Prices", url: "/orders/pricing/active-prices" },
+  { step: 1, label: "ต้นทุนรวม", url: "/orders/pricing/assumptions" },
+  { step: 2, label: "สร้างใบเสนอราคา", url: "/orders/pricing/simulation" },
+  { step: 3, label: "ข้อเสนอราคา", url: "/orders/pricing/proposals" },
+  { step: 4, label: "ราคาที่ใช้งาน", url: "/orders/pricing/active-prices" },
 ];
 
 export function PricingStepNav() {

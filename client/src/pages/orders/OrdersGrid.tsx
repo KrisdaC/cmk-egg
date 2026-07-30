@@ -1116,8 +1116,6 @@ export default function OrdersGrid() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [bulkBusy, setBulkBusy] = useState(false);
 
-  // Subtab (orders only for now)
-  const [subtab] = useState<"orders" | "planning" | "invoice">("orders");
 
   // Upload PO
   const [showUploadMenu, setShowUploadMenu] = useState(false);
@@ -1711,23 +1709,12 @@ export default function OrdersGrid() {
 
         {/* Sub-tabs */}
         <div className="flex items-end gap-0 border-b border-[#e3e5e8]">
-          {(["orders", "planning", "invoice"] as const).map(tab => (
-            <button
-              key={tab}
-              className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors -mb-px ${
-                subtab === tab
-                  ? "border-[#1a1a1a] text-[#1a1a1a]"
-                  : "border-transparent text-[#888] cursor-not-allowed opacity-60"
-              }`}
-            >
-              {tab === "orders" ? "Orders" : tab === "planning" ? "Planning" : "Invoice"}
-              {tab === "orders" && (
-                <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#e5e7eb] text-[10px] font-bold text-[#555]">
-                  {filtered.length}
-                </span>
-              )}
-            </button>
-          ))}
+          <button className="px-4 py-2 text-sm font-medium border-b-2 border-[#1a1a1a] text-[#1a1a1a] -mb-px">
+            Orders
+            <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#e5e7eb] text-[10px] font-bold text-[#555]">
+              {filtered.length}
+            </span>
+          </button>
         </div>
 
         {/* Action row */}

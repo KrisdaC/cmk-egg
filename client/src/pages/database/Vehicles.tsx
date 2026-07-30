@@ -13,14 +13,6 @@ import {
   Thermometer,
   Loader2,
 } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { getVehicles, deleteVehicle, upsertVehicle } from "@/lib/api/vehicles";
 import {
   Dialog,
@@ -70,6 +62,7 @@ export default function Vehicles() {
       plateNumber: "",
       vehicleType: "",
       capacity: undefined,
+      capacityEggs: undefined,
       costPerKm: undefined,
       isActive: true,
     },
@@ -86,6 +79,7 @@ export default function Vehicles() {
       capacity: editingVehicle.capacity
         ? Number(editingVehicle.capacity)
         : undefined,
+      capacityEggs: editingVehicle.capacityEggs ?? undefined,
       costPerKm: editingVehicle.costPerKm
         ? Number(editingVehicle.costPerKm)
         : undefined,
@@ -160,6 +154,7 @@ export default function Vehicles() {
               plateNumber: "",
               vehicleType: "",
               capacity: undefined,
+              capacityEggs: undefined,
               costPerKm: undefined,
               isActive: true,
             });
@@ -187,76 +182,72 @@ export default function Vehicles() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>License Plate</TableHead>
-                <TableHead>Vehicle Type</TableHead>
-                <TableHead>Capacity (m³)</TableHead>
-                <TableHead>Temp Control</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-[100px]">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredVehicles?.map((vehicle) => (
-                <TableRow
-                  key={vehicle.id}
-                  data-testid={`row-vehicle-${vehicle.id}`}
-                >
-                  <TableCell className="font-mono font-medium">
-                    <div className="flex items-center gap-2">
-                      <CarFront className="w-4 h-4 text-muted-foreground" />
-                      {vehicle.plateNumber}
+          <div className="divide-y divide-border rounded-md border overflow-hidden">
+            <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "180px 1fr 110px 130px 110px 90px 80px"}}>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">License Plate</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Vehicle Type</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Capacity (m³)</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Capacity (Eggs)</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Temp Control</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+              <div />
+            </div>
+            {filteredVehicles?.map((vehicle, idx) => (
+              <div
+                key={vehicle.id}
+                className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                style={{gridTemplateColumns: "180px 1fr 110px 130px 110px 90px 80px"}}
+                data-testid={`row-vehicle-${vehicle.id}`}
+              >
+                <div className="text-xs font-mono font-medium flex items-center gap-1.5">
+                  <CarFront className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                  {vehicle.plateNumber}
+                </div>
+                <div className="text-xs">{vehicle.vehicleType}</div>
+                <div className="text-xs">{vehicle.capacity} m³</div>
+                <div className="text-xs">
+                  {vehicle.capacityEggs != null
+                    ? vehicle.capacityEggs.toLocaleString()
+                    : <span className="text-muted-foreground">—</span>}
+                </div>
+                <div className="text-xs">
+                  {vehicle.tempControl ? (
+                    <div className="flex items-center gap-1 text-blue-600">
+                      <Thermometer className="w-3.5 h-3.5" />
+                      Yes
                     </div>
-                  </TableCell>
-                  <TableCell>{vehicle.vehicleType}</TableCell>
-                  <TableCell>{vehicle.capacity} m³</TableCell>
-                  <TableCell>
-                    {vehicle.tempControl ? (
-                      <div className="flex items-center gap-1 text-blue-600">
-                        <Thermometer className="w-4 h-4" />
-                        Yes
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">No</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={vehicle.isActive ? "secondary" : "outline"}
-                      className="capitalize"
-                    >
-                      {vehicle.isActive ? "active" : "inactive"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        data-testid={`button-edit-${vehicle.id}`}
-                        onClick={() => {
-                          setEditingVehicle(vehicle);
-                          setDialogOpen(true);
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        data-testid={`button-delete-${vehicle.id}`}
-                        onClick={() => setDeleteVehicleId(vehicle.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                  ) : (
+                    <span className="text-muted-foreground">No</span>
+                  )}
+                </div>
+                <div>
+                  <Badge variant={vehicle.isActive ? "secondary" : "outline"} className="capitalize text-[10px]">
+                    {vehicle.isActive ? "active" : "inactive"}
+                  </Badge>
+                </div>
+                <div className="flex gap-0.5">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    data-testid={`button-edit-${vehicle.id}`}
+                    onClick={() => { setEditingVehicle(vehicle); setDialogOpen(true); }}
+                  >
+                    <Edit className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    data-testid={`button-delete-${vehicle.id}`}
+                    onClick={() => setDeleteVehicleId(vehicle.id)}
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
         </CardContent>
       </Card>
 
@@ -353,7 +344,7 @@ export default function Vehicles() {
                       <FormControl>
                         <Input
                           type="number"
-                          placeholder="1000"
+                          placeholder="15"
                           value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(
@@ -370,21 +361,20 @@ export default function Vehicles() {
 
                 <FormField
                   control={vehicleForm.control}
-                  name="costPerKm"
+                  name="capacityEggs"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cost / KM</FormLabel>
+                      <FormLabel>Capacity (Eggs)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
-                          step="0.01"
-                          placeholder="12.50"
+                          placeholder="75000"
                           value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(
                               e.target.value === ""
                                 ? undefined
-                                : e.target.value,
+                                : Number(e.target.value),
                             )
                           }
                         />
@@ -393,6 +383,31 @@ export default function Vehicles() {
                   )}
                 />
               </div>
+
+              <FormField
+                control={vehicleForm.control}
+                name="costPerKm"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cost / KM</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        placeholder="12.50"
+                        value={field.value ?? ""}
+                        onChange={(e) =>
+                          field.onChange(
+                            e.target.value === ""
+                              ? undefined
+                              : e.target.value,
+                          )
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={vehicleForm.control}

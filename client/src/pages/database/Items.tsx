@@ -9,14 +9,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Search, Edit, Trash2, Loader2, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useFieldArray } from "react-hook-form";
@@ -652,104 +644,77 @@ export default function Items() {
               <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
             </div>
           ) : (
-            <Table className="border-separate border-spacing-y-1.5">
-              <TableHeader>
-                <TableRow>
-                  <TableHead>
-                    <button type="button" onClick={() => handleSort('sku')} className="flex items-center hover:text-foreground transition-colors">
-                      SKU {getSortIcon('sku')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button type="button" onClick={() => handleSort('name')} className="flex items-center hover:text-foreground transition-colors">
-                      ชื่อสินค้า {getSortIcon('name')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button type="button" onClick={() => handleSort('customer')} className="flex items-center hover:text-foreground transition-colors">
-                      ลูกค้า {getSortIcon('customer')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button type="button" onClick={() => handleSort('role')} className="flex items-center hover:text-foreground transition-colors">
-                      Role {getSortIcon('role')}
-                    </button>
-                  </TableHead>
-                  <TableHead>
-                    <button type="button" onClick={() => handleSort('type')} className="flex items-center hover:text-foreground transition-colors">
-                      ประเภท {getSortIcon('type')}
-                    </button>
-                  </TableHead>
-                  <TableHead>ขนาด</TableHead>
-                  <TableHead>
-                    <button type="button" onClick={() => handleSort('status')} className="flex items-center hover:text-foreground transition-colors">
-                      สถานะ {getSortIcon('status')}
-                    </button>
-                  </TableHead>
-                  <TableHead className="w-[100px]">จัดการ</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredAndSortedItems.map((item) => (
-                  <TableRow key={item.id} className={ROW_CLS}>
-                    <TableCell className="font-mono text-sm">
-                      {item.sku || "-"}
-                    </TableCell>
-                    <TableCell className="font-medium max-w-[250px]">
-                      <div className="truncate" title={item.name}>
-                        {item.name}
+            <div className="divide-y divide-border rounded-md border overflow-hidden">
+              <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "110px 1fr 140px 80px 120px 80px 100px 80px"}}>
+                <button type="button" onClick={() => handleSort('sku')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                  SKU {getSortIcon('sku')}
+                </button>
+                <button type="button" onClick={() => handleSort('name')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                  ชื่อสินค้า {getSortIcon('name')}
+                </button>
+                <button type="button" onClick={() => handleSort('customer')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                  ลูกค้า {getSortIcon('customer')}
+                </button>
+                <button type="button" onClick={() => handleSort('role')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                  Role {getSortIcon('role')}
+                </button>
+                <button type="button" onClick={() => handleSort('type')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                  ประเภท {getSortIcon('type')}
+                </button>
+                <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ขนาด</div>
+                <button type="button" onClick={() => handleSort('status')} className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground uppercase tracking-wide hover:text-foreground transition-colors">
+                  สถานะ {getSortIcon('status')}
+                </button>
+                <div />
+              </div>
+              {filteredAndSortedItems.length === 0 ? (
+                <div className="text-center py-8 text-sm text-muted-foreground">No items found</div>
+              ) : filteredAndSortedItems.map((item, idx) => (
+                <div
+                  key={item.id}
+                  className={`grid items-center px-3 py-2.5 hover:bg-primary/5 transition-colors ${idx % 2 === 0 ? 'bg-white dark:bg-background' : 'bg-slate-50/60 dark:bg-slate-900/30'}`}
+                  style={{gridTemplateColumns: "110px 1fr 140px 80px 120px 80px 100px 80px"}}
+                >
+                  <div className="text-xs font-mono">{item.sku || "-"}</div>
+                  <div className="text-xs font-medium truncate pr-2" title={item.name}>{item.name}</div>
+                  <div>
+                    {item.partners && item.partners.length > 0 ? (
+                      <div className="flex flex-wrap gap-1">
+                        {item.partners.map((p: any) => {
+                          const bp = businessPartners.find((b) => b.id === p.partnerId);
+                          const label = bp?.nickname ?? p.partnerCode ?? String(p.partnerId);
+                          return (
+                            <span
+                              key={p.partnerId}
+                              className="inline-flex items-center px-2 py-0.5 text-[10px] font-semibold rounded-full text-white whitespace-nowrap"
+                              style={{ background: getCustColor(label) }}
+                            >
+                              {label}
+                            </span>
+                          );
+                        })}
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      {item.partners && item.partners.length > 0 ? (
-                        <div className="flex flex-wrap gap-1">
-                          {item.partners.map((p: any) => {
-                            const bp = businessPartners.find((b) => b.id === p.partnerId);
-                            const label = bp?.nickname ?? p.partnerCode ?? String(p.partnerId);
-                            return (
-                              <span
-                                key={p.partnerId}
-                                className="inline-flex items-center px-2 py-0.5 text-xs font-semibold rounded-full text-white whitespace-nowrap"
-                                style={{ background: getCustColor(label) }}
-                              >
-                                {label}
-                              </span>
-                            );
-                          })}
-                        </div>
-                      ) : (
-                        "-"
-                      )}
-                    </TableCell>
-                    <TableCell className="text-sm">{item.itemRole || "-"}</TableCell>
-                    <TableCell className="text-sm">{item.itemType || "-"}</TableCell>
-                    <TableCell><EggSizePill item={item} /></TableCell>
-                    <TableCell>
-                      <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full border ${item.isActive === 'active' ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
-                        {item.isActive === 'active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => { setEditingItem(item); setDialogOpen(true); }}>
-                          <Edit className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => setDeleteItemId(item.id)}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {filteredAndSortedItems.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                      No items found
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                    ) : <span className="text-xs text-muted-foreground">-</span>}
+                  </div>
+                  <div className="text-xs">{item.itemRole || "-"}</div>
+                  <div className="text-xs">{item.itemType || "-"}</div>
+                  <div><EggSizePill item={item} /></div>
+                  <div>
+                    <span className={`inline-flex items-center px-2 py-0.5 text-[10px] font-medium rounded-full border ${item.isActive === 'active' ? 'bg-[#EAF3DE] text-[#27500A] border-[#97C459]' : 'bg-[#F1EFE8] text-[#5F5E5A] border-[#D3D1C7]'}`}>
+                      {item.isActive === 'active' ? 'ใช้งาน' : 'ไม่ใช้งาน'}
+                    </span>
+                  </div>
+                  <div className="flex gap-0.5">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditingItem(item); setDialogOpen(true); }}>
+                      <Edit className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteItemId(item.id)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
           )}
         </CardContent>
       </Card>
