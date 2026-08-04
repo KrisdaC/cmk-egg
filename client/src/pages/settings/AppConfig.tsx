@@ -11,14 +11,14 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-const users = [
-  { id: 1, name: "Admin User", email: "admin@egggrade.com", role: "Admin", department: "IT", status: "active" },
-  { id: 2, name: "Sales Manager", email: "sales@egggrade.com", role: "Manager", department: "Sales", status: "active" },
-  { id: 3, name: "Production Lead", email: "production@egggrade.com", role: "Supervisor", department: "Production", status: "active" },
-  { id: 4, name: "Warehouse Staff", email: "warehouse@egggrade.com", role: "Operator", department: "Inventory", status: "active" },
-  { id: 5, name: "Driver 1", email: "driver1@egggrade.com", role: "Driver", department: "Logistics", status: "inactive" },
-];
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const roles = [
   { name: "Admin", permissions: "Full access", users: 1 },
@@ -75,59 +75,7 @@ export default function AppConfig() {
         </TabsContent>
 
         <TabsContent value="users" className="mt-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-4">
-              <div>
-                <CardTitle className="text-lg">User Management</CardTitle>
-                <CardDescription>Manage user accounts and access</CardDescription>
-              </div>
-              <Button data-testid="button-add-user">
-                <Plus className="w-4 h-4 mr-2" />
-                Add User
-              </Button>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Department</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="w-[100px]">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id} data-testid={`row-user-${user.id}`}>
-                      <TableCell className="font-medium">{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{user.role}</Badge>
-                      </TableCell>
-                      <TableCell>{user.department}</TableCell>
-                      <TableCell>
-                        <Badge variant={user.status === "active" ? "secondary" : "outline"} className="capitalize">
-                          {user.status}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex gap-1">
-                          <Button variant="ghost" size="icon" data-testid={`button-edit-${user.id}`}>
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button variant="ghost" size="icon" data-testid={`button-delete-${user.id}`}>
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+          <UsersTab />
         </TabsContent>
 
         <TabsContent value="roles" className="mt-4">
@@ -292,6 +240,231 @@ export default function AppConfig() {
         </TabsContent>
       </Tabs>
     </div>
+  );
+}
+
+// =============================================
+// USERS TAB
+// =============================================
+
+interface AppUser {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  createdAt: string | null;
+}
+
+function UsersTab() {
+  const qc = useQueryClient();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<AppUser | null>(null);
+  const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [formError, setFormError] = useState("");
+
+  const { data: users = [], isLoading } = useQuery<AppUser[]>({
+    queryKey: ["/api/users"],
+    queryFn: async () => {
+      const res = await fetch("/api/users");
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      if (editingUser) {
+        const res = await fetch(`/api/users/${editingUser.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName, lastName, email }),
+        });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+        if (password) {
+          const r2 = await fetch(`/api/users/${editingUser.id}/password`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password }),
+          });
+          if (!r2.ok) { const e = await r2.json(); throw new Error(e.message); }
+        }
+        return res.json();
+      } else {
+        const res = await fetch("/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ firstName, lastName, email, password }),
+        });
+        if (!res.ok) { const e = await res.json(); throw new Error(e.message); }
+        return res.json();
+      }
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/users"] });
+      closeDialog();
+    },
+    onError: (err: Error) => setFormError(err.message),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      await fetch(`/api/users/${id}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["/api/users"] });
+      setDeleteUserId(null);
+    },
+  });
+
+  const openAdd = () => {
+    setEditingUser(null);
+    setFirstName(""); setLastName(""); setEmail(""); setPassword(""); setFormError("");
+    setDialogOpen(true);
+  };
+
+  const openEdit = (u: AppUser) => {
+    setEditingUser(u);
+    setFirstName(u.firstName ?? ""); setLastName(u.lastName ?? ""); setEmail(u.email);
+    setPassword(""); setFormError("");
+    setDialogOpen(true);
+  };
+
+  const closeDialog = () => { setDialogOpen(false); setEditingUser(null); };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError("");
+    if (!email) { setFormError("กรุณากรอกอีเมล"); return; }
+    if (!editingUser && !password) { setFormError("กรุณากรอกรหัสผ่าน"); return; }
+    saveMutation.mutate();
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <div>
+            <CardTitle className="text-lg">จัดการผู้ใช้งาน</CardTitle>
+            <CardDescription>บัญชีผู้ใช้งานระบบทั้งหมด</CardDescription>
+          </div>
+          <Button onClick={openAdd} data-testid="button-add-user">
+            <Plus className="w-4 h-4 mr-2" />
+            เพิ่มผู้ใช้งาน
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ชื่อ</TableHead>
+                  <TableHead>อีเมล</TableHead>
+                  <TableHead>สร้างเมื่อ</TableHead>
+                  <TableHead className="w-[80px]">จัดการ</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {users.map((u) => (
+                  <TableRow key={u.id} data-testid={`row-user-${u.id}`}>
+                    <TableCell className="font-medium">
+                      {[u.firstName, u.lastName].filter(Boolean).join(" ") || <span className="text-muted-foreground">—</span>}
+                    </TableCell>
+                    <TableCell>{u.email}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">
+                      {u.createdAt ? new Date(u.createdAt).toLocaleDateString("th-TH") : "—"}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-0.5">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(u)}>
+                          <Edit className="w-3.5 h-3.5" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setDeleteUserId(u.id)}>
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {users.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">ยังไม่มีผู้ใช้งาน</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={dialogOpen} onOpenChange={(o) => !o && closeDialog()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingUser ? "แก้ไขผู้ใช้งาน" : "เพิ่มผู้ใช้งานใหม่"}</DialogTitle>
+            <DialogDescription>
+              {editingUser ? "แก้ไขข้อมูลผู้ใช้งาน" : "สร้างบัญชีผู้ใช้งานสำหรับเข้าสู่ระบบ"}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4 pt-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>ชื่อ</Label>
+                <Input value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="สมชาย" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>นามสกุล</Label>
+                <Input value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="ใจดี" />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label>อีเมล *</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="user@example.com" />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{editingUser ? "รหัสผ่านใหม่ (เว้นว่างถ้าไม่เปลี่ยน)" : "รหัสผ่าน *"}</Label>
+              <Input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="อย่างน้อย 8 ตัวอักษร" />
+            </div>
+            {formError && <p className="text-sm text-destructive">{formError}</p>}
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={closeDialog}>ยกเลิก</Button>
+              <Button type="submit" disabled={saveMutation.isPending}>
+                {saveMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                {editingUser ? "บันทึก" : "สร้างบัญชี"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={deleteUserId !== null} onOpenChange={() => setDeleteUserId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ลบผู้ใช้งาน</AlertDialogTitle>
+            <AlertDialogDescription>
+              คุณแน่ใจหรือไม่ว่าต้องการลบผู้ใช้งานนี้? การดำเนินการนี้ไม่สามารถย้อนกลับได้
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>ยกเลิก</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteUserId && deleteMutation.mutate(deleteUserId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteMutation.isPending && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              ลบ
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
