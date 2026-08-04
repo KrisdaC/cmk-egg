@@ -1532,7 +1532,7 @@ export default function OrdersGrid() {
 
         {/* Page header */}
         <div className="flex items-baseline gap-3">
-          <h1 className="text-[22px] font-bold text-[#1a1a1a]">Orders</h1>
+          <h1 className="text-[22px] font-bold text-[#1a1a1a]">คำสั่งซื้อ</h1>
           <span className="text-[14px] text-[#888]">{dateLabel}</span>
           <button onClick={fetchOrders} disabled={loading} className="ml-auto p-1.5 rounded hover:bg-[#ebebeb]">
             {loading ? <Loader2 className="w-4 h-4 animate-spin text-[#888]" /> : <RefreshCw className="w-3.5 h-3.5 text-[#888]" />}
@@ -1543,18 +1543,18 @@ export default function OrdersGrid() {
         <div className="grid grid-cols-4 gap-3">
           {/* Tickets by status */}
           <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-4 shadow-sm">
-            <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-2">Tickets by status</div>
+            <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-2">สถานะคำสั่งซื้อ</div>
             <div className="flex flex-col gap-0.5">
-              {kpi.drafting > 0 && <div className="text-sm"><b className="text-[#854F0B]">{kpi.drafting}</b> <span className="text-[#888]">Drafting</span></div>}
-              {kpi.open > 0 && <div className="text-sm"><b className="text-[#1E40AF]">{kpi.open}</b> <span className="text-[#888]">Open</span></div>}
-              {kpi.confirmed > 0 && <div className="text-sm"><b className="text-[#166534]">{kpi.confirmed}</b> <span className="text-[#888]">Confirmed</span></div>}
-              {kpi.drafting === 0 && kpi.open === 0 && kpi.confirmed === 0 && <div className="text-sm text-[#bbb]">0 tickets</div>}
+              {kpi.drafting > 0 && <div className="text-sm"><b className="text-[#854F0B]">{kpi.drafting}</b> <span className="text-[#888]">กำลังร่าง</span></div>}
+              {kpi.open > 0 && <div className="text-sm"><b className="text-[#1E40AF]">{kpi.open}</b> <span className="text-[#888]">รอดำเนินการ</span></div>}
+              {kpi.confirmed > 0 && <div className="text-sm"><b className="text-[#166534]">{kpi.confirmed}</b> <span className="text-[#888]">ยืนยันแล้ว</span></div>}
+              {kpi.drafting === 0 && kpi.open === 0 && kpi.confirmed === 0 && <div className="text-sm text-[#bbb]">0 รายการ</div>}
             </div>
           </div>
 
           {/* Total eggs */}
           <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-4 shadow-sm">
-            <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-1">Total eggs</div>
+            <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-1">ไข่ทั้งหมด (ฟอง)</div>
             <div className="text-[28px] font-bold tabular-nums text-[#1a1a1a] leading-tight">
               {fmtNum(kpi.totalEggs)}
             </div>
@@ -1567,13 +1567,13 @@ export default function OrdersGrid() {
                   {name} {fmtNum(eggs)}
                 </span>
               ))}
-              {kpi.topCusts.length === 0 && <span className="text-[#bbb] text-xs">no orders yet</span>}
+              {kpi.topCusts.length === 0 && <span className="text-[#bbb] text-xs">ยังไม่มีคำสั่งซื้อ</span>}
             </div>
           </div>
 
           {/* Delivery sites */}
           <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-4 shadow-sm">
-            <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-1">Delivery sites</div>
+            <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-1">สาขาจัดส่ง</div>
             <div className="text-[28px] font-bold tabular-nums text-[#1a1a1a] leading-tight">{kpi.sites}</div>
             <div className="flex flex-wrap gap-1 mt-1.5">
               {Object.entries(kpi.custSites).map(([name, sites]) => (
@@ -1583,7 +1583,7 @@ export default function OrdersGrid() {
                   {sites.size} Direct
                 </span>
               ))}
-              {Object.keys(kpi.custSites).length === 0 && <span className="text-[#bbb] text-xs">no sites yet</span>}
+              {Object.keys(kpi.custSites).length === 0 && <span className="text-[#bbb] text-xs">ยังไม่มีสาขา</span>}
             </div>
           </div>
 
@@ -1591,7 +1591,7 @@ export default function OrdersGrid() {
           <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-4 shadow-sm">
             <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wider mb-1">Fast-track</div>
             <div className="text-[28px] font-bold tabular-nums text-[#1a1a1a] leading-tight">0</div>
-            <div className="text-[11px] text-[#888] mt-1">same-day orders</div>
+            <div className="text-[11px] text-[#888] mt-1">คำสั่งซื้อด่วน</div>
           </div>
         </div>
 
@@ -1603,7 +1603,7 @@ export default function OrdersGrid() {
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search by PO, site, customer name..."
+              placeholder="ค้นหา PO, สาขา, ชื่อลูกค้า..."
               className="flex-1 bg-transparent text-sm outline-none text-[#333] placeholder-[#aaa]"
             />
             {search && <button onClick={() => setSearch("")} className="text-[#aaa] hover:text-[#555]"><X className="w-3.5 h-3.5" /></button>}
@@ -1613,17 +1613,17 @@ export default function OrdersGrid() {
           <div className="grid gap-x-6 gap-y-3" style={{ gridTemplateColumns: "auto auto auto auto auto" }}>
             {/* DATE */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">Date</span>
+              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">วันที่</span>
               <div className="flex gap-1">
-                <Chip active={dateMode === "all"} onClick={() => setDateMode("all")}>All</Chip>
-                <Chip active={dateMode === "single"} onClick={() => setDateMode("single")}>Single</Chip>
-                <Chip active={dateMode === "range"} onClick={() => setDateMode("range")}>Range</Chip>
+                <Chip active={dateMode === "all"} onClick={() => setDateMode("all")}>ทั้งหมด</Chip>
+                <Chip active={dateMode === "single"} onClick={() => setDateMode("single")}>วันเดียว</Chip>
+                <Chip active={dateMode === "range"} onClick={() => setDateMode("range")}>ช่วง</Chip>
               </div>
               {dateMode === "single" && (
                 <div className="flex items-center gap-1 mt-1">
-                  <Chip active={date === yesterday} onClick={() => setDate(yesterday)}>Yest</Chip>
-                  <Chip active={date === today} onClick={() => setDate(today)}>Today</Chip>
-                  <Chip active={date === tomorrow} onClick={() => setDate(tomorrow)}>Tom</Chip>
+                  <Chip active={date === yesterday} onClick={() => setDate(yesterday)}>เมื่อวาน</Chip>
+                  <Chip active={date === today} onClick={() => setDate(today)}>วันนี้</Chip>
+                  <Chip active={date === tomorrow} onClick={() => setDate(tomorrow)}>พรุ่งนี้</Chip>
                   <input type="date" value={date} onChange={e => e.target.value && setDate(e.target.value)}
                     className="h-7 px-2 text-xs border border-[#e3e5e8] rounded-md bg-white focus:outline-none" />
                   <span className="inline-flex gap-0.5">
@@ -1646,10 +1646,10 @@ export default function OrdersGrid() {
             {/* CUSTOMER */}
             <div className="space-y-1.5">
               <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">
-                Customer <span className="font-normal normal-case text-[#ccc]">(top 5 by eggs)</span>
+                ลูกค้า <span className="font-normal normal-case text-[#ccc]">(5 อันดับแรก)</span>
               </span>
               <div className="flex gap-1 flex-wrap">
-                <Chip active={custFilter === "all"} onClick={() => setCustFilter("all")}>All</Chip>
+                <Chip active={custFilter === "all"} onClick={() => setCustFilter("all")}>ทั้งหมด</Chip>
                 {topPartners.map(p => (
                   <Chip
                     key={p.id}
@@ -1665,20 +1665,20 @@ export default function OrdersGrid() {
 
             {/* GROUP / TYPE */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">Group / Type</span>
+              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">กลุ่ม / ประเภท</span>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[#aaa] w-10">Group</span>
+                <span className="text-[10px] text-[#aaa] w-10">กลุ่ม</span>
                 {(["all", "g1", "g2", "none"] as GroupFilter[]).map(v => (
                   <Chip key={v} active={groupFilter === v} onClick={() => setGroupFilter(v)}>
-                    {v === "all" ? "All" : v === "none" ? "—" : v.toUpperCase()}
+                    {v === "all" ? "ทั้งหมด" : v === "none" ? "—" : v.toUpperCase()}
                   </Chip>
                 ))}
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-[10px] text-[#aaa] w-10">Type</span>
+                <span className="text-[10px] text-[#aaa] w-10">ประเภท</span>
                 {(["all", "direct", "dc"] as TypeFilter[]).map(v => (
                   <Chip key={v} active={typeFilter === v} onClick={() => setTypeFilter(v)}>
-                    {v === "all" ? "All" : v === "direct" ? "Direct" : "DC"}
+                    {v === "all" ? "ทั้งหมด" : v === "direct" ? "Direct" : "DC"}
                   </Chip>
                 ))}
               </div>
@@ -1686,22 +1686,22 @@ export default function OrdersGrid() {
 
             {/* SPEED */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">Speed</span>
+              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">ความเร็ว</span>
               <div className="flex gap-1">
-                <Chip active={speedFilter === "all"} onClick={() => setSpeedFilter("all")}>All</Chip>
-                <Chip active={speedFilter === "fast"} onClick={() => setSpeedFilter("fast")}>⚡ Fast</Chip>
-                <Chip active={speedFilter === "normal"} onClick={() => setSpeedFilter("normal")}>Normal</Chip>
+                <Chip active={speedFilter === "all"} onClick={() => setSpeedFilter("all")}>ทั้งหมด</Chip>
+                <Chip active={speedFilter === "fast"} onClick={() => setSpeedFilter("fast")}>⚡ ด่วน</Chip>
+                <Chip active={speedFilter === "normal"} onClick={() => setSpeedFilter("normal")}>ปกติ</Chip>
               </div>
             </div>
 
             {/* STATUS */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">Status</span>
+              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">สถานะ</span>
               <div className="flex gap-1">
-                <Chip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>All</Chip>
-                <Chip active={statusFilter === "drafting"} onClick={() => setStatusFilter("drafting")}>Drafting</Chip>
-                <Chip active={statusFilter === "open"} onClick={() => setStatusFilter("open")}>Open</Chip>
-                <Chip active={statusFilter === "confirmed"} onClick={() => setStatusFilter("confirmed")}>Confirmed</Chip>
+                <Chip active={statusFilter === "all"} onClick={() => setStatusFilter("all")}>ทั้งหมด</Chip>
+                <Chip active={statusFilter === "drafting"} onClick={() => setStatusFilter("drafting")}>กำลังร่าง</Chip>
+                <Chip active={statusFilter === "open"} onClick={() => setStatusFilter("open")}>รอดำเนินการ</Chip>
+                <Chip active={statusFilter === "confirmed"} onClick={() => setStatusFilter("confirmed")}>ยืนยันแล้ว</Chip>
               </div>
             </div>
           </div>
@@ -1710,7 +1710,7 @@ export default function OrdersGrid() {
         {/* Sub-tabs */}
         <div className="flex items-end gap-0 border-b border-[#e3e5e8]">
           <button className="px-4 py-2 text-sm font-medium border-b-2 border-[#1a1a1a] text-[#1a1a1a] -mb-px">
-            Orders
+            คำสั่งซื้อ
             <span className="ml-1.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[#e5e7eb] text-[10px] font-bold text-[#555]">
               {filtered.length}
             </span>

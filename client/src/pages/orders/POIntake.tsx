@@ -120,11 +120,11 @@ function StatusBadge({ status }: { status: string }) {
     cancelled: "bg-red-100 text-red-600",
   };
   const label: Record<string, string> = {
-    pending: "Open",
-    confirmed: "Confirmed",
-    in_production: "In Production",
-    delivered: "Delivered",
-    cancelled: "Cancelled",
+    pending: "รอดำเนินการ",
+    confirmed: "ยืนยันแล้ว",
+    in_production: "กำลังผลิต",
+    delivered: "จัดส่งแล้ว",
+    cancelled: "ยกเลิก",
   };
   return (
     <span className={`inline-flex px-2 py-0.5 rounded text-xs font-semibold ${map[status] ?? "bg-gray-100 text-gray-600"}`}>
@@ -420,7 +420,7 @@ export default function POIntakePage() {
           {/* Header */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="text-2xl font-bold">PO Intake</h1>
+              <h1 className="text-2xl font-bold">รับ PO</h1>
               <p className="text-sm text-muted-foreground mt-0.5">
                 รับ PO → ตรวจราคา → ใส่ Accepted Qty → Adjustment → Confirm Order
               </p>
@@ -428,12 +428,12 @@ export default function POIntakePage() {
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={() => setShowUpload(true)}>
                 <Upload className="w-4 h-4 mr-1.5" />
-                Upload PO
+                อัปโหลด PO
               </Button>
               <Button size="sm" onClick={() => navigate("/orders/new")}
                 className="bg-[#1a1a1a] text-white hover:bg-[#333]">
                 <Plus className="w-4 h-4 mr-1.5" />
-                Create Manual PO
+                สร้าง PO ด้วยตนเอง
               </Button>
             </div>
           </div>
@@ -472,9 +472,9 @@ export default function POIntakePage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">สถานะทั้งหมด</SelectItem>
-                <SelectItem value="pending">Open</SelectItem>
-                <SelectItem value="confirmed">Confirmed</SelectItem>
-                <SelectItem value="delivered">Delivered</SelectItem>
+                <SelectItem value="pending">รอดำเนินการ</SelectItem>
+                <SelectItem value="confirmed">ยืนยันแล้ว</SelectItem>
+                <SelectItem value="delivered">จัดส่งแล้ว</SelectItem>
               </SelectContent>
             </Select>
             <Button variant="outline" size="sm" onClick={fetchList} disabled={loading}>
@@ -491,15 +491,15 @@ export default function POIntakePage() {
                   <tr className="bg-[#f9fafb] border-b border-[#e5e7eb]">
                     <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-8"></th>
                     <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">PO No.</th>
-                    <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Customer / Delivery Site</th>
+                    <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">ลูกค้า / สาขา</th>
                     <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-24">วันที่สั่ง</th>
                     <th className="px-3 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide w-24">วันที่ส่ง</th>
                     <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-12">Lines</th>
                     <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">PO Qty (ฟอง)</th>
-                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">Accepted Qty</th>
-                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">Adjustment</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide w-24">Price Check</th>
-                    <th className="px-3 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide w-32">Next Action</th>
+                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">จำนวนรับ</th>
+                    <th className="px-3 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide w-28">ปรับยอด</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide w-24">ตรวจราคา</th>
+                    <th className="px-3 py-2.5 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide w-32">ขั้นตอนถัดไป</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#f0f0f0]">
@@ -529,7 +529,7 @@ export default function POIntakePage() {
                             onClick={(e) => { e.stopPropagation(); openDrawer(po.id); }}
                             className="text-xs px-2.5 py-1 rounded-md font-medium bg-amber-500 text-white hover:bg-amber-600 transition-colors"
                           >
-                            Check Price
+                            ตรวจราคา
                           </button>
                         );
                       }
@@ -539,7 +539,7 @@ export default function POIntakePage() {
                             onClick={(e) => { e.stopPropagation(); openDrawer(po.id); }}
                             className="text-xs px-2.5 py-1 rounded-md font-medium bg-orange-500 text-white hover:bg-orange-600 transition-colors"
                           >
-                            Request Approval
+                            ขออนุมัติปรับยอด
                           </button>
                         );
                       }
@@ -548,7 +548,7 @@ export default function POIntakePage() {
                           onClick={(e) => { e.stopPropagation(); openDrawer(po.id); }}
                           className="text-xs px-2.5 py-1 rounded-md font-medium bg-[#1a1a1a] text-white hover:bg-[#333] transition-colors"
                         >
-                          Confirm Order
+                          ยืนยันคำสั่งซื้อ
                         </button>
                       );
                     };
@@ -673,11 +673,11 @@ export default function POIntakePage() {
                       <tr className="bg-[#f9fafb] border-b border-[#e5e7eb]">
                         <th className="px-2 py-2 text-left font-medium text-muted-foreground">สินค้า</th>
                         <th className="px-2 py-2 text-right font-medium text-muted-foreground w-14">PO Qty</th>
-                        <th className="px-2 py-2 text-right font-medium text-muted-foreground w-20">Accepted</th>
-                        <th className="px-2 py-2 text-right font-medium text-muted-foreground w-14">Adj</th>
+                        <th className="px-2 py-2 text-right font-medium text-muted-foreground w-20">รับจริง</th>
+                        <th className="px-2 py-2 text-right font-medium text-muted-foreground w-14">ปรับ</th>
                         <th className="px-2 py-2 text-right font-medium text-muted-foreground w-16">PO ฿</th>
                         <th className="px-2 py-2 text-right font-medium text-muted-foreground w-16">Active ฿</th>
-                        <th className="px-2 py-2 text-center font-medium text-muted-foreground w-16">Status</th>
+                        <th className="px-2 py-2 text-center font-medium text-muted-foreground w-16">สถานะ</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#f0f0f0]">
@@ -781,10 +781,10 @@ export default function POIntakePage() {
               <div className="mx-4 mt-4 rounded-lg border border-[#e5e7eb] bg-[#f9fafb] p-3">
                 <div className="text-xs font-semibold mb-2">Workflow & Approval</div>
                 {drawerStats && [
-                  { label: "SKU mapped", ok: selected.lines.every((l) => l.item_id) },
-                  { label: "Price checked", ok: drawerStats.priceOk },
-                  { label: "Accepted Qty entered", ok: drawerStats.allAccepted },
-                  { label: "Adjustment approved", ok: drawerStats.adjOk },
+                  { label: "ผูก SKU แล้ว", ok: selected.lines.every((l) => l.item_id) },
+                  { label: "ตรวจราคาแล้ว", ok: drawerStats.priceOk },
+                  { label: "กรอกจำนวนรับแล้ว", ok: drawerStats.allAccepted },
+                  { label: "อนุมัติปรับยอดแล้ว", ok: drawerStats.adjOk },
                 ].map((step) => (
                   <div key={step.label} className="flex items-center gap-2 py-1">
                     {step.ok
@@ -802,7 +802,7 @@ export default function POIntakePage() {
                 {selected.status === "confirmed" ? (
                   <div className="flex items-center justify-center gap-2 text-sm text-green-700 font-medium py-2">
                     <CheckCircle2 className="w-5 h-5" />
-                    Order Confirmed
+                    ยืนยันคำสั่งซื้อแล้ว
                   </div>
                 ) : (
                   <Button
@@ -811,7 +811,7 @@ export default function POIntakePage() {
                     onClick={confirmOrder}
                   >
                     {confirming ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                    Confirm Order
+                    ยืนยันคำสั่งซื้อ
                   </Button>
                 )}
               </div>
@@ -825,14 +825,14 @@ export default function POIntakePage() {
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
             <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-[#e5e7eb]">
-              <div className="font-semibold text-base">Upload PO</div>
+              <div className="font-semibold text-base">อัปโหลด PO</div>
               <button onClick={() => setShowUpload(false)} className="text-muted-foreground hover:text-foreground">
                 <X className="w-4 h-4" />
               </button>
             </div>
             <div className="px-5 py-4 space-y-3">
               <div className="space-y-1.5">
-                <label className="text-sm font-medium">Customer *</label>
+                <label className="text-sm font-medium">ลูกค้า *</label>
                 <Select value={uploadCustomer} onValueChange={setUploadCustomer}>
                   <SelectTrigger>
                     <SelectValue placeholder="เลือกลูกค้า…" />

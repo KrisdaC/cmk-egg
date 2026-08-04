@@ -541,16 +541,16 @@ function PlanningGrid({
                             </code>
                           )}
                           <div className="text-[9px] text-[#888] mt-0.5 flex items-center gap-1">
-                            <span>Confirmed 🔒</span>
+                            <span>ยืนยันแล้ว 🔒</span>
                             <span className="tabular-nums font-medium">{fmtNum(tot.confEggs)}</span>
                           </div>
                           <div className="text-[10px] font-bold leading-tight flex items-center gap-1" style={{ color: custColor(o.partnerName) }}>
-                            <span>Plan {roundLabel}</span>
+                            <span>แผน {roundLabel}</span>
                             <span className="tabular-nums">{fmtNum(tot.planEggs)}</span>
                           </div>
                           {tot.planEggs !== tot.confEggs && (
                             <div className={`text-[10px] font-bold tabular-nums ${tot.planEggs > tot.confEggs ? "text-green-600" : "text-red-600"}`}>
-                              Δ Plan {tot.planEggs > tot.confEggs ? `+${fmtNum(tot.planEggs - tot.confEggs)}` : fmtNum(tot.planEggs - tot.confEggs)}
+                              Δ แผน {tot.planEggs > tot.confEggs ? `+${fmtNum(tot.planEggs - tot.confEggs)}` : fmtNum(tot.planEggs - tot.confEggs)}
                             </div>
                           )}
                         </div>
@@ -1573,7 +1573,7 @@ export default function DailyPlan() {
                 : "bg-white text-[#555] border-[#d6d8dc] hover:border-[#999]"
             }`}
           >
-            ALL
+            ทั้งหมด
           </button>
         </div>
 

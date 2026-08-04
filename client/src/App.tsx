@@ -140,14 +140,14 @@ const navigationGroups = [
     ],
   },
   {
-    label: "Order Management",
+    label: "จัดการคำสั่งซื้อ",
     icon: ShoppingCart,
     items: [
-      { title: "Order Intake", url: "/orders/input", icon: ClipboardList },
-      { title: "Daily Plan", url: "/orders/daily-plan", icon: Calendar },
-      { title: "Daily Summary", url: "/orders/daily-summary", icon: Calendar },
-      { title: "Invoices", url: "/orders/invoices", icon: Receipt },
-      { title: "Returns", url: "/orders/returns", icon: RotateCcw },
+      { title: "รับ PO", url: "/orders/input", icon: ClipboardList },
+      { title: "แผนประจำวัน", url: "/orders/daily-plan", icon: Calendar },
+      { title: "สรุปประจำวัน", url: "/orders/daily-summary", icon: Calendar },
+      { title: "ใบแจ้งหนี้", url: "/orders/invoices", icon: Receipt },
+      { title: "การคืนสินค้า", url: "/orders/returns", icon: RotateCcw },
     ],
   },
   {
