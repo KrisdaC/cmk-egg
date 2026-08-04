@@ -18,12 +18,12 @@ export default function RawMaterials() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Raw Materials</h1>
-          <p className="text-muted-foreground">Master list of raw materials and packaging</p>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">วัตถุดิบ</h1>
+          <p className="text-muted-foreground">รายการวัตถุดิบและบรรจุภัณฑ์ทั้งหมด</p>
         </div>
         <Button data-testid="button-add-material">
           <Plus className="w-4 h-4 mr-2" />
-          Add Material
+          เพิ่มวัตถุดิบ
         </Button>
       </div>
 
@@ -32,26 +32,26 @@ export default function RawMaterials() {
           <div className="flex items-center gap-4 flex-wrap">
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input 
-                placeholder="Search materials..." 
-                className="pl-9" 
+              <Input
+                placeholder="ค้นหาวัตถุดิบ..."
+                className="pl-9"
                 data-testid="input-search"
               />
             </div>
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" data-testid="button-filter-category">All Categories</Button>
+              <Button variant="outline" size="sm" data-testid="button-filter-category">ทุกหมวดหมู่</Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="divide-y divide-border rounded-md border overflow-hidden">
             <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "130px 1fr 130px 70px 110px 90px 80px"}}>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Code</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Material Name</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Category</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Unit</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Min Stock</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">รหัส</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อวัตถุดิบ</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">หมวดหมู่</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">หน่วย</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สต็อกขั้นต่ำ</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
               <div />
             </div>
             {sampleMaterials.map((material, idx) => (

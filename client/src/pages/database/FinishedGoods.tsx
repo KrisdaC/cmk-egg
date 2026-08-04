@@ -281,11 +281,10 @@ export default function FinishedGoods() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-page-title">
-            Finished Goods
+            สินค้าสำเร็จรูป
           </h1>
           <p className="text-muted-foreground">
-            Master list of all finished products ({filteredProducts.length}{" "}
-            items)
+            รายการสินค้าสำเร็จรูปทั้งหมด ({filteredProducts.length} รายการ)
           </p>
         </div>
         <Button
@@ -314,7 +313,7 @@ export default function FinishedGoods() {
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Product
+          เพิ่มสินค้า
         </Button>
       </div>
 
@@ -324,7 +323,7 @@ export default function FinishedGoods() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search by SKU or product name..."
+                placeholder="ค้นหาด้วยรหัส SKU หรือชื่อสินค้า..."
                 className="pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -338,7 +337,7 @@ export default function FinishedGoods() {
                 onClick={() => setFilterVendor(null)}
                 data-testid="button-filter-all"
               >
-                All
+                ทั้งหมด
               </Button>
               {vendors?.map((v) => (
                 <Button
@@ -371,7 +370,7 @@ export default function FinishedGoods() {
                 <div />
               </div>
               {filteredProducts.length === 0 ? (
-                <div className="text-center py-8 text-sm text-muted-foreground">No products found</div>
+                <div className="text-center py-8 text-sm text-muted-foreground">ไม่พบสินค้า</div>
               ) : filteredProducts.map((product, idx) => (
                 <div
                   key={product.id}
@@ -419,10 +418,10 @@ export default function FinishedGoods() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingItem ? "แก้ไข Finished Goods" : "เพิ่ม Finished Goods"}
+              {editingItem ? "แก้ไขสินค้าสำเร็จรูป" : "เพิ่มสินค้าสำเร็จรูป"}
             </DialogTitle>
             <DialogDescription>
-              กรอกข้อมูลสินค้า Finished Goods
+              กรอกข้อมูลสินค้าสำเร็จรูป
             </DialogDescription>
           </DialogHeader>
 
@@ -785,7 +784,7 @@ export default function FinishedGoods() {
                 name="business_partner_ids"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Customers</FormLabel>
+                    <FormLabel>ลูกค้า</FormLabel>
 
                     <Popover>
                       <PopoverTrigger asChild>
@@ -800,7 +799,7 @@ export default function FinishedGoods() {
                                   .filter((bp) => field.value?.includes(bp.id))
                                   .map((bp) => bp.name)
                                   .join(", ")
-                              : "Select customers"}
+                              : "เลือกลูกค้า"}
                             <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
                           </Button>
                         </FormControl>
@@ -864,12 +863,12 @@ export default function FinishedGoods() {
                             <SelectValue placeholder="เลือกประเภท" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="grade">Grade</SelectItem>
+                            <SelectItem value="grade">ตามเกรด</SelectItem>
                             <SelectItem value="OEM">OEM</SelectItem>
                             <SelectItem value="undergrade">
-                              Undergrade
+                              ไข่ตกเกรด
                             </SelectItem>
-                            <SelectItem value="own">Own Brand</SelectItem>
+                            <SelectItem value="own">แบรนด์ตัวเอง</SelectItem>
                           </SelectContent>
                         </Select>
                       </FormControl>

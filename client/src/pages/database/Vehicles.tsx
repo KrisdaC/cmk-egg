@@ -140,9 +140,9 @@ export default function Vehicles() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-page-title">
-            Vehicles
+            ยานพาหนะ
           </h1>
-          <p className="text-muted-foreground">Manage delivery fleet</p>
+          <p className="text-muted-foreground">จัดการยานพาหนะ</p>
         </div>
 
         <Button
@@ -162,7 +162,7 @@ export default function Vehicles() {
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Vehicle
+          เพิ่มยานพาหนะ
         </Button>
       </div>
 
@@ -172,7 +172,7 @@ export default function Vehicles() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search vehicles..."
+                placeholder="ค้นหายานพาหนะ..."
                 className="pl-9"
                 data-testid="input-search"
                 value={search}
@@ -184,12 +184,12 @@ export default function Vehicles() {
         <CardContent>
           <div className="divide-y divide-border rounded-md border overflow-hidden">
             <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "180px 1fr 110px 130px 110px 90px 80px"}}>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">License Plate</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Vehicle Type</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Capacity (m³)</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Capacity (Eggs)</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Temp Control</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ทะเบียนรถ</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ประเภทรถ</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ปริมาตร (ม³)</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">จำนวนไข่ (ฟอง)</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ควบคุมอุณหภูมิ</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
               <div />
             </div>
             {filteredVehicles?.map((vehicle, idx) => (
@@ -214,15 +214,15 @@ export default function Vehicles() {
                   {vehicle.tempControl ? (
                     <div className="flex items-center gap-1 text-blue-600">
                       <Thermometer className="w-3.5 h-3.5" />
-                      Yes
+                      มี
                     </div>
                   ) : (
-                    <span className="text-muted-foreground">No</span>
+                    <span className="text-muted-foreground">ไม่มี</span>
                   )}
                 </div>
                 <div>
                   <Badge variant={vehicle.isActive ? "secondary" : "outline"} className="capitalize text-[10px]">
-                    {vehicle.isActive ? "active" : "inactive"}
+                    {vehicle.isActive ? "ใช้งาน" : "ไม่ใช้งาน"}
                   </Badge>
                 </div>
                 <div className="flex gap-0.5">
@@ -264,10 +264,10 @@ export default function Vehicles() {
         <DialogContent className="max-w-2xl">
           <DialogHeader>
             <DialogTitle>
-              {editingVehicle ? "แก้ไข Vehicle" : "เพิ่ม Vehicle"}
+              {editingVehicle ? "แก้ไขยานพาหนะ" : "เพิ่มยานพาหนะ"}
             </DialogTitle>
             <DialogDescription>
-              Enter vehicle details for fleet management
+              กรอกข้อมูลยานพาหนะ
             </DialogDescription>
           </DialogHeader>
 
@@ -282,7 +282,7 @@ export default function Vehicles() {
                   name="code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Vehicle Code*</FormLabel>
+                      <FormLabel>รหัสยานพาหนะ *</FormLabel>
                       <FormControl>
                         <Input placeholder="VHC-001" {...field} />
                       </FormControl>
@@ -296,7 +296,7 @@ export default function Vehicles() {
                   name="plateNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>License Plate*</FormLabel>
+                      <FormLabel>ทะเบียนรถ *</FormLabel>
                       <FormControl>
                         <Input placeholder="1กข-1234" {...field} />
                       </FormControl>
@@ -311,20 +311,20 @@ export default function Vehicles() {
                 name="vehicleType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Vehicle Type*</FormLabel>
+                    <FormLabel>ประเภทรถ *</FormLabel>
                     <FormControl>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select vehicle type" />
+                          <SelectValue placeholder="เลือกประเภทรถ" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="truck">Truck</SelectItem>
-                          <SelectItem value="van">Van</SelectItem>
+                          <SelectItem value="truck">รถบรรทุก</SelectItem>
+                          <SelectItem value="van">รถตู้</SelectItem>
                           <SelectItem value="refrigerated">
-                            Refrigerated
+                            รถห้องเย็น
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -340,7 +340,7 @@ export default function Vehicles() {
                   name="capacity"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Capacity (m³)</FormLabel>
+                      <FormLabel>ปริมาตร (ม³)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -364,7 +364,7 @@ export default function Vehicles() {
                   name="capacityEggs"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Capacity (Eggs)</FormLabel>
+                      <FormLabel>จำนวนไข่สูงสุด (ฟอง)</FormLabel>
                       <FormControl>
                         <Input
                           type="number"
@@ -389,7 +389,7 @@ export default function Vehicles() {
                 name="costPerKm"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Cost / KM</FormLabel>
+                    <FormLabel>ค่าใช้จ่าย / กม.</FormLabel>
                     <FormControl>
                       <Input
                         type="number"
@@ -422,7 +422,7 @@ export default function Vehicles() {
                         }
                       />
                     </FormControl>
-                    <FormLabel className="!mt-0">Active</FormLabel>
+                    <FormLabel className="!mt-0">ใช้งาน</FormLabel>
                   </FormItem>
                 )}
               />
@@ -442,9 +442,9 @@ export default function Vehicles() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>ลบ Vehicle</AlertDialogTitle>
+            <AlertDialogTitle>ลบยานพาหนะ</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบ Vehicle นี้?
+              คุณแน่ใจหรือไม่ว่าต้องการลบยานพาหนะนี้?
               การดำเนินการนี้ไม่สามารถย้อนกลับได้
             </AlertDialogDescription>
           </AlertDialogHeader>

@@ -176,10 +176,10 @@ export default function Suppliers() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-page-title">
-            Suppliers
+            ซัพพลายเออร์
           </h1>
           <p className="text-muted-foreground">
-            Manage egg farms and material suppliers
+            จัดการฟาร์มไข่และซัพพลายเออร์
           </p>
         </div>
         <Button
@@ -189,7 +189,7 @@ export default function Suppliers() {
             setDialogOpen(true);
           }}
         >
-          Add Supplier
+          เพิ่มซัพพลายเออร์
         </Button>
       </div>
 
@@ -205,10 +205,10 @@ export default function Suppliers() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingItem ? "แก้ไข Supplier" : "เพิ่ม Supplier"}
+              {editingItem ? "แก้ไขซัพพลายเออร์" : "เพิ่มซัพพลายเออร์"}
             </DialogTitle>
 
-            <DialogDescription>กรอกข้อมูล Suppliers</DialogDescription>
+            <DialogDescription>กรอกข้อมูลซัพพลายเออร์</DialogDescription>
           </DialogHeader>
           <Form {...supplierForm}>
             <form
@@ -221,7 +221,7 @@ export default function Suppliers() {
                   name="code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Code*</FormLabel>
+                      <FormLabel>รหัส *</FormLabel>
                       <FormControl>
                         <Input placeholder="SUP-001" {...field} />
                       </FormControl>
@@ -234,9 +234,9 @@ export default function Suppliers() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Supplier Name*</FormLabel>
+                      <FormLabel>ชื่อซัพพลายเออร์ *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Fresh Farm" {...field} />
+                        <Input placeholder="ฟาร์มสดใหม่" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -250,9 +250,9 @@ export default function Suppliers() {
                   name="contactPerson"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Contact Person</FormLabel>
+                      <FormLabel>ผู้ติดต่อ</FormLabel>
                       <FormControl>
-                        <Input placeholder="Marie Antoinette" {...field} />
+                        <Input placeholder="ชื่อผู้ติดต่อ" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -263,7 +263,7 @@ export default function Suppliers() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone</FormLabel>
+                      <FormLabel>เบอร์โทร</FormLabel>
                       <FormControl>
                         <Input placeholder="0812345678" {...field} />
                       </FormControl>
@@ -278,19 +278,19 @@ export default function Suppliers() {
                 name="supplierType"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Supplier Type*</FormLabel>
+                    <FormLabel>ประเภทซัพพลายเออร์ *</FormLabel>
                     <FormControl>
                       <Select
                         value={field.value}
                         onValueChange={field.onChange}
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Select supplier type" />
+                          <SelectValue placeholder="เลือกประเภท" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="eggs">Eggs</SelectItem>
-                          <SelectItem value="packaging">Packaging</SelectItem>
-                          <SelectItem value="labels">Labels</SelectItem>
+                          <SelectItem value="eggs">ไข่</SelectItem>
+                          <SelectItem value="packaging">บรรจุภัณฑ์</SelectItem>
+                          <SelectItem value="labels">สติ๊กเกอร์</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>
@@ -309,7 +309,7 @@ export default function Suppliers() {
                         onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormLabel className="font-normal">Active</FormLabel>
+                    <FormLabel className="font-normal">ใช้งาน</FormLabel>
                   </FormItem>
                 )}
               />
@@ -329,9 +329,9 @@ export default function Suppliers() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>ลบ Supplier</AlertDialogTitle>
+            <AlertDialogTitle>ลบซัพพลายเออร์</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบ Supplier นี้?
+              คุณแน่ใจหรือไม่ว่าต้องการลบซัพพลายเออร์นี้?
               การดำเนินการนี้ไม่สามารถย้อนกลับได้
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -363,7 +363,7 @@ export default function Suppliers() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search suppliers..."
+                placeholder="ค้นหาซัพพลายเออร์..."
                 className="pl-9"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -375,13 +375,13 @@ export default function Suppliers() {
         <CardContent>
           <div className="divide-y divide-border rounded-md border overflow-hidden">
             <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "90px 1fr 160px 130px 90px 70px 90px 80px"}}>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Code</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Supplier Name</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Contact</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Phone</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Type</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Avg Supply</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">รหัส</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อซัพพลายเออร์</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ผู้ติดต่อ</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">เบอร์โทร</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ประเภท</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ปริมาณเฉลี่ย</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
               <div />
             </div>
             {filteredSuppliers.map((supplier, idx) => (
@@ -407,7 +407,7 @@ export default function Suppliers() {
                 <div className="text-xs text-muted-foreground">-</div>
                 <div>
                   <Badge variant={supplier.isActive ? "secondary" : "outline"} className="capitalize text-[10px]">
-                    {supplier.isActive ? "active" : "inactive"}
+                    {supplier.isActive ? "ใช้งาน" : "ไม่ใช้งาน"}
                   </Badge>
                 </div>
                 <div className="flex gap-0.5">

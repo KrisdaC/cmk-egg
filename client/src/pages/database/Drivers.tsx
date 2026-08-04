@@ -166,9 +166,9 @@ export default function Drivers() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-page-title">
-            Drivers
+            พนักงานขับรถ
           </h1>
-          <p className="text-muted-foreground">Manage delivery drivers</p>
+          <p className="text-muted-foreground">จัดการพนักงานขับรถส่งสินค้า</p>
         </div>
         <Button
           data-testid="button-add-driver"
@@ -186,7 +186,7 @@ export default function Drivers() {
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Add Driver
+          เพิ่มพนักงานขับรถ
         </Button>
       </div>
 
@@ -202,9 +202,9 @@ export default function Drivers() {
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingItem ? "แก้ไข Driver" : "เพิ่ม Driver"}
+              {editingItem ? "แก้ไขพนักงานขับรถ" : "เพิ่มพนักงานขับรถ"}
             </DialogTitle>
-            <DialogDescription>กรอกข้อมูล Drivers</DialogDescription>
+            <DialogDescription>กรอกข้อมูลพนักงานขับรถ</DialogDescription>
           </DialogHeader>
 
           <Form {...driverForm}>
@@ -219,7 +219,7 @@ export default function Drivers() {
                   name="code"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Code*</FormLabel>
+                      <FormLabel>รหัส *</FormLabel>
                       <FormControl>
                         <Input placeholder="DRV-001" {...field} />
                       </FormControl>
@@ -233,9 +233,9 @@ export default function Drivers() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Driver Name*</FormLabel>
+                      <FormLabel>ชื่อพนักงาน *</FormLabel>
                       <FormControl>
-                        <Input placeholder="Somchai Jaidee" {...field} />
+                        <Input placeholder="สมชาย ใจดี" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -250,7 +250,7 @@ export default function Drivers() {
                   name="licenseNumber"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>License Number</FormLabel>
+                      <FormLabel>เลขที่ใบขับขี่</FormLabel>
                       <FormControl>
                         <Input placeholder="1234567890" {...field} />
                       </FormControl>
@@ -264,7 +264,7 @@ export default function Drivers() {
                   name="phone"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone</FormLabel>
+                      <FormLabel>เบอร์โทร</FormLabel>
                       <FormControl>
                         <Input placeholder="0812345678" {...field} />
                       </FormControl>
@@ -280,7 +280,7 @@ export default function Drivers() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>อีเมล</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -307,7 +307,7 @@ export default function Drivers() {
                         }
                       />
                     </FormControl>
-                    <FormLabel className="font-normal">Active</FormLabel>
+                    <FormLabel className="font-normal">ใช้งาน</FormLabel>
                   </FormItem>
                 )}
               />
@@ -327,9 +327,9 @@ export default function Drivers() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>ลบ Driver</AlertDialogTitle>
+            <AlertDialogTitle>ลบพนักงานขับรถ</AlertDialogTitle>
             <AlertDialogDescription>
-              คุณแน่ใจหรือไม่ว่าต้องการลบ Driver นี้?
+              คุณแน่ใจหรือไม่ว่าต้องการลบพนักงานขับรถนี้?
               การดำเนินการนี้ไม่สามารถย้อนกลับได้
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -361,7 +361,7 @@ export default function Drivers() {
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search drivers..."
+                placeholder="ค้นหาพนักงานขับรถ..."
                 className="pl-9"
                 onChange={(e) => setSearch(e.target.value)}
                 data-testid="input-search"
@@ -372,11 +372,11 @@ export default function Drivers() {
         <CardContent>
           <div className="divide-y divide-border rounded-md border overflow-hidden">
             <div className="grid items-center px-3 py-2.5 bg-muted/30" style={{gridTemplateColumns: "100px 1fr 140px 160px 90px 80px"}}>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Code</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Driver Name</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Phone</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">License No.</div>
-              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">Status</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">รหัส</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ชื่อพนักงาน</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">เบอร์โทร</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">ใบขับขี่</div>
+              <div className="text-[11px] font-medium text-muted-foreground uppercase tracking-wide">สถานะ</div>
               <div />
             </div>
             {filteredDrivers.map((driver: any, idx: number) => (
@@ -398,7 +398,7 @@ export default function Drivers() {
                 <div className="text-xs font-mono">{driver.licenseNumber}</div>
                 <div>
                   <Badge variant={driver.isActive ? "secondary" : "outline"} className="capitalize text-[10px]">
-                    {driver.isActive ? "active" : "inactive"}
+                    {driver.isActive ? "ใช้งาน" : "ไม่ใช้งาน"}
                   </Badge>
                 </div>
                 <div className="flex gap-0.5">

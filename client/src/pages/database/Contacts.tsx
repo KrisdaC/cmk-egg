@@ -255,7 +255,7 @@ export default function Contacts() {
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">Contacts</h1>
+          <h1 className="text-2xl font-bold" data-testid="text-page-title">ผู้ติดต่อ</h1>
           <p className="text-muted-foreground">จัดการผู้ติดต่อลูกค้า</p>
         </div>
         <div className="flex gap-2">
