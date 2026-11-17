@@ -1,0 +1,186 @@
+/* ==========================================================================
+   CMK Factory — Primitive component classes
+   The canonical reusable classes (pills, buttons, cards, tabs, bubble rows).
+   Production consumers using plain HTML get the brand look from these; the
+   React components mirror them. Shape/typography only — entity FILL colors
+   are set inline from the canonical mapping (never hard-coded per page).
+   ========================================================================== */
+
+/* ---- Base reset ---- */
+html, body {
+  margin: 0;
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  font-size: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+}
+code, pre, .mono { font-family: var(--font-mono); }
+
+/* ---- Section header ---- */
+.cmk-section-header {
+  font-size: var(--text-section);
+  text-transform: uppercase;
+  letter-spacing: var(--section-letter-spacing);
+  color: var(--text-hint);
+  font-weight: var(--weight-medium);
+  margin: 0;
+}
+
+/* ---- Mono code (PO numbers, item codes) ---- */
+.cmk-code { font-family: var(--font-mono); color: var(--text-code); font-variant-numeric: var(--numeric); }
+
+/* ==== Buttons ==== */
+.cmk-btn {
+  padding: 5px 11px;
+  border: var(--border-width) solid var(--border-default);
+  border-radius: var(--radius-input);
+  background: var(--surface-card);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+.cmk-btn:hover { background: var(--surface-page); }
+.cmk-btn--primary { background: var(--btn-primary-bg); color: #fff; border-color: var(--btn-primary-bg); }
+.cmk-btn--primary:hover { background: #000; }
+.cmk-btn--danger  { background: var(--btn-danger-bg); color: #fff; border-color: var(--btn-danger-bg); }
+.cmk-btn--danger:hover { background: #a93226; }
+.cmk-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ==== Pills (shape + type only; fill set inline) ==== */
+.cmk-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  color: #fff;
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.3px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+.cmk-pill--dim { opacity: 0.55; }
+.cmk-pill--ring { box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--gray-900); }
+.cmk-pill--neutral { background: var(--cust-general); }
+
+/* Status pill — three-state, text-on-tint with hairline border */
+.cmk-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  font-size: var(--text-meta);
+  font-weight: var(--weight-medium);
+  border: 0.5px solid transparent;
+}
+.cmk-status--draft     { background: #F1EFE8; color: #5F5E5A; border-color: #D3D1C7; }
+.cmk-status--submitted { background: var(--info-bg);    color: var(--info-fg);    border-color: var(--info-border); }
+.cmk-status--confirmed { background: var(--success-bg); color: var(--success-fg); border-color: var(--success-border); }
+.cmk-status--editing   { background: var(--warning-bg); color: var(--warning-fg); border-color: var(--warning-border); font-weight: var(--weight-semibold); }
+
+/* Small chip (egg size / delivery type) — shape only */
+.cmk-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: var(--radius-chip);
+  font-size: var(--text-label);
+  font-weight: var(--weight-semibold);
+  letter-spacing: 0.2px;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+/* Filter chip (toggle) */
+.cmk-filterchip {
+  padding: 4px 10px;
+  font-size: var(--text-meta);
+  border: 1px solid var(--border-default);
+  background: var(--surface-card);
+  border-radius: 14px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  line-height: 1.2;
+  transition: all 0.1s;
+}
+.cmk-filterchip:hover { background: var(--surface-page); border-color: #bbb; color: var(--text-primary); }
+.cmk-filterchip--active { background: var(--gray-900); color: #fff; border-color: var(--gray-900); font-weight: var(--weight-medium); }
+
+/* Round-status chip (MRP) */
+.cmk-round { font-size: 11.5px; font-weight: var(--weight-bold); border-radius: var(--radius-round); padding: 2px 11px; white-space: nowrap; }
+.cmk-round--open     { background: var(--round-open-bg);     color: var(--round-open-fg);     border: 1px solid var(--round-open-border); }
+.cmk-round--closed   { background: var(--round-closed-bg);   color: var(--round-closed-fg);   border: 1px solid var(--round-closed-border); }
+.cmk-round--defer    { background: var(--round-defer-bg);    color: var(--round-defer-fg);    border: 1px solid var(--round-defer-border); }
+.cmk-round--all      { background: var(--round-all-bg);      color: var(--round-all-fg);      border: 1px solid var(--round-all-border); }
+.cmk-round--inactive { background: var(--round-inactive-bg); color: var(--round-inactive-fg); border: 1px solid var(--round-inactive-border); }
+
+/* ==== Card / KPI tile (bubble surface) ==== */
+.cmk-card {
+  background: var(--surface-card);
+  border: var(--border-width) solid var(--border-default);
+  border-radius: var(--radius-card);
+  padding: var(--card-pad-y) var(--card-pad-x);
+  box-shadow: var(--shadow-card);
+}
+.cmk-kpi-label {
+  margin: 0 0 6px;
+  font-size: var(--text-section);
+  font-weight: var(--weight-medium);
+  color: var(--text-hint);
+  text-transform: uppercase;
+  letter-spacing: var(--section-letter-spacing);
+}
+.cmk-kpi-num { font-size: var(--text-kpi-num); font-weight: var(--weight-medium); font-variant-numeric: var(--numeric); line-height: 1.1; }
+.cmk-kpi-sub { font-size: var(--text-meta); color: var(--text-secondary); }
+
+/* ==== Tabs (underline-active) ==== */
+.cmk-tabs { display: flex; gap: 4px; border-bottom: 1px solid #e3e5e8; }
+.cmk-tab {
+  padding: 9px 14px;
+  cursor: pointer;
+  font-size: var(--text-body);
+  color: #777;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  user-select: none;
+  transition: color 0.12s;
+}
+.cmk-tab:hover { color: var(--text-primary); }
+.cmk-tab--active { color: var(--text-primary); font-weight: var(--weight-medium); border-bottom-color: var(--gray-900); }
+
+/* ==== Bubble-row table ==== */
+.cmk-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 6px;
+  background: transparent;
+  font-size: var(--text-body-sm);
+  font-variant-numeric: var(--numeric);
+}
+.cmk-table thead th {
+  background: transparent;
+  font-weight: var(--weight-medium);
+  font-size: var(--text-label);
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: var(--section-letter-spacing);
+  padding: 6px 12px 4px;
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-subtle);
+}
+.cmk-table thead th.num, .cmk-table tbody td.num { text-align: right; }
+.cmk-table tbody td {
+  background: var(--surface-card);
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
+  padding: 8px 12px;
+  transition: background 0.1s;
+}
+.cmk-table tbody tr td:first-child { border-left: 1px solid var(--border-default); border-radius: 8px 0 0 8px; }
+.cmk-table tbody tr td:last-child  { border-right: 1px solid var(--border-default); border-radius: 0 8px 8px 0; }
+.cmk-table tbody tr:hover td { background: var(--surface-page); }
+.cmk-qty-hero { font-weight: var(--weight-bold); font-variant-numeric: var(--numeric); text-align: right; }

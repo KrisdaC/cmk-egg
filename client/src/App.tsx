@@ -145,77 +145,88 @@ const navigationGroups = [
     items: [
       { title: "รับ PO", url: "/orders/input", icon: ClipboardList },
       { title: "แผนประจำวัน", url: "/orders/daily-plan", icon: Calendar },
-      { title: "สรุปประจำวัน", url: "/orders/daily-summary", icon: Calendar },
+      // "การผลิต" hidden from nav (2026-10-22) — it's the Production sub-tab
+      // already reachable inside "แผนประจำวัน" (DailyPlan's own Grading/
+      // Packing/BOM tabs), redundant as a separate top-level link. Route
+      // still exists below, just not duplicated in the sidebar.
+      // "สรุปประจำวัน" / "การคืนสินค้า" hidden from the sidebar at the user's
+      // request (2026-11-04): not in use yet. Routes still exist below, just
+      // not discoverable via the nav — re-add here when ready to use them.
+      // { title: "สรุปประจำวัน", url: "/orders/daily-summary", icon: Calendar },
       { title: "ใบแจ้งหนี้", url: "/orders/invoices", icon: Receipt },
-      { title: "การคืนสินค้า", url: "/orders/returns", icon: RotateCcw },
+      // { title: "การคืนสินค้า", url: "/orders/returns", icon: RotateCcw },
     ],
   },
-  {
-    label: "Productions",
-    icon: Factory,
-    items: [
-      {
-        title: "Planned Production",
-        url: "/production/planned",
-        icon: ClipboardList,
-      },
-      {
-        title: "SKU Transformation",
-        url: "/production/transformation",
-        icon: Boxes,
-      },
-      { title: "Order Picking", url: "/production/picking", icon: Package },
-      {
-        title: "Material Requirements",
-        url: "/production/materials",
-        icon: Box,
-      },
-      { title: "Real-time Output", url: "/production/output", icon: BarChart3 },
-      {
-        title: "Daily Productivity",
-        url: "/production/productivity",
-        icon: FileText,
-      },
-    ],
-  },
-  {
-    label: "Inventory",
-    icon: Warehouse,
-    items: [
-      {
-        title: "Goods Receive",
-        url: "/inventory/receive",
-        icon: ClipboardList,
-      },
-      { title: "Stock Locations", url: "/inventory/locations", icon: MapPin },
-      { title: "Stock Cards", url: "/inventory/cards", icon: BookOpen },
-      { title: "Stock by Category", url: "/inventory/category", icon: Egg },
-    ],
-  },
-  {
-    label: "Logistics",
-    icon: Truck,
-    items: [
-      {
-        title: "Delivery Planning",
-        url: "/logistics/planning",
-        icon: RouteIcon,
-      },
-      { title: "Delivery Tracking", url: "/logistics/tracking", icon: MapPin },
-    ],
-  },
-  {
-    label: "Customer Support",
-    icon: HeadphonesIcon,
-    items: [
-      { title: "Claim Cases", url: "/support/claims", icon: AlertCircle },
-    ],
-  },
-  {
-    label: "Reports",
-    icon: BarChart3,
-    items: [{ title: "Reports & Dashboard", url: "/reports", icon: FileText }],
-  },
+  // Productions / Inventory / Logistics / Customer Support / Reports —
+  // hidden from the sidebar at the user's request (2026-10-22): placeholder
+  // groups, not in use yet. Routes/pages still exist below, just not
+  // discoverable via the nav — re-add here when ready to use them.
+  // {
+  //   label: "Productions",
+  //   icon: Factory,
+  //   items: [
+  //     {
+  //       title: "Planned Production",
+  //       url: "/production/planned",
+  //       icon: ClipboardList,
+  //     },
+  //     {
+  //       title: "SKU Transformation",
+  //       url: "/production/transformation",
+  //       icon: Boxes,
+  //     },
+  //     { title: "Order Picking", url: "/production/picking", icon: Package },
+  //     {
+  //       title: "Material Requirements",
+  //       url: "/production/materials",
+  //       icon: Box,
+  //     },
+  //     { title: "Real-time Output", url: "/production/output", icon: BarChart3 },
+  //     {
+  //       title: "Daily Productivity",
+  //       url: "/production/productivity",
+  //       icon: FileText,
+  //     },
+  //   ],
+  // },
+  // {
+  //   label: "Inventory",
+  //   icon: Warehouse,
+  //   items: [
+  //     {
+  //       title: "Goods Receive",
+  //       url: "/inventory/receive",
+  //       icon: ClipboardList,
+  //     },
+  //     { title: "Stock Locations", url: "/inventory/locations", icon: MapPin },
+  //     { title: "Stock Cards", url: "/inventory/cards", icon: BookOpen },
+  //     { title: "Stock by Category", url: "/inventory/category", icon: Egg },
+  //   ],
+  // },
+  // {
+  //   label: "Logistics",
+  //   icon: Truck,
+  //   items: [
+  //     {
+  //       title: "Delivery Planning",
+  //       url: "/logistics/planning",
+  //       icon: RouteIcon,
+  //     },
+  //     { title: "Delivery Tracking", url: "/logistics/tracking", icon: MapPin },
+  //   ],
+  // },
+  // {
+  //   label: "Customer Support",
+  //   icon: HeadphonesIcon,
+  //   items: [
+  //     { title: "Claim Cases", url: "/support/claims", icon: AlertCircle },
+  //   ],
+  // },
+  // {
+  //   label: "Reports",
+  //   icon: BarChart3,
+  //   items: [{ title: "Reports & Dashboard", url: "/reports", icon: FileText }],
+  // },
   {
     label: "Settings",
     icon: Settings,
@@ -346,7 +357,7 @@ function MainLayout({ children }: { children: React.ReactNode }) {
           <header className="flex h-11 shrink-0 items-center gap-2 px-4 border-b border-[#d6d8dc] bg-white">
             <SidebarTrigger className="text-[#888] hover:text-[#1a1a1a]" data-testid="button-sidebar-toggle" />
           </header>
-          <div className="flex-1 overflow-auto bg-[#fafbfc] p-6">{children}</div>
+          <div className="flex-1 overflow-auto bg-[#fafbfc] p-6 pt-0">{children}</div>
         </main>
       </div>
     </SidebarProvider>
@@ -446,6 +457,10 @@ function Router() {
       />
       <Route
         path="/orders/daily-plan"
+        component={() => <ProtectedRoute component={DailyPlan} />}
+      />
+      <Route
+        path="/orders/daily-plan/production"
         component={() => <ProtectedRoute component={DailyPlan} />}
       />
       <Route

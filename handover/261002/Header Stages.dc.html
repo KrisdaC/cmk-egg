@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/spacing.css">
+  <style>
+    html, body { margin: 0; background: #fafbfc; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', 'Sukhumvit Set', sans-serif; color: #1a1a1a; font-variant-numeric: tabular-nums; text-wrap: pretty; }
+    a { color: #0C447C; } a:hover { color: #185FA5; }
+  </style>
+</helmet>
+<div ref="{{ rootRef }}" style="max-width: 1320px; margin: 0 auto; padding: 18px 22px 48px; display: flex; flex-direction: column; gap: 18px;">
+  <div style="border-bottom: 1px solid #ecedf0; padding-bottom: 12px;">
+    <div style="font-size: 11px; font-weight: 500; letter-spacing: .4px; text-transform: uppercase; color: #888;">Daily Plan · หัวหน้า 3 หน้า · แถบวันที่ + สถานะ · แถบ KPI</div>
+    <div style="font-size: 16px; font-weight: 700; color: #1a1a1a; margin-top: 4px;">หัวหน้าออเดอร์ · คัดไข่ · แพ็ก — โครงเดียวกันทุกขั้นของวัน</div>
+    <div style="font-size: 11.5px; color: #666; margin-top: 4px; line-height: 1.55;">แต่ละขั้นแสดง 3 หน้าเรียงกัน: <b>แถบวันที่ + สถานะ</b> แล้ว <b>แถบ KPI + บล็อกสถานะ</b> — ตำแหน่ง ขนาด และคำเดียวกันทุกหน้า ต่างกันเฉพาะข้อมูลของหน้า · ข้อมูลวันชุดเดียวกับ <a href="Status%20Block%20Stages.dc.html">สถานะวันนี้</a></div>
+  </div>
+
+  <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px;">
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888;">หน้า</span>
+      <div style="display: inline-flex; gap: 2px; padding: 2px; background: #eef0f3; border-radius: 6px;">
+        <sc-for list="{{ pageOpts }}" as="o" hint-placeholder-count="4">
+          <button type="button" style="{{ o.style }}" onClick="{{ o.on }}">{{ o.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888;">ขั้น</span>
+      <div style="display: inline-flex; gap: 2px; padding: 2px; background: #eef0f3; border-radius: 6px;">
+        <sc-for list="{{ stageOpts }}" as="o" hint-placeholder-count="9">
+          <button type="button" style="{{ o.style }}" onClick="{{ o.on }}">{{ o.label }}</button>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 11.5px; font-weight: 700;">
+      <span style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888;">สีตัวเลข</span>
+      <span style="color: #5B4B8A;">ออเดอร์</span>
+      <span style="color: #0C447C;">แผน</span>
+      <span style="color: #854F0B;">ปรับ / เลื่อน</span>
+      <span style="color: #1B6E64;">สต็อก</span>
+      <span style="color: #1a1a1a;">ผลจริง</span>
+      <span style="color: #791F1F;">ของเสีย</span>
+      <span style="color: #888;">ไม่มีค่า</span>
+    </div>
+  </div>
+
+  <sc-for list="{{ stages }}" as="s" hint-placeholder-count="8">
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+      <div style="display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;">
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; border-radius: 9999px; background: #1a1a1a; color: #fff; font-size: 11px; font-weight: 700;">{{ s.n }}</span>
+        <span style="font-size: 13px; font-weight: 700; color: #1a1a1a;">{{ s.title }}</span>
+        <span style="font-size: 11px; color: #888;">{{ s.note }}</span>
+      </div>
+      <sc-for list="{{ s.pages }}" as="pg" hint-placeholder-count="3">
+        <div>
+          <div style="{{ frameStyle }}">
+            <div style="background: #fff; border: 1px solid #d6d8dc; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); padding: 8px 16px 10px;">
+              <div style="{{ pg.tagStyle }}">{{ pg.tag }}</div>
+              <div style="display: flex; align-items: flex-end; gap: 18px; margin-top: 6px;">
+                <div style="flex: none;">
+                  <div style="display: flex; align-items: center; gap: 6px; height: 15px; margin-bottom: 4px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; white-space: nowrap;"><span>{{ pg.dlLabel }}</span><span style="{{ pg.dsegStyle }}"><span style="{{ pg.dl1Style }}">Load-in</span><span style="{{ pg.dl2Style }}">วันส่ง</span></span></div>
+                  <div style="display: flex; align-items: center; gap: 4px;">
+                    <span role="button" aria-label="วันก่อน" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; box-sizing: border-box; border: 1px solid #d6d8dc; border-radius: 5px; background: #fff; font-size: 12px; color: #1a1a1a;">←</span>
+                    <span style="display: inline-flex; align-items: center; height: 28px; box-sizing: border-box; padding: 0 10px; border: 1px solid #d6d8dc; border-radius: 5px; background: #fff; font-size: 12px; color: #1a1a1a; white-space: nowrap;">01/01/2026</span>
+                    <span role="button" aria-label="วันถัดไป" style="display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; box-sizing: border-box; border: 1px solid #d6d8dc; border-radius: 5px; background: #fff; font-size: 12px; color: #1a1a1a;">→</span>
+                    <span aria-disabled="true" style="display: inline-flex; align-items: center; height: 28px; box-sizing: border-box; padding: 0 10px; border: 1px solid #e3e5e9; border-radius: 5px; background: #fafbfc; font-size: 11.5px; color: #a3a3a3; white-space: nowrap;">วันนี้</span>
+                  </div>
+                </div>
+                <span style="flex: none; width: 1px; align-self: stretch; background: #eef0f3;"></span>
+                <div style="flex: none;">
+                  <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; margin-bottom: 4px; white-space: nowrap;">สถานะวางแผน</div>
+                  <div style="display: flex; align-items: center; gap: 8px; min-height: 28px; white-space: nowrap;">
+                    <span style="{{ pg.chipStyle }}">{{ pg.chip }}</span>
+                    <span style="{{ pg.wordStyle }}"><span style="{{ pg.dotStyle }}"></span>{{ pg.glyph }}{{ pg.word }}</span>
+                    <span style="{{ pg.detailStyle }}">{{ pg.detail }}</span>
+                    <span style="{{ pg.selStyle }}">{{ pg.sel }}</span>
+                  </div>
+                </div>
+                <div style="{{ pg.workZoneStyle }}">
+                  <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; margin-bottom: 4px; white-space: nowrap;">สถานะงาน · รอบนี้</div>
+                  <div style="display: flex; align-items: center; min-height: 28px;"><span style="{{ pg.workStyle }}"><span style="{{ pg.workDot }}"></span>{{ pg.work }}</span></div>
+                </div>
+                <div style="margin-left: auto; display: flex; align-items: flex-end; gap: 18px;">
+                  <div style="{{ pg.totZoneStyle }}">
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; margin-bottom: 4px; white-space: nowrap;">สถานะงาน · ทั้งวัน</div>
+                    <div style="display: flex; align-items: center; justify-content: flex-end; min-height: 30px;"><span style="{{ pg.totStyle }}"><span style="{{ pg.totDot }}"></span>{{ pg.tot }}</span></div>
+                  </div>
+                  <div style="flex: none; display: flex; flex-direction: column; align-items: flex-end;">
+                    <div style="{{ pg.gateStyle }}">{{ pg.gate }}</div>
+                    <div style="display: flex; align-items: center; gap: 8px; min-height: 30px;">
+                      <span style="{{ pg.priStyle }}">{{ pg.pri }}</span>
+                      <span style="{{ pg.secStyle }}">ปิดวันนี้</span>
+                      <span style="{{ pg.closedStyle }}"><span style="grid-area: 1 / 1 / 2 / 3; height: 0; visibility: hidden;">✓ ปิดวัน O-R2 · 9,999,999 ฟอง · 00:00</span><span style="grid-area: 2 / 1;">✓ ปิดวัน {{ pg.crid }}</span><span style="grid-area: 2 / 2; justify-self: end;">{{ pg.cqty }} ฟอง · {{ pg.ctime }}</span></span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="{{ pg.bandStyle }}">
+              <sc-for list="{{ pg.blocks }}" as="b" hint-placeholder-count="2">
+                <div style="{{ b.style }}">
+                  <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; margin-bottom: 6px; white-space: nowrap;"><span>{{ b.cap }}</span><span style="{{ b.capRStyle }}">{{ b.capR }}</span></div>
+                  <div style="{{ b.gridStyle }}">
+                    <sc-for list="{{ b.cells }}" as="c" hint-placeholder-count="3">
+                      <div style="min-width: 0; display: flex; flex-direction: column; justify-content: space-between; gap: 2px;">
+                        <div style="{{ c.lblStyle }}">{{ c.lbl }}</div>
+                        <div style="{{ c.valStyle }}">{{ c.val }}<span style="{{ c.unitStyle }}">ฟอง</span></div>
+                        <div style="font-size: 11px; color: #6b7280; height: 15px; line-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.sub }}</div>
+                        <div style="font-size: 11px; color: #6b7280; height: 15px; line-height: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{ c.sub2 }}</div>
+                      </div>
+                    </sc-for>
+                    <sc-for list="{{ b.lrows }}" as="lr" hint-placeholder-count="3">
+                      <span style="{{ lr.lblStyle }}">{{ lr.lbl }}</span>
+                      <span style="{{ lr.valStyle }}">{{ lr.val }}<span style="{{ lr.unitStyle }}">{{ lr.unit }}</span></span>
+                      <span style="{{ lr.val2Style }}">{{ lr.val2 }}<span style="{{ lr.unit2Style }}">ฟอง</span></span>
+                    </sc-for>
+                  </div>
+                </div>
+              </sc-for>
+              <div style="{{ pg.statusStyle }}">
+                <div style="display: flex; justify-content: space-between; gap: 8px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; margin-bottom: 6px;"><span>สถานะวางแผน</span><span>สถานะงาน</span></div>
+                <div style="display: grid; grid-template-columns: 56px minmax(0, 1fr) max-content; gap: 5px 8px; align-items: center;">
+                  <sc-for list="{{ pg.rows }}" as="r" hint-placeholder-count="3">
+                    <span style="{{ r.pillStyle }}">{{ r.pill }}</span>
+                    <span style="{{ r.restStyle }}">
+                      <span style="{{ r.wordStyle }}"><span style="{{ r.dotStyle }}"></span>{{ r.glyph }}{{ r.word }}</span>
+                      <span style="font-size: 11px; color: #6b7280;">{{ r.detail }}</span>
+                    </span>
+                    <span style="{{ r.closedStyle }}"><span style="grid-area: 1 / 1 / 2 / 3; height: 0; visibility: hidden;">✓ ปิดวัน O-R2 · 9,999,999 ฟอง · 00:00</span><span style="grid-area: 2 / 1;">✓ ปิดวัน {{ r.rid }}</span><span style="grid-area: 2 / 2; justify-self: end;">{{ r.qty }} ฟอง · {{ r.time }}</span></span>
+                    <span style="{{ r.workStyle }}"><span style="{{ r.workDot }}"></span>{{ r.work }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="{{ pg.chartStyle }}">
+              <div style="display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content max-content; gap: 8px 14px; align-items: center;">
+                <sc-for list="{{ pg.bars }}" as="br" hint-placeholder-count="1">
+                  <span style="{{ br.lblStyle }}">{{ br.lbl }}<span style="font-weight: 500; color: #6b7280;">{{ br.sub }}</span></span>
+                  <span style="position: relative; display: flex; height: 6px; border-radius: 3px; background: #eef0f3;">
+                    <sc-for list="{{ br.segs }}" as="sg" hint-placeholder-count="1"><span style="{{ sg.style }}"></span></sc-for>
+                    <span style="{{ br.markStyle }}"></span>
+                  </span>
+                  <span style="{{ br.valStyle }}"><b style="color: #1a1a1a;">{{ br.val }}</b>{{ br.rest }}</span>
+                  <span style="display: flex; align-items: center; gap: 14px; white-space: nowrap;">
+                    <sc-for list="{{ br.legend }}" as="lg" hint-placeholder-count="1"><span style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: #555;"><span style="{{ lg.dot }}"></span>{{ lg.lbl }}<b style="color: #1a1a1a;">{{ lg.val }}</b><span style="color: #6b7280;">{{ lg.pct }}</span></span></sc-for>
+                  </span>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </sc-for>
+
+  <div style="background: #fff; border: 1px solid #d6d8dc; border-radius: 8px; padding: 12px 14px; font-size: 11.5px; color: #444441; line-height: 1.6; display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #888; margin-bottom: 2px;">กติกาที่จะใช้ทั้งสามหน้า</div>
+    <div><b>แถบวันที่ + สถานะ</b> · ซ้าย → ขวา: วันที่ | สถานะวางแผนของรอบที่เลือก + ตัวเลือกรอบ · สถานะงานรอบนี้ (P-R) …… สถานะงานทั้งวัน (G-P · P-R) · ปุ่ม หรือ ชิปปิดวัน (ขวาสุด) · ป้ายโซน 10px/700 ตัวพิมพ์ใหญ่ #888 · คอนโทรลสูง 28px · ปุ่มสูง 30px · ทุกโซนชิดล่างแนวเดียวกัน</div>
+    <div><b>วันที่</b> · ป้ายบอกความหมายของวัน (วันที่คัด · วันที่แพ็ก) · ← วันที่ → วันนี้ ขนาดเท่ากันทุกหน้า · ปุ่ม วันนี้ จางเมื่อวันที่แสดงเป็นวันนี้อยู่แล้ว · ลูกศรมีชื่อสำหรับโปรแกรมอ่านหน้าจอ (วันก่อน · วันถัดไป) · ออเดอร์: ป้าย "วันที่" + สวิตช์ [Load-in | วันส่ง] 2 ช่องกว้างเท่ากัน ช่องที่เลือกทึบเข้ม ตัวขาว (แบบเดียวกับปุ่มดูตามเดิม) อยู่แถวป้าย โซนวันที่จึงกว้างเท่ากันทุกหน้า · แสดงทั้ง 2 แบบทุกขั้น — เปลี่ยนเฉพาะชุดออเดอร์ที่นับ</div>
+    <div><b>สถานะวางแผน</b> · สถานะของรอบที่เลือกเสมอ (ชิปรอบ 60px · คำสถานะ · รายละเอียด) + ตัวเลือกรอบ (O-R · P-R) — หลังปิดวันยังเลือกดูรอบได้ · <b>สถานะงาน</b> รอบนี้อยู่ถัดสถานะวางแผน (P-R) · ทั้งวันอยู่ข้างปุ่ม (G-P · P-R) · คำเดียวกับบล็อกสถานะ</div>
+    <div><b>ปุ่ม</b> · หลัก = ขั้นถัดไป สีของหน้า (ส่ง … · ไปที่ …-Rn) · ทบทวน… เป็นปุ่มเส้นขอบสีของหน้า · รอง = ปิดวันนี้ · เหตุผลที่กดไม่ได้อยู่แถวป้ายเหนือปุ่ม ชิดขวา 11.5px · ปิดวันแล้ว → ชิปปิดวันขวาสุดแทนปุ่ม ป้าย "อ่านอย่างเดียว" เหนือชิป</div>
+    <div><b>กติกาจากสถาปัตยกรรม</b> · PQ มีเมื่อเผยแพร่แล้วเท่านั้น — รอบร่างแสดงจำนวนเป็น "ร่าง · ยังไม่เผยแพร่" และไม่รวมใน PQ รวม · ผลจริงการแพ็กยังไม่อยู่ในสโคป → "ยังไม่มีข้อมูล" เสมอ ห้ามแสดง 0 หรือ % (ตัวเลขจำลองเปิดได้จาก Tweaks) · ผลจริงคัดไข่บันทึกต่อแบตช์ — ค่าว่าง (—) · ศูนย์ · Unknown แยกกัน จึงเขียน "จริง —" จนกว่าแบตช์แรกจะจบ</div>
+    <div><b>กราฟแท่งใต้ KPI</b> · 1 แถวต่อแท่ง: ป้าย · แท่ง · ตัวเลข · คำอธิบายสี · ออเดอร์: PQ ตามลูกค้า — แท่งเดียวแบ่งสีตามลูกค้า · คำอธิบายสี = ลูกค้า ตัวเลข % · แพ็ก: 2 แถว สเกลเดียวกัน — ความยาวเต็มแท่ง = PQ ทั้งวัน ทั้ง 2 แถว (ความยาวเท่ากัน = จำนวนฟองเท่ากัน) — งาน (PT) เทียบ PQ (PT รอบก่อน ม่วง → PT รอบนี้ น้ำเงิน · ขีดดำ = เส้น PQ · ส่วนขาด = ยังไม่ตั้งเป้า) และ งาน (PT) เทียบผลจริง (ผลจริง เขียว · เกิน PQ อำพัน · ขีดดำ = งาน PT รวม · ตัวเลขจำลองจนเชื่อมระบบ) · คำอธิบายสีอยู่ท้ายแถวของตัวเอง · คัดไข่: ไม่มีกราฟ</div>
+    <div><b>แถบ KPI</b> · ออกแบบที่กว้าง 1280px · 1 แถวทุกหน้า · บล็อกสถานะกว้าง ≥404px อยู่ขวาสุดทุกหน้า · ทุกหน้า 6 ช่องตัวเลขใหญ่ใน 3 หรือ 2 บล็อก · ทุกบล็อกสูงเท่ากัน</div>
+    <div><b>ลำดับช่อง</b> · ออเดอร์ = แพ็ก: [ทั้งวัน: ความต้องการ · Accum · ผล] [รอบนี้: เริ่มต้น · ปรับ/เลื่อน · สุดท้าย] · คัดไข่: [ไข่คละ: คงเหลือ (คาด น้ำเงินขณะคัดยังไม่เสร็จ → จริง เขียวเมื่องานสุดท้ายบันทึกผล) · คัดวันนี้ (จำนวนงานใต้ตัวเลข)] [แผนคละ / คัด: คัดไข่ · คละไข่ — ตัวเลข = จริง + คาด · 2 บรรทัดใต้: จริง … / คาด … ("—" เมื่อยังไม่มีแบตช์จบ / ไม่มีแบตช์ค้าง) · น้ำเงินขณะยังมีค่าคาด → ดำเมื่องานเสร็จครบ] [สต็อกไข่เบอร์: ยกมา (อายุ ≥ 3 วัน ใต้ตัวเลข) · รวม = สต็อก + คัดได้]</div>
+    <div><b>ช่อง KPI</b> · ป้าย · ตัวเลข 19px/700 + ฟอง 11px จาง บรรทัดเดียว (9,999,999 ฟอง พอดีช่องที่แคบที่สุด · ข้อมูลตัวอย่าง: ตัวเลขหลักล้าน หมายเหตุหลักแสน) · หมายเหตุ (≤ 2 บรรทัด) ใส่เฉพาะสิ่งที่ตัวเลขอื่นไม่บอก: แผนงาน: จำนวนงาน · ของเสีย: ค่าคาดทั้งวัน (เทียบกับจริง) · ค้างคัดรวม: ยังไม่จัดคัด + อายุไข่ดิบเก่าสุด · ออเดอร์ที่เลื่อนมา · ผลจริงยังไม่เชื่อมระบบ — ไม่ซ้ำตัวเลขข้างเคียง ไม่ใส่ชื่อฉบับ คำสถานะ หรือสูตร · ไม่มีค่า = "—" อย่างเดียว · หมายเหตุที่มีตัวเลข #6b7280 (คอนทราสต์ ≥ 4.5:1) · ป้ายโซนล้วน #888</div>
+    <div><b>ช่อง</b> · ป้าย 10.5px/600 · ตัวเลข 19px/700 + ฟอง บรรทัดเดียว · <b>สีตัวเลข 1 สี = 1 ความหมาย ทุกหน้า</b>: ม่วง ออเดอร์ (OQ) · น้ำเงิน แผน (PQ · Accum · เข้าคัด · PT) · อำพัน ปรับ/เลื่อน · เขียว สต็อก · ดำ ผลจริง · แดง ของเสีย · เทา ไม่มีค่า — ตัวเดียวกันสีเดียวกันทุกหน้า (PQ น้ำเงินทั้งหน้าออเดอร์และแพ็ก) · คัดได้ น้ำเงินขณะยังมีค่าคาด → ดำเมื่อจริงครบ · สีของหน้าใช้กับชิปและปุ่มหลักเท่านั้น</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showMockActuals&quot;: {&quot;editor&quot;: &quot;boolean&quot;, &quot;default&quot;: false, &quot;tsType&quot;: &quot;boolean&quot;, &quot;section&quot;: &quot;ข้อมูลตัวอย่าง&quot;}}">
+class Component extends DCLogic {
+  state = { page: 'all', stage: 0, fit: 0 };
+  rootRef = React.createRef();
+  /* frames are designed at 1280px; below that they scale down (zoom) instead of scrolling sideways */
+  componentDidMount() {
+    const el = this.rootRef.current; if (!el || typeof ResizeObserver === 'undefined') return;
+    this._ro = new ResizeObserver(() => { const w = el.clientWidth - 44; if (w > 0 && Math.abs(w - this.state.fit) > 1) this.setState({ fit: w }); });
+    this._ro.observe(el);
+  }
+  componentWillUnmount() { if (this._ro) this._ro.disconnect(); }
+  renderVals() {
+    const AC = { O: '#2563EB', G: '#7C3AED', P: '#BE185D' };
+    const TONE = { blue: '#0C447C', amber: '#854F0B', green: '#166534', plain: '#6b7280' };
+    /* number colour = ONE meaning on every page; the same quantity keeps its colour across pages (PQ is แผน on Order and Packing alike) */
+    const ROLE = { order: '#5B4B8A', plan: '#0C447C', adj: '#854F0B', actual: '#1a1a1a', stock: '#1B6E64', loss: '#791F1F' };
+    const LBL = Object.assign({}, ROLE, { actual: '#444441' });
+    const HIDE = 'display:none';
+    const DOT = (c) => `width:6px;height:6px;border-radius:50%;background:${c};flex:none`;
+    const ST = { idle: ['plain', 'ยังไม่เริ่ม', '○'], draft: ['amber', 'ร่าง', ''], sent: ['blue', 'ส่งแล้ว', '✓'], closed: ['green', 'ปิดวัน', '✓'] };
+    const CLOSED = (dom, big) => `display:inline-grid;grid-template-columns:auto auto;column-gap:10px;align-items:center;font-size:${big ? 12 : 11}px;font-weight:700;color:#fff;background:${AC[dom]};border:1.5px solid ${AC[dom]};border-radius:9999px;padding:${big ? '2px 10px' : '1px 8px'};line-height:1.5;white-space:nowrap`;
+    const workOf = (w, size) => {
+      const base = `display:inline-flex;justify-self:end;align-items:center;gap:5px;font-size:${size}px;font-weight:700;white-space:nowrap`;
+      if (w === undefined) return { work: '', workStyle: base, workDot: HIDE };
+      if (w === '—') return { work: '○ รองาน', workStyle: `${base};color:${TONE.plain}`, workDot: HIDE };
+      const done = w[0] >= w[1];
+      return { work: `${done ? '✓ เสร็จ' : 'ทำแล้ว'} ${w[0]}/${w[1]}`, workStyle: `${base};color:${done ? TONE.green : TONE.blue}`, workDot: done ? HIDE : DOT(TONE.blue) };
+    };
+    /* one planning row → status-block row (small) or the command bar's สถานะวางแผน zone (big) — same words, same chip */
+    const plan = (dom, r, big) => {
+      const [rid, st, detail, work] = r, [tone, word, glyph] = ST[st], closed = st === 'closed';
+      const w = workOf(dom === 'O' ? undefined : (work === undefined ? '—' : work), big ? 12.5 : 11);
+      const qt = closed ? detail.split(' ฟอง · ') : ['', ''];
+      return Object.assign(w, {
+        pill: closed ? '' : rid,
+        pillStyle: closed ? HIDE : `display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;${big ? 'min-width:60px;font-size:12px;padding:2px 10px' : 'font-size:11px;padding:1px 8px'};font-weight:700;color:${AC[dom]};border:1.5px solid ${AC[dom]}33;background:${AC[dom]}0d;border-radius:999px;line-height:1.5;white-space:nowrap`,
+        restStyle: closed ? HIDE : 'display:inline-flex;align-items:center;gap:6px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis',
+        word: closed ? '' : word, glyph: !closed && glyph ? glyph + ' ' : '',
+        wordStyle: closed ? HIDE : `display:inline-flex;align-items:center;gap:5px;font-size:${big ? 12.5 : 11.5}px;font-weight:700;color:${TONE[tone]};white-space:nowrap`,
+        dotStyle: glyph || closed ? HIDE : DOT(TONE[tone]),
+        detail: closed ? '' : (detail || ''),
+        detailStyle: closed ? HIDE : `font-size:${big ? 11.5 : 11}px;color:${big ? '#555' : '#6b7280'};white-space:nowrap`,
+        closedStyle: closed ? CLOSED(dom, big) + (big ? '' : ';grid-column:1/3;justify-self:start') : HIDE,
+        rid, qty: qt[0], time: qt[1],
+      });
+    };
+    /* command-bar actions: primary = next step (page colour; ทบทวน… outlined) · secondary = ปิดวันนี้ · gate = one reason line */
+    const BTN = 'display:inline-flex;align-items:center;height:30px;box-sizing:border-box;padding:0 14px;border-radius:6px;font-size:12.5px;font-weight:600;white-space:nowrap;';
+    const GATE = 'min-height:15px;line-height:15px;margin-bottom:4px;font-size:11.5px;font-weight:600;white-space:nowrap;color:';
+    const act = (dom, a) => a.ro
+      ? { pri: '', priStyle: HIDE, secStyle: HIDE, gate: a.ro, gateStyle: GATE + '#888' }
+      : { pri: a.pri[0] + ' ›', priStyle: BTN + (a.pri[2] ? `background:${AC[dom]}12;border:1px solid ${AC[dom]};color:${AC[dom]}` : `background:${AC[dom]};border:1px solid ${AC[dom]};color:#fff`) + (a.pri[1] ? '' : ';opacity:.4;cursor:not-allowed'),
+          secStyle: BTN + (a.sec ? 'background:#fff;border:1px solid #c9ccd1;color:#1a1a1a' : 'background:#fafbfc;border:1px solid #e3e5e9;color:#a3a3a3;cursor:not-allowed'),
+          gate: a.gate || '', gateStyle: GATE + '#854F0B' };
+    /* KPI: 16-part grid — every cell spans 2 parts, status block 4 parts; label 10.5/600 role colour · 22/700 number · 11 muted sub */
+    /* KPI cell = label · number + ฟอง on one line (fits 100,000 ฟอง) · optional note ONLY when it adds what no other number shows:
+       forecast share (คัดได้ · ของเสีย) · raw eggs with no job yet · orders moved in from the previous round · actuals not connected */
+    const cell = (lbl, v, role) => {
+      const empty = v[0] === '—';
+      return { lbl, val: v[0], sub: v[1] || '', sub2: v[2] || '',
+        unitStyle: empty ? 'display:none' : 'margin-left:4px;font-size:11px;font-weight:500;color:#888',
+        lblStyle: 'height:15px;line-height:15px;font-size:10.5px;font-weight:600;color:' + LBL[role] + ';white-space:nowrap;overflow:hidden;text-overflow:ellipsis',
+        valStyle: 'height:26px;line-height:26px;font-size:19px;font-weight:700;white-space:nowrap;color:' + (empty || v[0] === '0' ? '#888' : ROLE[role]) };
+    };
+    const blk = (cap, cells) => ({ cap, cells, lrows: [], capR: '', capRStyle: 'display:none', style: 'grid-column:span ' + cells.length + ';min-width:0;display:flex;flex-direction:column;padding:8px 12px;border:1px solid #e3e5e9;border-radius:8px;background:#fff', gridStyle: 'display:grid;grid-template-columns:repeat(' + cells.length + ',minmax(0,1fr));gap:6px 12px;flex:1;align-content:stretch' });
+    const pick = (a, i) => a[Math.min(i, a.length - 1)];
+    const E = ['—'];
+    const oR1 = [['6,840,000'], ['0'], ['6,520,000'], 'O-R1', ['6,840,000'], ['−320,000'], ['6,520,000']];
+    const oR2 = [['8,200,000'], ['6,520,000'], ['8,200,000'], 'O-R2', ['1,680,000', 'เลื่อนมา 320,000'], ['0'], ['1,680,000']];
+    /* architecture: PQ exists only as a published version — a draft round shows its quantity as ร่าง and adds nothing to PQ รวม */
+    const oR1d = [['6,840,000'], ['0'], ['—', 'ยังไม่มี PQ'], 'O-R1', ['6,840,000'], ['−320,000'], ['6,520,000', 'ร่าง · ยังไม่เผยแพร่']];
+    const oR2d = [['8,200,000'], ['6,520,000'], ['6,520,000', 'PQ v1'], 'O-R2', ['1,680,000', 'เลื่อนมา 320,000'], ['0'], ['1,680,000', 'ร่าง · ยังไม่เผยแพร่']];
+    const O_K = [[E, E, E, 'O-R1', E, E, E], oR1d, oR1, oR2d, oR2];
+    /* Grading — ONE line, 6 big cells like Order/Packing: [ไข่คละ: คงเหลือ · คัดวันนี้] [แผนคละ / คัด: คัดไข่ · คละไข่ (จริง · คาด below)] [สต็อกไข่เบอร์: ยกมา (aging below) · รวม = สต็อก + คัดได้]
+       คัดไข่ / คละไข่ = จริง + คาด: blue while any estimate remains, black once every job reports actuals. ยกมา 1,200,000 of which ≥ 3 วัน 400,000 */
+    const G_K = [
+      { left: ['9,960,000', 'จริง'], job: E, gr: E, mx: E, tot: '1,200,000' },
+      { left: ['2,760,000', 'คาด'], job: ['7,200,000', '2 งาน'], gr: ['6,768,000', '0', '6,768,000'], mx: E, tot: '7,968,000' },
+      { left: ['2,760,000', 'คาด'], job: ['7,200,000', '2 งาน'], gr: ['6,768,000', '0', '6,768,000'], mx: E, tot: '7,968,000' },
+      { left: ['120,000', 'คาด'], job: ['9,840,000', '4 งาน'], gr: ['7,896,000', '6,732,000', '1,164,000'], mx: ['1,440,000', '0', '1,440,000'], tot: '9,096,000' },
+      { left: ['126,000', 'จริง'], job: ['9,840,000', '4 งาน'], gr: ['7,854,000', '7,854,000', '0'], mx: ['1,440,000', '1,440,000', '0'], tot: '9,054,000' },
+    ];
+    /* คงเหลือ = raw eggs left after today's jobs: estimate (blue) while grading runs, actual (green) once the last job reports */
+    const leftCell = (v) => cell('คงเหลือ', v, v[1] === 'คาด' ? 'plan' : 'stock');
+    /* output cell: [total, จริง, คาด] → two sub lines; blue while คาด > 0, black once all actual */
+    const outCell = (lbl, v) => v[0] === '—' ? cell(lbl, E, 'plan') : cell(lbl, [v[0], 'จริง ' + (v[1] === '0' ? '—' : v[1]), 'คาด ' + (v[2] === '0' ? '—' : v[2])], v[2] === '0' ? 'actual' : 'plan');
+    const p0 = [E, E, 'P-R', E, E, E];
+    const p1 = [['6,520,000'], ['0'], 'P-R1', ['6,520,000'], ['−171,200'], ['6,348,800']];
+    const p3 = [['8,200,000'], ['8,060,800'], 'P-R3', ['139,200'], ['0'], ['139,200']];
+    const P_K = [p0, p0, p1, p1, [['8,200,000'], ['6,348,800'], 'P-R2', ['1,851,200'], ['−139,200'], ['1,712,000']], p3, p3];
+    /* mocked packing actuals per stage (จำนวนงานที่ทำแล้ว 0/4 → 3/4 → 6/7 → 7/9 → 9/9) — placeholder until the floor system is connected */
+    const MOCK = this.props.showMockActuals ?? false;
+    const P_ACT = MOCK ? ['—', '—', '—', '0', '4,760,000', '6,900,000', '7,380,000', '8,187,600'] : ['—', '—', '—', '—', '—', '—', '—', '—'];
+    /* architecture: packing Actual is out of scope → ยังไม่มีข้อมูล / Unknown · never infer 0 or % from ส่ง/ปล่อย/พิมพ์ */
+    const actNote = (k, i) => MOCK ? (P_ACT[i] === '—' ? (k[0][0] === '—' ? 'รอ PQ' : 'ยังไม่เริ่มงาน') : 'ตัวเลขจำลอง') : 'ยังไม่มีข้อมูล';
+    const actNote2 = (k) => MOCK ? '' : (k[0][0] === '—' ? '' : 'ยังไม่เชื่อมต่อ');
+    const blocksFor = {
+      O: (i) => { const k = pick(O_K, i); return [
+        blk('ทั้งวัน', [cell('OQ', k[0], 'order'), cell('Accum PQ', k[1], 'plan'), cell('PQ รวม', k[2], 'plan')]),
+        blk('รอบนี้ · ' + k[3], [cell('ออเดอร์รอบนี้', k[4], 'order'), cell('เลื่อนรอบถัดไป', k[5], 'adj'), cell('PQ รอบนี้', k[6], 'plan')]) ]; },
+      G: (i) => { const k = pick(G_K, i); return [
+        blk('ไข่คละ', [leftCell(k.left), cell('คัดวันนี้', k.job, 'plan')]),
+        blk('แผนคละ / คัด', [outCell('คัดไข่', k.gr), outCell('คละไข่', k.mx)]),
+        blk('สต็อกไข่เบอร์', [cell('ยกมา', ['1,200,000', 'อายุ ≥ 3 วัน 400,000'], 'stock'), cell('รวม', [k.tot, 'สต็อก + คัดได้'], 'stock')]) ]; },
+      P: (i) => { const k = pick(P_K, i); return [
+        blk('ทั้งวัน', [cell('PQ', k[0], 'plan'), cell('Accum PT', k[1], 'plan'), cell('ผลจริง', [P_ACT[i], actNote(k, i), actNote2(k)], 'actual')]),
+        blk('รอบนี้ · ' + k[2], [cell('PT เริ่มต้น', k[3], 'plan'), cell('ปรับลด', k[4], 'adj'), cell('PT สุดท้าย', k[5], 'plan')]) ]; },
+    };
+    /* bar charts under the KPI band (from the prototype): Order = PQ ตามลูกค้า (one bar per customer) · Packing = งาน (PT) เทียบ PQ + เทียบผลจริง with a PQ end-mark. Grading has none. */
+    const CHART = 'background:#fff;border:1px solid #d6d8dc;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.04);padding:10px 16px 12px';
+    const BSEG = (pct, color, first) => ({ style: 'width:' + pct + '%;height:100%;background:' + color + (first ? ';border-radius:3px 0 0 3px' : '') });
+    /* top 4 customers in their own colour · everyone else pooled as อื่นๆ in a light neutral */
+    const CUST = [['Thaifood', .42, '#185FA5'], ['CJ Express', .20, '#993556'], ['BigC', .13, '#3B6D11'], ['Makro', .11, '#A32D2D'], ['อื่นๆ (12 ลูกค้า)', .14, '#c9ccd1']];
+    const fmt = (n) => Math.round(n).toLocaleString('en-US');
+    /* ONE line per bar: label · bar · value · legend (with values on the Order chart) */
+    const PLBL = 'font-size:11.5px;font-weight:600;color:#444441;white-space:nowrap';
+    const PVAL = 'font-size:11.5px;color:#555;white-space:nowrap;text-align:right';
+    const LEG = (c) => 'width:8px;height:8px;border-radius:50%;background:' + c;
+    const legOf = (arr) => arr.map((l) => Object.assign({ val: '', pct: '' }, l));
+    const P_LEG1 = legOf([{ lbl: 'PT รอบก่อน', dot: LEG('#5B4B8A') }, { lbl: 'PT สุดท้ายรอบนี้', dot: LEG('#0C447C') }, { lbl: 'เส้น PQ', dot: 'width:2px;height:10px;background:#1a1a1a' }]);
+    const P_LEG2 = legOf([{ lbl: 'ผลจริง', dot: LEG('#1B6E64') }, { lbl: 'เกิน PQ', dot: LEG('#854F0B') }, { lbl: 'ขีด = งาน PT รวม', dot: 'width:2px;height:10px;background:#1a1a1a' }]);
+    const num = (s) => Number(String(s).replace(/[^0-9]/g, ''));
+    const custBar = (pq) => { let rem = pq; const parts = CUST.map(([name, share, fg], i) => { const v = i === CUST.length - 1 ? rem : Math.round(pq * share / 1000) * 1000; rem -= v; return { name, v, fg }; });
+      return { lbl: 'PQ ตามลูกค้า', sub: ' · 4 อันดับแรก + อื่นๆ', lblStyle: PLBL, segs: parts.map((p, i) => BSEG(p.v / pq * 100, p.fg, i === 0)), markStyle: HIDE, val: fmt(pq), rest: ' ฟอง', valStyle: PVAL,
+        legend: parts.map((p) => ({ lbl: p.name + ' ', dot: LEG(p.fg), val: fmt(p.v), pct: ' · ' + Math.round(p.v / pq * 100) + '%' })) }; };
+    const emptyBar = (lbl, note) => ({ lbl, sub: '', lblStyle: PLBL, segs: [], markStyle: HIDE, val: '', rest: note, valStyle: PVAL, legend: [] });
+    const chartFor = {
+      O: (i) => { const k = pick(O_K, i); return { chartStyle: CHART, bars: [k[2][0] === '—' ? emptyBar('PQ ตามลูกค้า', k[0][0] === '—' ? 'ยังไม่มีออเดอร์' : 'ยังไม่มี PQ · ' + k[3] + ' ร่าง') : custBar(num(k[2][0]))] }; },
+      G: () => ({ chartStyle: HIDE, bars: [] }),
+      P: (i) => { const k = pick(P_K, i), has = k[0][0] !== '—'; const pq = num(k[0][0]), prev = num(k[1][0]), cur = num(k[5][0]), tot = prev + cur, gap = pq - tot, act = num(P_ACT[i]), left = tot - act, started = P_ACT[i] !== '—';
+        return { chartStyle: CHART, bars: has ? [
+          { lbl: '1 · งาน (PT) เทียบ PQ', sub: '', lblStyle: PLBL, segs: [BSEG(prev / pq * 100, '#5B4B8A', true), BSEG(cur / pq * 100, '#0C447C', prev === 0)], markStyle: 'position:absolute;right:-1px;top:-3px;width:2px;height:12px;background:#1a1a1a', val: fmt(tot), rest: ' / PQ ' + fmt(pq) + ' · ' + Math.floor(tot / pq * 100) + '%' + (gap > 0 ? ' · ยังไม่ตั้งเป้า ' + fmt(gap) : ' · ครบ PQ'), valStyle: PVAL, legend: P_LEG1 },
+          !started ? emptyBar('2 · งาน (PT) เทียบผลจริง', (MOCK ? 'ยังไม่เริ่มงาน' : 'ยังไม่มีข้อมูล · ยังไม่เชื่อมต่อ') + ' · งาน ' + fmt(tot) + ' ฟอง') : { lbl: '2 · งาน (PT) เทียบผลจริง', sub: '', lblStyle: PLBL, segs: [BSEG(Math.min(act, tot) / pq * 100, '#1B6E64', true), BSEG(Math.max(act - tot, 0) / pq * 100, '#854F0B', false)], markStyle: 'position:absolute;left:' + (tot / pq * 100) + '%;top:-3px;width:2px;height:12px;background:#1a1a1a;margin-left:-1px', val: fmt(act), rest: ' / งาน ' + fmt(tot) + ' · ' + Math.floor(act / tot * 100) + '%' + (left > 0 ? ' · เหลือ ' + fmt(left) : left < 0 ? ' · เกิน ' + fmt(-left) : ' · ครบ'), valStyle: PVAL, legend: P_LEG2 } ] : [emptyBar('งาน (PT) เทียบ PQ', 'รอ PQ')] }; },
+    };
+    const SB = 'min-width:0;display:flex;flex-direction:column;background:#fff;border:1px solid #e3e5e9;border-radius:8px;padding:8px 12px 10px';
+    const BAND = 'display:grid;grid-template-columns:repeat(6,minmax(0,2fr)) minmax(404px,4fr);gap:10px;align-items:stretch';
+    const STATUS = 'grid-column:7/8;' + SB;
+    const STAGES = [
+      [1, 'ต้นวัน', 'ยังไม่มีออเดอร์ · ยังไม่มีงานคัด · แพ็กรอ PQ'],
+      [2, 'วางแผนออเดอร์ · วางงานคัด', 'O-R1 ร่าง 68 ออเดอร์ · G-P ร่าง 2 งาน · แพ็กยังรอ PQ'],
+      [3, 'ส่ง O-R1 · ส่งงานคัด · P-R1 ร่าง', 'PQ v1 6,520,000 · งานคัดเริ่มที่หน้างาน · P-R1 ยืนยันแผนวัตถุดิบแล้ว รอส่ง'],
+      [4, 'O-R2 รับออเดอร์เพิ่ม · ส่ง P-R1', 'O-R2 ร่าง 14 ออเดอร์ · ส่งเพิ่ม งานคัด 1 · งานคละ 1 · งานแพ็กรอบแรกเริ่มที่หน้างาน'],
+      [5, 'ส่ง O-R2 และปิดวันออเดอร์ · P-R2 ร่าง', 'PQ v2 8,200,000 ตรึงแล้ว · งานคัดเสร็จ 4/4 · P-R2 วางแผนส่วนที่เหลือ'],
+      [6, 'ปิดวันแผนคัด · P-R3 รอส่ง', 'แผนคัดปิดวัน (บันทึกผลจริงได้) · P-R2 ส่งแล้ว · P-R3 ยืนยันแผนวัตถุดิบแล้ว'],
+      [7, 'ปิดวันแพ็ก · หน้างานยังแพ็ก', 'ทุกแผนปิดวัน ไม่วางแผนเพิ่ม · งานแพ็กทำแล้ว 7/9'],
+      [8, 'งานเสร็จครบ — จบวัน', 'ปิดวันทุกแผน · งานคัดและงานแพ็กเสร็จทุกงาน · อ่านอย่างเดียว'],
+    ];
+    const oC = ['O-R2', 'closed', '8,200,000 ฟอง · 13:40'], gC = ['G-P', 'closed', '9,840,000 ฟอง · 15:20', [4, 4]];
+    const ROWS = [
+      [['O-R1', 'idle', ''], ['G-P', 'idle', ''], ['P-R', 'idle', 'รอ PQ']],
+      [['O-R1', 'draft', '68 ออเดอร์'], ['G-P', 'draft', '2 งาน'], ['P-R', 'idle', 'รอ PQ']],
+      [['O-R1', 'sent', 'PQ v1 · 10:40'], ['G-P', 'sent', '2 งาน · 10:05', [0, 2]], ['P-R1', 'draft', 'Accum 0 + รอบนี้ 6,348,800']],
+      [['O-R2', 'draft', '14 ออเดอร์'], ['G-P', 'sent', '4 งาน · 11:30', [2, 4]], ['P-R1', 'sent', '6,348,800 ฟอง · 10:52', [0, 4]]],
+      [oC, ['G-P', 'sent', '4 งาน · 11:30', [4, 4]], ['P-R2', 'draft', 'Accum 6,348,800 + รอบนี้ 1,712,000', [3, 4]]],
+      [oC, gC, ['P-R3', 'draft', 'Accum 8,060,800 + รอบนี้ 139,200', [6, 7]]],
+      [oC, gC, ['P-R3', 'closed', '8,200,000 ฟอง · 17:05', [7, 9]]],
+      [oC, gC, ['P-R3', 'closed', '8,200,000 ฟอง · 17:05', [9, 9]]],
+    ];
+    const RO = { ro: 'อ่านอย่างเดียว' };
+    const ACT = {
+      O: [
+        { pri: ['ส่ง O-R1', 0], sec: 0, gate: 'ส่ง O-R1 ได้เมื่อมีออเดอร์ในรอบ' },
+        { pri: ['ส่ง O-R1', 1], sec: 0, gate: 'ปิดวันนี้ได้เมื่อส่ง PQ แล้วอย่างน้อย 1 ฉบับ' },
+        { pri: ['ไปที่ O-R2', 1], sec: 1, gate: '' },
+        { pri: ['ส่ง O-R2', 1], sec: 0, gate: 'ปิดวันนี้ได้เมื่อส่ง O-R2 แล้ว' },
+        RO, RO, RO, RO],
+      G: [
+        { pri: ['ส่ง G-P', 0], sec: 0, gate: 'ส่ง G-P ได้เมื่อมีงานร่าง' },
+        { pri: ['ส่ง G-P', 1], sec: 0, gate: 'ปิดวันนี้ได้เมื่อส่งงานร่างครบ และ O-R ปิดวันแล้ว' },
+        { pri: ['ส่ง G-P', 0], sec: 0, gate: 'ปิดวันนี้ได้เมื่อ O-R ปิดวันแล้ว' },
+        { pri: ['ส่ง G-P', 0], sec: 0, gate: 'ปิดวันนี้ได้เมื่อ O-R ปิดวันแล้ว' },
+        { pri: ['ส่ง G-P', 0], sec: 1, gate: '' },
+        { ro: 'อ่านอย่างเดียว · บันทึกผลจริงได้' }, { ro: 'อ่านอย่างเดียว · บันทึกผลจริงได้' }, { ro: 'อ่านอย่างเดียว · บันทึกผลจริงได้' }],
+      P: [
+        { pri: ['ทบทวนเป้าแพ็ก', 0, 1], sec: 0, gate: 'เริ่มได้เมื่อมี PQ ที่ส่งแล้ว' },
+        { pri: ['ทบทวนเป้าแพ็ก', 0, 1], sec: 0, gate: 'เริ่มได้เมื่อมี PQ ที่ส่งแล้ว' },
+        { pri: ['ส่ง P-R1', 1], sec: 0, gate: 'ปิดวันนี้ได้เมื่อ O-R ปิดวันแล้ว' },
+        { pri: ['ไปที่ P-R2', 1], sec: 0, gate: 'ปิดวันนี้ได้เมื่อ O-R ปิดวันแล้ว' },
+        { pri: ['ทบทวนเป้าแพ็ก', 1, 1], sec: 0, gate: 'ปิดวันนี้ได้เมื่อส่ง P-R2 แล้ว' },
+        { pri: ['ส่ง P-R3', 1], sec: 0, gate: 'ปิดวันนี้ได้เมื่อส่ง P-R3 แล้ว' },
+        RO, RO],
+    };
+    const DSEG = (on, first) => 'display:inline-flex;align-items:center;justify-content:center;width:66px;box-sizing:border-box;border:1px solid ' + (on ? '#1F2937' : '#cbd5e1') + ';background:' + (on ? '#1F2937' : '#fff') + ';color:' + (on ? '#fff' : '#555') + ';border-radius:' + (first ? '9999px 0 0 9999px' : '0 9999px 9999px 0;margin-left:-1px');
+    /* header shows the selected round's OWN state; the day chip sits at the far right. Round work = P-R only; day work = G-P · P-R */
+    const HDRC = { O: ['O-R2', 'sent', 'PQ v2 · 13:40'], G: ['G-P', 'sent', '4 งาน · 11:30'], P: ['P-R3', 'sent', '139,200 ฟอง · 16:50'] };
+    const PRW = ['—', '—', '—', [0, 4], '—', '—', [0, 2], [2, 2]];
+    const PAGES = [
+      { k: 'O', tag: 'แผนออเดอร์ · ดูตามวันที่ Load-in', mode: 0, sel: (rid) => rid },
+      { k: 'O', tag: 'แผนออเดอร์ · ดูตามวันส่ง', mode: 1, sel: (rid) => rid },
+      { k: 'G', tag: 'แผนคัดไข่', date: 'วันที่คัด', sel: () => null },
+      { k: 'P', tag: 'แผนแพ็ก', date: 'วันที่แพ็ก', sel: (rid) => (rid === 'P-R' ? null : rid) },
+    ];
+    const SEL = 'display:inline-flex;align-items:center;height:28px;box-sizing:border-box;padding:0 8px;border:1px solid #d6d8dc;border-radius:5px;background:#fff;font-size:11.5px;color:#1a1a1a;white-space:nowrap';
+    const { page, stage } = this.state;
+    const stages = STAGES.filter((s) => !stage || s[0] === stage).map(([n, title, note]) => {
+      const i = n - 1, R = ROWS[i];
+      const rows = R.map((r, j) => plan('OGP'[j], r, false));
+      const pages = PAGES.filter((p) => page === 'all' || page === p.k).map((p) => {
+        const j = 'OGP'.indexOf(p.k), rowS = R[j], dayClosed = rowS[1] === 'closed', hdr = dayClosed ? HDRC[p.k] : rowS;
+        const me = plan(p.k, hdr, true), sel = p.sel(hdr[0]), qt = dayClosed ? rowS[2].split(' ฟอง · ') : ['', ''];
+        const rw = workOf(PRW[i], 12.5), dw = workOf(rowS[3] === undefined ? '—' : rowS[3], 12.5);
+        return Object.assign({
+          tag: p.tag, tagStyle: 'font-size:11px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:' + AC[p.k],
+          dlLabel: p.date || 'วันที่', dsegStyle: p.date ? HIDE : 'display:inline-flex;height:17px;margin:-1px 0',
+          dl1Style: DSEG(p.mode === 0, true), dl2Style: DSEG(p.mode === 1, false),
+          chip: me.pill, chipStyle: me.pillStyle, glyph: me.glyph, word: me.word, wordStyle: me.wordStyle, dotStyle: me.dotStyle,
+          detail: me.detail, detailStyle: me.detailStyle,
+          closedStyle: dayClosed ? CLOSED(p.k, true) : HIDE, crid: rowS[0], cqty: qt[0], ctime: qt[1],
+          sel: sel ? sel + ' ▾' : '', selStyle: sel ? SEL : HIDE,
+          workZoneStyle: p.k === 'P' ? 'flex:none' : HIDE, work: rw.work, workStyle: rw.workStyle, workDot: rw.workDot,
+          totZoneStyle: p.k === 'O' ? HIDE : 'flex:none', tot: dw.work, totStyle: dw.workStyle, totDot: dw.workDot,
+          blocks: blocksFor[p.k](i), rows, bandStyle: BAND, statusStyle: STATUS,
+        }, chartFor[p.k](i), act(p.k, ACT[p.k][i]));
+      });
+      return { n, title, note, pages };
+    });
+    const SEG = (on) => `height:26px;min-width:30px;padding:0 11px;border:0;border-radius:5px;font-family:inherit;font-size:12px;cursor:pointer;${on ? 'background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.1);font-weight:600;color:#1a1a1a' : 'background:transparent;font-weight:500;color:#666'}`;
+    const pageOpts = [['all', 'ทุกหน้า'], ['O', 'ออเดอร์'], ['G', 'คัดไข่'], ['P', 'แพ็ก']].map(([k, label]) => ({ label, style: SEG(page === k), on: () => this.setState({ page: k }) }));
+    const stageOpts = [[0, 'ทุกขั้น']].concat(STAGES.map((s) => [s[0], String(s[0])])).map(([k, label]) => ({ label, style: SEG(stage === k), on: () => this.setState({ stage: k }) }));
+    const FW = 1280, fit = this.state.fit;
+    const frameStyle = 'display:flex;flex-direction:column;gap:8px;' + (fit && fit < FW ? 'width:' + FW + 'px;zoom:' + (fit / FW).toFixed(4) : 'width:100%;min-width:' + FW + 'px');
+    return { stages, pageOpts, stageOpts, frameStyle, rootRef: this.rootRef };
+  }
+}
+</script>
+</body>
+</html>

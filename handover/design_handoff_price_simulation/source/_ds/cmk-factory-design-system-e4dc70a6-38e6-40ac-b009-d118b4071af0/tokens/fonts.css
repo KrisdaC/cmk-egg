@@ -1,0 +1,5 @@
+/* CMK Factory — webfonts.
+   Inter (UI Latin), Noto Sans Thai (UI Thai), IBM Plex Mono (codes/IDs).
+   Loaded from Google Fonts CDN. To self-host, replace these @imports with
+   local @font-face rules pointing at woff2 files under assets/fonts/. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');

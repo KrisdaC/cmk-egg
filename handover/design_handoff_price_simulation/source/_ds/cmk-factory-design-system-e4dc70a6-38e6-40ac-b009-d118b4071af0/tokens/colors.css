@@ -1,0 +1,49 @@
+/* ==========================================================================
+   CMK Factory — Color tokens
+   Base palette + semantic aliases. Categorical/sequential entity ramps live
+   in categorical.css. These are the reusable core used across OMS + MRP.
+   ========================================================================== */
+:root {
+  /* ---- Base neutrals ---- */
+  --gray-900: #1a1a1a;   /* primary text, primary button fill */
+  --gray-700: #444441;
+  --gray-600: #666;      /* secondary text */
+  --gray-500: #888;      /* hint / section-header text */
+  --gray-400: #aaa;      /* placeholder */
+  --gray-350: #bbb;      /* disabled / placeholder (lighter) */
+  --gray-300: #d6d8dc;   /* default border */
+  --gray-200: #ecedf0;   /* subtle border */
+  --gray-100: #f6f7f9;   /* secondary surface */
+  --gray-050: #fafbfc;   /* page surface */
+  --white:    #fff;      /* card surface */
+  --border-emphasis: #94A8BD;
+
+  /* ---- Brand accent (mono codes, links, focus) ---- */
+  --blue-ink:  #0C447C;  /* info text / PO numbers / item codes */
+  --blue-700:  #185FA5;  /* interactive blue (CTAs, focus ring base) */
+  --blue-050:  #E6F1FB;  /* info tint / focus halo */
+
+  /* ---- Semantic status: text on tint ---- */
+  --info-fg:      #0C447C;  --info-bg:      #E6F1FB;  --info-border:    #85B7EB;
+  --success-fg:   #27500A;  --success-bg:   #EAF3DE;  --success-border: #97C459;
+  --warning-fg:   #854F0B;  --warning-bg:   #FAEEDA;  --warning-border: #F0B400;
+  --danger-fg:    #791F1F;  --danger-bg:    #FCEBEB;  --danger-border:  #c0392b;
+
+  /* ---- Semantic aliases (use these in components) ---- */
+  --text-primary:    var(--gray-900);
+  --text-secondary:  var(--gray-600);
+  --text-hint:       var(--gray-500);
+  --text-placeholder:var(--gray-400);
+  --text-code:       var(--blue-ink);
+
+  --border-default:  var(--gray-300);
+  --border-subtle:   var(--gray-200);
+
+  --surface-card:      var(--white);
+  --surface-page:      var(--gray-050);
+  --surface-secondary: var(--gray-100);
+
+  /* ---- Action button fills ---- */
+  --btn-primary-bg: var(--gray-900);
+  --btn-danger-bg:  #c0392b;
+}

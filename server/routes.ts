@@ -15,6 +15,9 @@ import priceAdjustmentRoutes from "./routes/priceAdjustment";
 import materialCostsRoutes from "./routes/materialCosts";
 import settingsRoutes from "./routes/settings";
 import usersRoutes from "./routes/users";
+import gradingRoutes from "./routes/grading";
+import packingRoutes from "./routes/packing";
+import bomRoutes from "./routes/bom";
 
 export async function registerRoutes(
   httpServer: Server,
@@ -34,6 +37,9 @@ export async function registerRoutes(
   app.use("/api/material-costs", materialCostsRoutes);
   app.use("/api/settings", settingsRoutes);
   app.use("/api/users", usersRoutes);
+  app.use("/api/grading", gradingRoutes);
+  app.use("/api/packing", packingRoutes);
+  app.use("/api/bom", bomRoutes);
   // app.use("/api/customer-accounts", customerAccountsRoutes);
   // app.use("/api/delivery-sites", deliverySitesRoutes);
 

@@ -1880,16 +1880,15 @@ export default function OrdersGrid() {
                     const eggs = Number(order.total_eggs) || 0;
 
                     return (
-                      <>
-                        <tr
-                          key={order.id}
-                          onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                          className={`cursor-pointer border-b transition-colors ${
-                            isExpanded
-                              ? "bg-[#fafbfc] border-[#d6d8dc]"
-                              : "border-[#f0f0f0] hover:bg-[#fafbfc]"
-                          }`}
-                        >
+                      <tr
+                        key={order.id}
+                        onClick={() => setExpandedId(order.id)}
+                        className={`cursor-pointer border-b transition-colors ${
+                          isExpanded
+                            ? "bg-[#fafbfc] border-[#d6d8dc]"
+                            : "border-[#f0f0f0] hover:bg-[#fafbfc]"
+                        }`}
+                      >
                           <td className="px-3 py-2.5" onClick={e => e.stopPropagation()}>
                             <input
                               type="checkbox"
@@ -1923,28 +1922,12 @@ export default function OrdersGrid() {
                             <PackMixCell lines={order.lines} />
                           </td>
                           <td className="px-3 py-2.5">
-                            <div className="flex items-center gap-1 flex-wrap">
-                              <StatusPill order={order} />
-                              <AttentionChip order={order} />
-                            </div>
-                          </td>
-                        </tr>
-
-                        {isExpanded && (
-                          <tr key={`${order.id}-exp`} className="border-b border-[#d6d8dc]">
-                            <td colSpan={9} className="p-0 bg-[#fafbfc] border-l border-r border-[#d6d8dc]">
-                              <div className="px-3 py-3">
-                                <ExpandedCard
-                                  order={order}
-                                  onCollapse={() => setExpandedId(null)}
-                                  onDelete={handleDelete}
-                                  onRefresh={fetchOrders}
-                                />
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </>
+                          <div className="flex items-center gap-1 flex-wrap">
+                            <StatusPill order={order} />
+                            <AttentionChip order={order} />
+                          </div>
+                        </td>
+                      </tr>
                     );
                   })}
                 </tbody>
@@ -1988,6 +1971,30 @@ export default function OrdersGrid() {
           </button>
         </div>
       )}
+
+      {/* View/edit PO popup */}
+      {expandedId != null && (() => {
+        const expandedOrder = filtered.find(o => o.id === expandedId);
+        if (!expandedOrder) return null;
+        return (
+          <div
+            className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+            onClick={() => setExpandedId(null)}
+          >
+            <div
+              className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-y-auto"
+              onClick={e => e.stopPropagation()}
+            >
+              <ExpandedCard
+                order={expandedOrder}
+                onCollapse={() => setExpandedId(null)}
+                onDelete={handleDelete}
+                onRefresh={fetchOrders}
+              />
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

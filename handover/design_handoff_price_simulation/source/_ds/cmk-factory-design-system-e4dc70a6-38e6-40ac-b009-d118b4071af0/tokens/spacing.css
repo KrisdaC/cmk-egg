@@ -1,0 +1,44 @@
+/* ==========================================================================
+   CMK Factory — Spacing, radius & shadow tokens
+   Dense factory-floor rhythm: page 14x18, card 12x14, 12-14px vertical gaps.
+   ========================================================================== */
+:root {
+  /* ---- Spacing scale ---- */
+  --space-1: 2px;
+  --space-2: 4px;
+  --space-3: 6px;
+  --space-4: 8px;
+  --space-5: 10px;
+  --space-6: 12px;
+  --space-7: 14px;
+  --space-8: 16px;
+  --space-9: 18px;
+  --space-10: 20px;
+
+  /* ---- Semantic spacing ---- */
+  --page-pad-y: 14px;
+  --page-pad-x: 18px;
+  --card-pad-y: 12px;   /* KPI tile */
+  --card-pad-x: 14px;
+  --section-pad-y: 14px; /* editor section card */
+  --section-pad-x: 16px;
+  --rhythm: 12px;        /* vertical gap between major blocks */
+
+  /* ---- Radius ---- */
+  --radius-pill:  10px;   /* status / category pills */
+  --radius-chip:  6px;    /* size / delivery-type chips */
+  --radius-round: 9999px; /* round-status + filter pills */
+  --radius-card:  8px;    /* cards, KPI tiles, bubble rows */
+  --radius-card-lg: 12px; /* MRP soft cards */
+  --radius-input: 5px;    /* inputs, buttons */
+
+  /* ---- Borders ---- */
+  --border-width: 1px;
+
+  /* ---- Shadows ---- */
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-soft: 0 1px 2px rgba(16,24,40,0.04);
+  --shadow-pop:  0 6px 18px rgba(0,0,0,0.12);
+  --shadow-modal:0 16px 48px rgba(0,0,0,0.30);
+  --focus-ring:  0 0 0 3px rgba(24,95,165,0.12);
+}

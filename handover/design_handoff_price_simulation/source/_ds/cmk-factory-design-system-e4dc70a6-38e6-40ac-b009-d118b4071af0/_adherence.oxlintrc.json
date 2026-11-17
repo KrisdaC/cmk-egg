@@ -1,0 +1,476 @@
+{
+  "plugins": [
+    "react",
+    "import"
+  ],
+  "rules": {
+    "react/forbid-elements": [
+      "warn",
+      {
+        "forbid": []
+      }
+    ],
+    "no-restricted-imports": [
+      "warn",
+      {
+        "patterns": [
+          {
+            "group": [
+              "components/buttons/**",
+              "components/data/**",
+              "components/lib/**",
+              "components/navigation/**",
+              "components/pills/**",
+              "components/surfaces/**",
+              "ui_kits/daily_planning/**",
+              "ui_kits/order_management/**"
+            ],
+            "message": "Import design-system components from 'index.js', not component internals."
+          }
+        ]
+      }
+    ],
+    "no-restricted-syntax": [
+      "warn",
+      {
+        "selector": "Literal[value=/#[0-9a-fA-F]{3,8}\\b/]",
+        "message": "Raw hex color — use a design-system color token via var()."
+      },
+      {
+        "selector": "Literal[value=/\\b\\d+px\\b/]",
+        "message": "Raw px value — use a design-system spacing token via var()."
+      },
+      {
+        "selector": "Literal[value=/font-family\\s*:\\s*(?!['\\\"]?(?:Inter|Noto Sans Thai|IBM Plex Mono))/i]",
+        "message": "Font not provided by the design system. Available: Inter, Noto Sans Thai, IBM Plex Mono."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='BubbleColumn'] > JSXAttribute > JSXIdentifier[name!=/^(?:key|label|align|hero|render|key|ref|className|style|children)$/]",
+        "message": "<BubbleColumn> doesn't accept that prop. Declared props: key, label, align, hero, render."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='BubbleColumn'] > JSXAttribute[name.name='align'] > Literal[value!=/^(?:left|right|center)$/]",
+        "message": "<BubbleColumn> align must be one of 'left' | 'right' | 'center'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute > JSXIdentifier[name!=/^(?:variant|size|children|key|ref|className|style|children)$/]",
+        "message": "<Button> doesn't accept that prop. Declared props: variant, size, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:primary|danger|default|cta)$/]",
+        "message": "<Button> variant must be one of 'primary' | 'danger' | 'default' | 'cta'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Button'] > JSXAttribute[name.name='size'] > Literal[value!=/^(?:sm|md|lg)$/]",
+        "message": "<Button> size must be one of 'sm' | 'md' | 'lg'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='Card'] > JSXAttribute > JSXIdentifier[name!=/^(?:soft|children|key|ref|className|style|children)$/]",
+        "message": "<Card> doesn't accept that prop. Declared props: soft, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CustomerPill'] > JSXAttribute > JSXIdentifier[name!=/^(?:name|variant|dim|ring|clickable|onClick|key|ref|className|style|children)$/]",
+        "message": "<CustomerPill> doesn't accept that prop. Declared props: name, variant, dim, ring, clickable, onClick."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='CustomerPill'] > JSXAttribute[name.name='variant'] > Literal[value!=/^(?:solid|tint|neutral)$/]",
+        "message": "<CustomerPill> variant must be one of 'solid' | 'tint' | 'neutral'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DeliveryTypePill'] > JSXAttribute > JSXIdentifier[name!=/^(?:type|children|key|ref|className|style|children)$/]",
+        "message": "<DeliveryTypePill> doesn't accept that prop. Declared props: type, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='DeliveryTypePill'] > JSXAttribute[name.name='type'] > Literal[value!=/^(?:direct|dc|xdock|wholesale|retail|pickup)$/]",
+        "message": "<DeliveryTypePill> type must be one of 'direct' | 'dc' | 'xdock' | 'wholesale' | 'retail' | 'pickup'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='FilterChip'] > JSXAttribute > JSXIdentifier[name!=/^(?:active|color|children|key|ref|className|style|children)$/]",
+        "message": "<FilterChip> doesn't accept that prop. Declared props: active, color, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='KpiTile'] > JSXAttribute > JSXIdentifier[name!=/^(?:label|value|sub|accent|soft|key|ref|className|style|children)$/]",
+        "message": "<KpiTile> doesn't accept that prop. Declared props: label, value, sub, accent, soft."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PackPill'] > JSXAttribute > JSXIdentifier[name!=/^(?:family|count|children|key|ref|className|style|children)$/]",
+        "message": "<PackPill> doesn't accept that prop. Declared props: family, count, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='PackPill'] > JSXAttribute[name.name='family'] > Literal[value!=/^(?:tray|mat|pack|basket|egg|other)$/]",
+        "message": "<PackPill> family must be one of 'tray' | 'mat' | 'pack' | 'basket' | 'egg' | 'other'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='RoundChip'] > JSXAttribute > JSXIdentifier[name!=/^(?:state|round|label|selected|small|key|ref|className|style|children)$/]",
+        "message": "<RoundChip> doesn't accept that prop. Declared props: state, round, label, selected, small."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='RoundChip'] > JSXAttribute[name.name='state'] > Literal[value!=/^(?:open|closed|defer|all|inactive)$/]",
+        "message": "<RoundChip> state must be one of 'open' | 'closed' | 'defer' | 'all' | 'inactive'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SizePill'] > JSXAttribute > JSXIdentifier[name!=/^(?:grade|children|key|ref|className|style|children)$/]",
+        "message": "<SizePill> doesn't accept that prop. Declared props: grade, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='SizePill'] > JSXAttribute[name.name='grade'] > Literal[value!=/^(?:0|1|2|3|4|5|mix|un)$/]",
+        "message": "<SizePill> grade must be one of '0' | '1' | '2' | '3' | '4' | '5' | 'mix' | 'un'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusPill'] > JSXAttribute > JSXIdentifier[name!=/^(?:state|children|key|ref|className|style|children)$/]",
+        "message": "<StatusPill> doesn't accept that prop. Declared props: state, children."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='StatusPill'] > JSXAttribute[name.name='state'] > Literal[value!=/^(?:draft|submitted|confirmed|editing)$/]",
+        "message": "<StatusPill> state must be one of 'draft' | 'submitted' | 'confirmed' | 'editing'."
+      },
+      {
+        "selector": "JSXOpeningElement[name.name='TabItem'] > JSXAttribute > JSXIdentifier[name!=/^(?:id|label|key|ref|className|style|children)$/]",
+        "message": "<TabItem> doesn't accept that prop. Declared props: id, label."
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": [
+        "**/index.js"
+      ],
+      "rules": {
+        "no-restricted-imports": "off"
+      }
+    }
+  ],
+  "x-omelette": {
+    "components": {
+      "BubbleColumn": {
+        "replaces": []
+      },
+      "Button": {
+        "replaces": []
+      },
+      "Card": {
+        "replaces": []
+      },
+      "CustomerPill": {
+        "replaces": []
+      },
+      "DeliveryTypePill": {
+        "replaces": []
+      },
+      "FilterChip": {
+        "replaces": []
+      },
+      "KpiTile": {
+        "replaces": []
+      },
+      "PackPill": {
+        "replaces": []
+      },
+      "RoundChip": {
+        "replaces": []
+      },
+      "SizePill": {
+        "replaces": []
+      },
+      "StatusPill": {
+        "replaces": []
+      },
+      "TabItem": {
+        "replaces": []
+      }
+    },
+    "tokens": [
+      "--blue-050",
+      "--blue-700",
+      "--blue-ink",
+      "--border-default",
+      "--border-emphasis",
+      "--border-subtle",
+      "--border-width",
+      "--btn-danger-bg",
+      "--btn-primary-bg",
+      "--card-pad-x",
+      "--card-pad-y",
+      "--cust-bigc",
+      "--cust-bigc-bg",
+      "--cust-cj",
+      "--cust-cj-bg",
+      "--cust-general",
+      "--cust-general-bg",
+      "--cust-lotuss",
+      "--cust-lotuss-bg",
+      "--cust-makro",
+      "--cust-makro-bg",
+      "--cust-thaifood",
+      "--cust-thaifood-bg",
+      "--cust-tt",
+      "--cust-tt-bg",
+      "--danger-bg",
+      "--danger-border",
+      "--danger-fg",
+      "--focus-ring",
+      "--font-mono",
+      "--font-ui",
+      "--gray-050",
+      "--gray-100",
+      "--gray-200",
+      "--gray-300",
+      "--gray-350",
+      "--gray-400",
+      "--gray-500",
+      "--gray-600",
+      "--gray-700",
+      "--gray-900",
+      "--info-bg",
+      "--info-border",
+      "--info-fg",
+      "--numeric",
+      "--pack-basket-bg",
+      "--pack-basket-fg",
+      "--pack-egg-bg",
+      "--pack-egg-fg",
+      "--pack-mat-bg",
+      "--pack-mat-fg",
+      "--pack-other-bg",
+      "--pack-other-fg",
+      "--pack-pack-bg",
+      "--pack-pack-fg",
+      "--pack-tray-bg",
+      "--pack-tray-fg",
+      "--page-pad-x",
+      "--page-pad-y",
+      "--radius-card",
+      "--radius-card-lg",
+      "--radius-chip",
+      "--radius-input",
+      "--radius-pill",
+      "--radius-round",
+      "--rhythm",
+      "--round-all-bg",
+      "--round-all-border",
+      "--round-all-fg",
+      "--round-closed-bg",
+      "--round-closed-border",
+      "--round-closed-fg",
+      "--round-defer-bg",
+      "--round-defer-border",
+      "--round-defer-fg",
+      "--round-inactive-bg",
+      "--round-inactive-border",
+      "--round-inactive-fg",
+      "--round-open-bg",
+      "--round-open-border",
+      "--round-open-fg",
+      "--section-letter-spacing",
+      "--section-pad-x",
+      "--section-pad-y",
+      "--shadow-card",
+      "--shadow-modal",
+      "--shadow-pop",
+      "--shadow-soft",
+      "--size-0-bg",
+      "--size-0-fg",
+      "--size-1-bg",
+      "--size-1-fg",
+      "--size-2-bg",
+      "--size-2-fg",
+      "--size-3-bg",
+      "--size-3-fg",
+      "--size-4-bg",
+      "--size-4-fg",
+      "--size-5-bg",
+      "--size-5-fg",
+      "--size-mix-bg",
+      "--size-mix-fg",
+      "--size-un-bg",
+      "--size-un-fg",
+      "--space-1",
+      "--space-10",
+      "--space-2",
+      "--space-3",
+      "--space-4",
+      "--space-5",
+      "--space-6",
+      "--space-7",
+      "--space-8",
+      "--space-9",
+      "--success-bg",
+      "--success-border",
+      "--success-fg",
+      "--surface-card",
+      "--surface-page",
+      "--surface-secondary",
+      "--text-body",
+      "--text-body-sm",
+      "--text-code",
+      "--text-h2",
+      "--text-hint",
+      "--text-kpi-num",
+      "--text-label",
+      "--text-meta",
+      "--text-modal",
+      "--text-page-title",
+      "--text-placeholder",
+      "--text-primary",
+      "--text-secondary",
+      "--text-section",
+      "--warning-bg",
+      "--warning-border",
+      "--warning-fg",
+      "--weight-bold",
+      "--weight-medium",
+      "--weight-regular",
+      "--weight-semibold",
+      "--white"
+    ],
+    "tokenKinds": {
+      "--gray-900": "color",
+      "--gray-700": "color",
+      "--gray-600": "color",
+      "--gray-500": "color",
+      "--gray-400": "color",
+      "--gray-350": "color",
+      "--gray-300": "color",
+      "--gray-200": "color",
+      "--gray-100": "color",
+      "--gray-050": "color",
+      "--white": "color",
+      "--border-emphasis": "color",
+      "--blue-ink": "color",
+      "--blue-700": "color",
+      "--blue-050": "color",
+      "--info-fg": "color",
+      "--info-bg": "color",
+      "--info-border": "color",
+      "--success-fg": "color",
+      "--success-bg": "color",
+      "--success-border": "color",
+      "--warning-fg": "color",
+      "--warning-bg": "color",
+      "--warning-border": "color",
+      "--danger-fg": "color",
+      "--danger-bg": "color",
+      "--danger-border": "color",
+      "--text-primary": "font",
+      "--text-secondary": "font",
+      "--text-hint": "font",
+      "--text-placeholder": "font",
+      "--text-code": "font",
+      "--border-default": "color",
+      "--border-subtle": "color",
+      "--surface-card": "color",
+      "--surface-page": "color",
+      "--surface-secondary": "color",
+      "--btn-primary-bg": "color",
+      "--btn-danger-bg": "color",
+      "--cust-makro": "color",
+      "--cust-makro-bg": "color",
+      "--cust-bigc": "color",
+      "--cust-bigc-bg": "color",
+      "--cust-thaifood": "color",
+      "--cust-thaifood-bg": "color",
+      "--cust-cj": "color",
+      "--cust-cj-bg": "color",
+      "--cust-tt": "color",
+      "--cust-tt-bg": "color",
+      "--cust-lotuss": "color",
+      "--cust-lotuss-bg": "color",
+      "--cust-general": "color",
+      "--cust-general-bg": "color",
+      "--size-0-fg": "color",
+      "--size-0-bg": "color",
+      "--size-1-fg": "color",
+      "--size-1-bg": "color",
+      "--size-2-fg": "color",
+      "--size-2-bg": "color",
+      "--size-3-fg": "color",
+      "--size-3-bg": "color",
+      "--size-4-fg": "color",
+      "--size-4-bg": "color",
+      "--size-5-fg": "color",
+      "--size-5-bg": "color",
+      "--size-mix-fg": "color",
+      "--size-mix-bg": "color",
+      "--size-un-fg": "color",
+      "--size-un-bg": "color",
+      "--pack-tray-fg": "color",
+      "--pack-tray-bg": "color",
+      "--pack-mat-fg": "color",
+      "--pack-mat-bg": "color",
+      "--pack-pack-fg": "color",
+      "--pack-pack-bg": "color",
+      "--pack-basket-fg": "color",
+      "--pack-basket-bg": "color",
+      "--pack-egg-fg": "color",
+      "--pack-egg-bg": "color",
+      "--pack-other-fg": "color",
+      "--pack-other-bg": "color",
+      "--round-open-fg": "radius",
+      "--round-open-bg": "radius",
+      "--round-open-border": "radius",
+      "--round-closed-fg": "radius",
+      "--round-closed-bg": "radius",
+      "--round-closed-border": "radius",
+      "--round-defer-fg": "radius",
+      "--round-defer-bg": "radius",
+      "--round-defer-border": "radius",
+      "--round-all-fg": "radius",
+      "--round-all-bg": "radius",
+      "--round-all-border": "radius",
+      "--round-inactive-fg": "radius",
+      "--round-inactive-bg": "radius",
+      "--round-inactive-border": "radius",
+      "--font-ui": "font",
+      "--font-mono": "font",
+      "--text-page-title": "font",
+      "--text-h2": "font",
+      "--text-modal": "font",
+      "--text-kpi-num": "font",
+      "--text-body": "font",
+      "--text-body-sm": "font",
+      "--text-meta": "font",
+      "--text-label": "font",
+      "--text-section": "font",
+      "--weight-regular": "font",
+      "--weight-medium": "font",
+      "--weight-semibold": "font",
+      "--weight-bold": "font",
+      "--section-letter-spacing": "font",
+      "--numeric": "other",
+      "--space-1": "spacing",
+      "--space-2": "spacing",
+      "--space-3": "spacing",
+      "--space-4": "spacing",
+      "--space-5": "spacing",
+      "--space-6": "spacing",
+      "--space-7": "spacing",
+      "--space-8": "spacing",
+      "--space-9": "spacing",
+      "--space-10": "spacing",
+      "--page-pad-y": "spacing",
+      "--page-pad-x": "spacing",
+      "--card-pad-y": "spacing",
+      "--card-pad-x": "spacing",
+      "--section-pad-y": "spacing",
+      "--section-pad-x": "spacing",
+      "--rhythm": "spacing",
+      "--radius-pill": "radius",
+      "--radius-chip": "radius",
+      "--radius-round": "radius",
+      "--radius-card": "radius",
+      "--radius-card-lg": "radius",
+      "--radius-input": "radius",
+      "--border-width": "spacing",
+      "--shadow-card": "shadow",
+      "--shadow-soft": "shadow",
+      "--shadow-pop": "shadow",
+      "--shadow-modal": "shadow",
+      "--focus-ring": "shadow"
+    },
+    "fontFamilies": [
+      "IBM Plex Mono",
+      "Inter",
+      "Noto Sans Thai"
+    ]
+  }
+}

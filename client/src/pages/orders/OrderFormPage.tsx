@@ -80,6 +80,42 @@ export const orderSchema = z.object({
 
 export type OrderFormValues = z.infer<typeof orderSchema>;
 
+// ── WIP tray classification — "ถาดพิเศษ" (special, e.g. a plastic tray or a
+// tray+lid combo) vs "ถาดปกติ" (normal, plain paper tray), read straight
+// from the item's real packaging_profile (the same field BOM already uses —
+// see server/routes/bom.ts). Matches the reference prototype's trayOfItem()
+// classification: a plastic/cover component makes it special, otherwise the
+// pack_base component (or a plain default) makes it normal.
+// /Users/krisdachugh/.claude/plans/scalable-hatching-moore.md
+type TrayInfo = { kind: "normal" | "special"; spec: string };
+
+function parsePackagingProfile(raw: unknown): Record<string, { enabled?: boolean; item_type?: string; component_sku?: string }> {
+  if (!raw) return {};
+  try {
+    const obj = typeof raw === "string" ? JSON.parse(raw) : raw;
+    return obj && typeof obj === "object" && !Array.isArray(obj) ? obj : {};
+  } catch {
+    return {};
+  }
+}
+
+function trayOfItem(item: any, itemsBySku: Record<string, any>): TrayInfo {
+  if (!item) return { kind: "normal", spec: "" };
+  const profile = parsePackagingProfile(item.packagingProfile);
+  const comps = Object.entries(profile)
+    .filter(([, c]) => c && c.enabled !== false && c.component_sku)
+    .map(([role, c]) => {
+      const resolved = itemsBySku[c.component_sku!];
+      return { role, sku: c.component_sku!, name: resolved?.name || c.component_sku!, type: (c.item_type || "").toLowerCase() };
+    });
+  const special = comps.filter(c => /พลาสติก|plastic|cover|lid|ฝา/i.test(`${c.name} ${c.type} ${c.role}`));
+  if (special.length) {
+    return { kind: "special", spec: special.map(c => c.name).join(" + ") };
+  }
+  const base = comps.find(c => c.role === "pack_base" || /tray|ถาด/i.test(`${c.type} ${c.name}`));
+  return { kind: "normal", spec: base ? base.name : "ถาดกระดาษ" };
+}
+
 export default function OrderFormPage() {
   const [, setLocation] = useLocation();
 
@@ -143,6 +179,7 @@ export default function OrderFormPage() {
     }[]
   >([]);
   const [productOptions, setProductOptions] = useState<any[]>([]);
+  const [allItemsBySku, setAllItemsBySku] = useState<Record<string, any>>({});
   const selectedPartnerId = form.watch("partnerId");
   const selectedCustomer = customers.find((c) => c.id === selectedPartnerId);
   const deliverySites = selectedCustomer?.deliverySites ?? [];
@@ -205,6 +242,13 @@ export default function OrderFormPage() {
         if (!res.ok) throw new Error("Failed to fetch items");
         const data: any[] = await res.json();
         setProductOptions(data.filter((i) => i.isSellable));
+        // Unfiltered, keyed by SKU — resolves packaging_profile component_sku
+        // (e.g. a WIP item's tray/cover) to a real name for the "ถาดพิเศษ"/
+        // "ถาดปกติ" chip below. Those components are usually not sellable
+        // themselves, so they wouldn't be in productOptions.
+        const bySku: Record<string, any> = {};
+        for (const it of data) if (it.sku) bySku[it.sku] = it;
+        setAllItemsBySku(bySku);
       } catch (error) {
         console.error("Error fetching items:", error);
       }
@@ -640,6 +684,25 @@ export default function OrderFormPage() {
                               </FormItem>
                             )}
                           />
+                          {(() => {
+                            const lineItemId = watchedProducts[index]?.itemId;
+                            const lineItem = productOptions.find((p: any) => p.id === Number(lineItemId));
+                            if (!lineItem || lineItem.itemRole !== "WIP") return null;
+                            const tray = trayOfItem(lineItem, allItemsBySku);
+                            return (
+                              <div className="flex items-center gap-1.5 flex-wrap mt-1.5 text-[11px]">
+                                <span className="inline-flex px-1.5 py-0.5 rounded-full font-semibold bg-[#F5F2FB] text-[#5B4B8A] border border-[#E3DDF0]">
+                                  WIP ขายตรง
+                                </span>
+                                {tray.kind === "special" ? (
+                                  <span className="text-[#5B4B8A] font-semibold">ถาดพิเศษ · {tray.spec}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">ถาดปกติ{tray.spec ? ` · ${tray.spec}` : ""}</span>
+                                )}
+                                <span className="text-muted-foreground">· ไปที่แผนคัดโดยตรง ไม่เข้าเป้าแพ็ก</span>
+                              </div>
+                            );
+                          })()}
                         </div>
 
                         <div className="col-span-2">

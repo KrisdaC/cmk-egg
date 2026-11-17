@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="th"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Grading · 2 ล็อตรับเข้า — section for editing</title>
+<link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/fonts.css">
+<style>
+/* ============================================================
+   EXTRACTED FROM: Daily Planning Prototype v13 · #gd3SecRecv — v2 column groups
+   Plug-back contract (keep so it wires back):
+   - root:        <div class="ppx-wf" id="gd3SecRecv"> … <div id="ppxSecRecv">
+   - view chips:  onclick="_ppxSetRecvView('today'|'queue'|'partial'|'full'|'date')"
+   - date input:  onchange="_ppxSetRecvDate(this.value)"
+   - new lot:     onclick="_ppxReOpenNew()"
+   - per row:     id="gd3rl-{lotId}"
+                  weight cell   → _ppxRlToggle(lotId)        (opens sub-lot rows)
+                  egg-type pill → _ppxRlTypeToggle(lotId)    (opens size breakdown)
+                  ⋯ menu        → _ppxRlMenuToggle(lotId, event)
+                  เพิ่มงานคัด    → _gd3JobFromLot(lotId) · ดูงานคัด → _gd3GoJob(batchId) · ผลคัด → _gd3CpView(batchId)
+   Pills: raw #EAF3DE/#27500A · sized #DEE6F6/#0C447C · internal #F5F3FF/#5B21B6 · grade #EAF3DE · mix #F5F3FF
+   State words: ○ รอวางแผน #5F6B7A · ○ วางแผนแล้ว #5F6B7A · ✓ ส่งแล้ว #0C447C · ● กำลังคัด #854F0B · ✓ คัดเสร็จ #27500A
+   ============================================================ */
+html, body { margin: 0; padding: 0; background: #f6f7f9; color: #1a1a1a; font-size: 13px; -webkit-font-smoothing: antialiased;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans Thai", "Sukhumvit Set", "IBM Plex Sans Thai", sans-serif; }
+a { color: #0C447C; } a:hover { color: #185FA5; }
+.page { max-width: 1440px; margin: 0 auto; padding: 18px 22px 48px; }
+.demo-h { border-bottom: 1px solid #ecedf0; padding-bottom: 12px; margin-bottom: 18px; }
+.demo-h .k { font-size: 11px; font-weight: 500; letter-spacing: .4px; text-transform: uppercase; color: #888; }
+.demo-h .t { font-size: 16px; font-weight: 700; margin-top: 4px; }
+.demo-h .s { font-size: 11.5px; color: #666; margin-top: 4px; line-height: 1.55; }
+.demo-lbl { font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #888; margin: 26px 0 8px; display: flex; align-items: center; gap: 8px; }
+.demo-lbl::after { content: ""; flex: 1; border-top: 1px solid #e3e5e9; }
+.panel { background: #fff; border: 1px solid #d6d8dc; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); padding: 14px 18px; }
+
+.gd3-scope { --gd-blue:#185FA5; --gd-blue-dark:#0C447C; --gd-blue-soft:#F4F8FC; --gd-green:#27500A; --gd-amber:#854F0B; --gd-red:#791F1F;
+  --gd-text:#1F2937; --gd-text-subtle:#64707D; --gd-text-quiet:#5F6B7A; --gd-border:#E3E5E9; --gd-border-strong:#8A94A0;
+  --gd-secondary-hover:#F7F9FB; --gd-surface:#FFFFFF; --gd-surface-subtle:#FAFBFC; --gd-accent:#7C3AED; --gd-accent-dark:#5B21B6; --gd-accent-soft:#F5F3FF; }
+.ppx-wf { margin: 0 0 22px; }
+.ppx-wf-h { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; }
+.ppx-wf-num { font-size: 14px; font-weight: 700; color: var(--gd-text); letter-spacing: -.01em; }
+.ppx-wf-num::after { content: "."; }
+.ppx-wf-t { font-size: 14px; font-weight: 700; color: var(--gd-text); letter-spacing: -.01em; }
+.gp-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 12px; color: #555; margin-bottom: 10px; min-height: 28px; }
+
+/* segmented view control — design-system .cmk-seg: inset grey track, raised white active segment */
+.cmk-seg { display: inline-flex; gap: 2px; padding: 2px; background: #eef0f3; border-radius: 6px; height: 28px; box-sizing: border-box; }
+.cmk-seg button { height: 24px; padding: 0 10px; border-radius: 5px; border: none; background: none; font: inherit; font-size: 11.5px; font-weight: 600; color: #666; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px; }
+.cmk-seg button .n { font-weight: 600; color: #888; font-variant-numeric: tabular-nums; }
+.cmk-seg button:hover { color: #1a1a1a; }
+.cmk-seg button[aria-pressed="true"] { background: #fff; color: #1a1a1a; box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+.cmk-seg button[aria-pressed="true"] .n { color: #0C447C; }
+.ppx-seg { display: inline-flex; border: 1px solid #d6d8dc; border-radius: 9999px; vertical-align: middle; }
+.ppx-seg button { border: none; background: #fff; padding: 3px 7px; font-size: 11px; font-weight: 600; color: #555; cursor: pointer; font-family: inherit; white-space: nowrap; transition: background .1s; }
+.ppx-seg button:first-child { border-radius: 9999px 0 0 9999px; } .ppx-seg button:last-child { border-radius: 0 9999px 9999px 0; }
+.ppx-seg button:hover { background: #fafbfc; }
+.ppx-seg button.on { font-weight: 700; background: var(--gd-blue); color: #fff; box-shadow: inset 0 -2px 0 var(--gd-blue-dark); }
+.ppx-datebtn { background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: #0C447C; }
+.ppx-datebtn:hover { text-decoration: underline; }
+.gd3-datechip[aria-pressed="true"] { font-weight: 700; text-decoration: underline; }
+.ppx-in { padding: 4px 7px; border: 1px solid #d6d8dc; border-radius: 5px; font-size: 12.5px; width: 92px; text-align: right; font-variant-numeric: tabular-nums; background: #fff; color: #1a1a1a; font-family: inherit; }
+.ppx-in:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,.12); }
+
+.gd3-btn { font-family: inherit; font-weight: 600; font-size: 12px; line-height: 1.2; padding: 7px 14px; border-radius: 8px; border: 1px solid transparent; cursor: pointer; min-height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; transition: background .1s, border-color .1s, color .1s; }
+.gd3-scope .gd3-btn[data-v="primary"] { font-size: 11.5px; min-height: 28px; height: 28px; padding: 0 12px; border-radius: 5px; border: 1px solid var(--gd-accent); background: var(--gd-accent); color: #fff; }
+.gd3-scope .gd3-btn[data-v="primary"]:hover { background: #6D28D9; border-color: #6D28D9; }
+.gd3-btn[data-v="secondary"] { background: var(--gd-surface); border-color: var(--gd-border-strong); color: var(--gd-text); }
+.gd3-btn[data-v="secondary"]:hover { background: var(--gd-secondary-hover); }
+/* icon actions — always three: 👁 ดูงานคัด · + เพิ่มงานคัด · ⋯ เมนู; same quiet shell, role colour on the glyph, disabled = zoned out */
+.gd3-acts { display: flex; gap: 4px; justify-content: flex-end; align-items: center; padding-right: 4px; }
+.l2row { display: inline-flex; align-items: center; gap: 4px; max-width: 100%; } .l2row .dot { color: #c4c8cf; }
+.l2 .gd3-work .ppx-bpill { padding: 0 5px; }
+.gd3-ibtn { flex: none; width: 28px; height: 28px; padding: 0; border-radius: 6px; border: 1px solid transparent; background: none; color: #55606d; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: background .1s, border-color .1s, color .1s; }
+.gd3-ibtn svg { width: 15px; height: 15px; display: block; }
+.gd3-ibtn:hover { background: #f1f3f5; }
+.gd3-ibtn[data-v="view"], .gd3-ibtn[data-v="create"], .gd3-ibtn[data-v="more"] { color: var(--gd-blue-dark); }
+.gd3-ibtn:not([disabled]):hover { background: var(--gd-blue-soft); }
+.gd3-ibtn[disabled] { color: #C9CFD6; cursor: default; }
+.gd3-ibtn[disabled]:hover { background: none; }
+.gd3-scope .ppx-table tbody tr.gd3-lot:hover .gd3-ibtn:not([disabled]) { border-color: #e3e5e9; background: #fff; }
+.gd3-reslink { display: inline-block; text-align: right; white-space: nowrap; border: none; background: none; padding: 2px 4px; margin: -2px -4px; border-radius: 7px; cursor: pointer; font-family: inherit; transition: background .1s; }
+.gd3-reslink:hover { background: var(--gd-blue-soft); }
+
+/* table + column groups */
+.ppx-scrollwrap { overflow-x: auto; }
+.ppx-table { width: 100%; border-collapse: separate; border-spacing: 0; background: #fff; border: 1px solid #d6d8dc; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); overflow: clip; font-size: 12.5px; }
+.ppx-table td:first-child .ppx-muted { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ppx-table th { font-size: 11px; text-transform: uppercase; letter-spacing: .4px; color: var(--gd-text-subtle); font-weight: 600; text-align: left; padding: 8px 10px; border-bottom: 1px solid #eef0f3; background: #fff; white-space: nowrap; }
+.ppx-table th.ppx-thgrp { font-size: 10px; font-weight: 700; color: #5F5E5A; background: #fafbfc; border-bottom: 1px solid #eef0f3; padding: 5px 10px; }
+.ppx-table th.ppx-gsep, .ppx-table td.ppx-gsep { border-left: 1px solid #eef0f3; }
+.ppx-table td { padding: 8px 10px; border-bottom: 1px solid #eef0f3; vertical-align: middle; }
+.ppx-table th { padding: 7px 10px; }
+.ppx-table th.ppx-thgrp { padding: 5px 10px; }
+.l1 { height: 18px; line-height: 18px; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l2 { height: 16px; line-height: 16px; font-size: 10.5px; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.l2 .gd3-work { margin: 0; display: inline-flex; gap: 4px; }
+.l2 .gd3-work .ppx-bpill { line-height: 15px; padding: 0 6px; font-size: 10px; }
+.l2 .ppx-bpill.tag { background: #F5F3FF; color: #5B21B6; line-height: 14px; padding: 0 6px; font-size: 10px; vertical-align: 1px; }
+.qual { color: #64707D; font-size: 10.5px; font-weight: 500; }
+.gd3-lot td .ppx-mono { line-height: 18px; }
+.ppx-table tbody tr:last-child td { border-bottom: none; }
+.ppx-table tbody tr.gd3-lot:hover td { background: #fafbfc; transition: background .1s; }
+.ppx-table th.num, .ppx-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.ppx-mono { font-family: "IBM Plex Mono", ui-monospace, monospace; color: #0C447C; font-size: 12px; }
+.ppx-muted { color: var(--gd-text-subtle); }
+.ppx-bpill { display: inline-block; padding: 1px 8px; border-radius: 6px; font-size: 10.5px; font-weight: 600; white-space: nowrap; }
+.ppx-bpill.ppx-s3 { background: #EEF6E4; color: #3F6212; } .ppx-bpill.ppx-s4 { background: #E4F3F0; color: #134E4A; }
+.ppx-card { background: #fff; border: 1px solid #d6d8dc; border-radius: 8px; padding: 12px 14px; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+
+/* clickable facts (weight · egg type) */
+.gd3-fact { background: none; border: 1px solid transparent; padding: 0 4px 0 0; margin: 0 0 0 -2px; font: inherit; color: #0C447C; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 3px; height: 18px; border-radius: 6px; white-space: nowrap; }
+.gd3-fact::after { content: "▾"; font-size: 9px; color: #0C447C; line-height: 1; }
+.gd3-fact:hover { border-color: #9DB8DD; background: var(--gd-blue-soft); box-shadow: none; }
+.gd3-fact[aria-expanded="true"] { border-color: var(--gd-blue); background: var(--gd-blue-soft); }
+.gd3-fact:has(.ppx-bpill) { padding-left: 0; }
+.gd3-fact[aria-expanded="true"] { background: var(--gd-blue-soft); box-shadow: 0 0 0 3px var(--gd-blue-soft); }
+/* body-level evidence popover — same shell as the Packing page (.pt-ev-pop) */
+.gd3-ev-pop { position: fixed; z-index: 120; width: max-content; min-width: 320px; max-width: calc(100vw - 16px); border: 1px solid #d6d8dc; border-radius: 9px; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.12); overflow: hidden; font-size: 12px; color: #1a1a1a; }
+.gd3-ev-pop .ev-pop-head { display: flex; align-items: center; gap: 8px; padding: 8px 8px 8px 12px; border-bottom: 1px solid #eef0f3; background: #f8fafc; min-height: 40px; }
+.gd3-ev-pop .ev-pop-head strong { font-size: 12.5px; } .gd3-ev-pop .ev-pop-head .sub { color: #64707D; font-size: 11px; }
+.gd3-ev-pop .ev-pop-close { margin-left: auto; min-width: 28px; min-height: 28px; border: 0; border-radius: 5px; background: none; color: #55606d; font-size: 13px; cursor: pointer; }
+.gd3-ev-pop .ev-pop-close:hover { background: #eceff2; }
+.gd3-ev-pop .ev-pop-body { max-height: 320px; overflow: auto; }
+.gd3-ev-pop .ppx-table { border: 0; border-radius: 0; box-shadow: none; width: 100%; max-width: none !important; table-layout: auto; }
+.gd3-ev-pop .ppx-table th, .gd3-ev-pop .ppx-table td { white-space: nowrap; }
+.gd3-ev-pop .ppx-table th { padding: 6px 12px; } .gd3-ev-pop .ppx-table td { padding: 6px 12px; }
+.gd3-ev-pop .ev-pop-foot { padding: 7px 12px; border-top: 1px solid #eef0f3; font-size: 11px; color: #64707D; display: flex; gap: 8px; justify-content: space-between; }
+.gd3-det { display: none; }
+
+/* state words + work chips */
+.gd3-sw { font-size: 11.5px; font-weight: 700; white-space: nowrap; line-height: 18px; }
+.gd3-st { white-space: nowrap; }
+.gd3-sw[data-s="queue"], .gd3-sw[data-s="planned"] { color: #5F6B7A; } .gd3-sw[data-s="sent"] { color: #0C447C; } .gd3-sw[data-s="run"] { color: #854F0B; } .gd3-sw[data-s="done"] { color: #27500A; }
+.gd3-work { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-top: 3px; }
+.gd3-work .ppx-bpill { padding: 0 7px; font-size: 10px; line-height: 17px; }
+.gd3-work .grade { background: #EAF3DE; color: #27500A; } .gd3-work .mix { background: #F5F3FF; color: #5B21B6; }
+
+@media (max-width: 1099px) {
+  .gd3-scope .ppx-table :is(th, td).gd3-actcol { position: sticky; right: 0; z-index: 2; background: var(--gd-surface); box-shadow: -6px 0 8px -8px rgba(15,23,42,.25); padding-left: 8px; padding-right: 12px; }
+  .gd3-scope .ppx-table thead th.gd3-actcol { z-index: 3; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="demo-h">
+    <div class="k">Daily Plan · คัดไข่ · ส่วนที่ 2</div>
+    <div class="t">ล็อตรับเข้า — ตาราง 3 กลุ่มคอลัมน์</div>
+    <div class="s"><b>วัตถุดิบ</b> ล็อต (ติดป้าย ภายใน ถ้าใช่) · วันที่รับ · น้ำหนัก (กด → ป๊อปโอเวอร์ล็อตย่อย) · ชนิดไข่ (กด → ป๊อปโอเวอร์เบอร์) &nbsp;·&nbsp; <b>จำนวน</b> รับเข้า · วางแผนแล้ว · คงเหลือ · เสร็จ (ผลคัด) &nbsp;·&nbsp; <b>สถานะงาน · จัดการ</b> คำสถานะ + ชิปงาน · สถานี · ปุ่มไอคอน 3 ปุ่มเสมอ 👁 ดูงานคัด · + เพิ่มงานคัด · ⋯ เมนู — จางเมื่อใช้ไม่ได้ (ยังไม่มีงาน / วางแผนครบแล้ว)</div>
+  </div>
+
+
+  <!-- ===================== VIEW: เกี่ยวข้องวันนี้ (default) ===================== -->
+  <div class="demo-lbl">มุมมอง เกี่ยวข้องวันนี้ · 6 — กด น้ำหนัก / ชนิดไข่ เพื่อเปิดป๊อปโอเวอร์ (แบบหน้าแพ็ก ไม่กางแถว)</div>
+  <div class="panel gd3-scope" id="planSubProduction">
+  <div class="ppx-wf" id="gd3SecRecv" data-screen-label="Grading · 2 Receiving Lots">
+    <div class="ppx-wf-h"><span class="ppx-wf-num">2</span><div><div class="ppx-wf-t">ล็อตรับเข้า</div></div></div>
+    <div id="ppxSecRecv">
+      <div class="gp-toolbar"><span class="cmk-seg" role="group" aria-label="มุมมองล็อต"><button type="button" aria-pressed="true" onclick="_ppxSetRecvView('today')">เกี่ยวข้องวันนี้ <span class="n">6</span></button><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('queue')">รอวางแผน <span class="n">9</span></button><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('partial')">วางแผนบางส่วน <span class="n">2</span></button><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('full')">วางแผนครบ <span class="n">3</span></button><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('date')">วันที่รับ</button></span><span style="margin-left:auto"><button class="gd3-btn" data-v="primary" onclick="_ppxReOpenNew()">+ รับล็อตเข้า</button></span></div>
+      <div class="ppx-scrollwrap">
+      <table class="ppx-table" style="table-layout:fixed;min-width:1120px">
+        <colgroup>
+          
+          
+          
+          
+        <col style="width:14%"><col style="width:6%"><col style="width:9%"><col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:7%"><col style="width:10%"><col style="width: 13%;"><col style="width:11%"><col style="width: 7%;"></colgroup>
+        <thead>
+          <tr><th class="ppx-thgrp" colspan="4">วัตถุดิบ</th><th class="ppx-thgrp ppx-gsep" colspan="4">จำนวน (ฟอง)</th><th class="ppx-thgrp ppx-gsep" colspan="2">สถานะงาน · จัดการ</th><th class="ppx-thgrp gd3-actcol"></th></tr>
+          <tr><th>ล็อต · แหล่ง</th><th>วันที่รับ</th><th>น้ำหนัก</th><th>ชนิดไข่</th><th class="num ppx-gsep">รับเข้า</th><th class="num">วางแผนแล้ว</th><th class="num">คงเหลือ</th><th class="num">เสร็จ</th><th class="ppx-gsep">สถานะ · งาน</th><th>สถานี</th><th class="gd3-actcol"></th></tr>
+        </thead>
+        <tbody>
+          <!-- F-2609-A · raw · done · weight expanded -->
+          <tr class="gd3-lot" id="gd3rl-rlmumhfdjlln"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">F-2609-A</span></div><div class="l2 ppx-muted">ฟาร์มบ้านนา</div></td><td style="font-variant-numeric:tabular-nums"><div class="l1" style="font-variant-numeric:tabular-nums">31/12</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlToggle('rlmumhfdjlln')">61.4 กก.</button></div><div class="l2 ppx-muted">2 ล็อตย่อย</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmumhfdjlln')"><span class="ppx-bpill" style="background:#EAF3DE;color:#27500A">ไข่ดิบ</span></button></div><div class="l2 ppx-muted">ยังไม่คัด</div></td><td class="num ppx-gsep"><div class="l1">30,000</div></td><td class="num"><div class="l1">30,000</div></td><td class="num"><div class="l1"><span class="ppx-muted">0</span></div></td><td class="num"><button type="button" class="gd3-reslink" onclick="_gd3CpView('mbmumhfdjlm3')"><div class="l1" style="font-weight:700;color:#27500A">30,000</div><div class="l2" style="color:#27500A">ใช้ได้ 94.2% ›</div></button></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="done">✓ คัดเสร็จ</span></div><div class="l2"><span class="l2row"><span class="gd3-work"><span class="ppx-bpill grade">คัดเบอร์</span></span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1">เครื่อง 1 <span class="ppx-mono" style="font-size:11px">#1</span></div><div class="l2 ppx-muted">08:10–10:40</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" onclick="_gd3GoJob('mbmumhfdjlm3')" title="ดูงานคัด" aria-label="ดูงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" disabled="" title="วางแผนครบแล้ว" aria-label="วางแผนครบแล้ว"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmumhfdjlln', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+          <tr class="gd3-det" id="gd3sub-rlmumhfdjlln"><td colspan="11">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:4px">ล็อตย่อย · น้ำหนักอ้างอิงต่อถาด</div>
+            <table class="ppx-table"><thead><tr><th>ล็อตย่อย</th><th class="num">จำนวน</th><th class="num">กก.</th><th>ใช้ในงาน</th></tr></thead><tbody>
+              <tr><td class="ppx-mono" style="font-weight:600">F-2609-A-1</td><td class="num">18,000</td><td class="num">61.2</td><td class="ppx-muted" style="font-size:11px">GR-001</td></tr>
+              <tr><td class="ppx-mono" style="font-weight:600">F-2609-A-2</td><td class="num">12,000</td><td class="num">61.8</td><td class="ppx-muted" style="font-size:11px">GR-001</td></tr>
+            </tbody></table><div class="ev-pop-foot"><span>รวม 30,000 ฟอง · เฉลี่ย 61.4 กก.</span><span>ฟาร์มบ้านนา · รับ 31/12</span></div></td></tr>
+
+          <!-- F-2609-B · raw · done -->
+          <tr class="gd3-lot" id="gd3rl-rlmumhfdjlzb"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">F-2609-B</span></div><div class="l2 ppx-muted">ฟาร์มหนองใหญ่</div></td><td style="font-variant-numeric:tabular-nums"><div class="l1" style="font-variant-numeric:tabular-nums">31/12</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlToggle('rlmumhfdjlzb')">63.0 กก.</button></div><div class="l2 ppx-muted">ทั้งล็อต</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmumhfdjlzb')"><span class="ppx-bpill" style="background:#EAF3DE;color:#27500A">ไข่ดิบ</span></button></div><div class="l2 ppx-muted">ยังไม่คัด</div></td><td class="num ppx-gsep"><div class="l1">24,000</div></td><td class="num"><div class="l1">24,000</div></td><td class="num"><div class="l1"><span class="ppx-muted">0</span></div></td><td class="num"><button type="button" class="gd3-reslink" onclick="_gd3CpView('mbmumhfdjlnk')"><div class="l1" style="font-weight:700;color:#27500A">21,468</div><div class="l2" style="color:#27500A">ใช้ได้ 96.1% ›</div></button></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="done">✓ คัดเสร็จ</span></div><div class="l2"><span class="l2row"><span class="gd3-work"><span class="ppx-bpill grade">คัดเบอร์</span></span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1">เครื่อง 2 <span class="ppx-mono" style="font-size:11px">#1</span></div><div class="l2 ppx-muted">08:10–10:40</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" onclick="_gd3GoJob('mbmumhfdjlnk')" title="ดูงานคัด" aria-label="ดูงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" disabled="" title="วางแผนครบแล้ว" aria-label="วางแผนครบแล้ว"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmumhfdjlzb', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+
+          <!-- UAT-0101-01 · raw · running -->
+          <tr class="gd3-lot" id="gd3rl-rlmuja78kyum"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">UAT-0101-01</span></div><div class="l2 ppx-muted">ฟาร์มบ้านนา A (ชุดทดสอบ)</div></td><td style="font-variant-numeric:tabular-nums"><div class="l1" style="font-variant-numeric:tabular-nums">01/01</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlToggle('rlmuja78kyum')">62.0 กก.</button></div><div class="l2 ppx-muted">ทั้งล็อต</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmuja78kyum')"><span class="ppx-bpill" style="background:#EAF3DE;color:#27500A">ไข่ดิบ</span></button></div><div class="l2 ppx-muted">ยังไม่คัด</div></td><td class="num ppx-gsep"><div class="l1">5,500</div></td><td class="num"><div class="l1">5,500</div></td><td class="num"><div class="l1"><span class="ppx-muted">0</span></div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="run">● กำลังคัด</span> </div><div class="l2"><span class="l2row"><span class="gd3-work"><span class="ppx-bpill grade">คัดเบอร์</span></span><span class="dot">·</span><span class="ppx-muted">ร่างผลคัด</span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1">เครื่อง 1 <span class="ppx-mono" style="font-size:11px">#2</span></div><div class="l2 ppx-muted">11:00–</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" onclick="_gd3GoJob('mbmuja78kyn5')" title="ดูงานคัด" aria-label="ดูงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" disabled="" title="วางแผนครบแล้ว" aria-label="วางแผนครบแล้ว"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmuja78kyum', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+
+          <!-- S-2609-01 · sized · partially planned · type expanded -->
+          <tr class="gd3-lot" id="gd3rl-rlmumhfdjlvo"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">S-2609-01</span></div><div class="l2 ppx-muted">ซื้อไข่เบอร์ · บ.ฟาร์มไทย</div></td><td style="font-variant-numeric:tabular-nums"><div class="l1" style="font-variant-numeric:tabular-nums">01/01</div></td><td><div class="l1 ppx-muted">—</div><div class="l2 ppx-muted">ไข่เบอร์</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmumhfdjlvo')"><span class="ppx-bpill" style="background:#DEE6F6;color:#0C447C">ไข่เบอร์</span></button></div><div class="l2 ppx-muted">เบอร์ 3, 4</div></td><td class="num ppx-gsep"><div class="l1">5,000</div></td><td class="num"><div class="l1">430</div></td><td class="num" style="font-weight:700"><div class="l1">4,570</div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="sent">✓ ส่งแล้ว</span>  <span class="qual">บางส่วน</span></div><div class="l2"><span class="l2row"><span class="gd3-work"><span class="ppx-bpill mix">คละ 3–4</span><span class="ppx-bpill grade">คัดเบอร์</span></span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1">ผสมมือ 1</div><div class="l2 ppx-muted">เครื่อง 2 #2 · 14:00</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" onclick="_gd3GoJob('rlmumhfdjlvo')" title="ดูงานคัด" aria-label="ดูงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" onclick="_gd3JobFromLot('rlmumhfdjlvo')" title="เพิ่มงานคัด" aria-label="เพิ่มงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmumhfdjlvo', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+          <tr class="gd3-det" id="gd3typ-rlmumhfdjlvo"><td colspan="11">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:#888;margin-bottom:4px">ไข่เบอร์ในล็อต</div>
+            <table class="ppx-table"><thead><tr><th>เบอร์</th><th class="num">รับเข้า</th><th class="num">วางแผนแล้ว</th><th class="num">คงเหลือ</th><th>ใช้ในงาน</th></tr></thead><tbody>
+              <tr><td><span class="ppx-bpill ppx-s3">เบอร์ 3</span></td><td class="num">3,000</td><td class="num">30</td><td class="num" style="font-weight:600">2,970</td><td class="ppx-muted" style="font-size:11px">GR-007 คละ 3–4</td></tr>
+              <tr><td><span class="ppx-bpill ppx-s4">เบอร์ 4</span></td><td class="num">2,000</td><td class="num">400</td><td class="num" style="font-weight:600">1,600</td><td class="ppx-muted" style="font-size:11px">GR-004 เครื่อง 2 #2</td></tr>
+            </tbody></table><div class="ev-pop-foot"><span>รวม 5,000 ฟอง · คงเหลือ 4,570</span><span>ซื้อไข่เบอร์ · บ.ฟาร์มไทย</span></div></td></tr>
+
+          <!-- F-2609-C · raw · queue (previous job cancelled) -->
+          <tr class="gd3-lot" id="gd3rl-rlmumhfdjlwg"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">F-2609-C</span></div><div class="l2 ppx-muted">ฟาร์มบ้านนา</div></td><td style="font-variant-numeric:tabular-nums"><div class="l1" style="font-variant-numeric:tabular-nums">01/01</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlToggle('rlmumhfdjlwg')">62.0 กก.</button></div><div class="l2 ppx-muted">ทั้งล็อต</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmumhfdjlwg')"><span class="ppx-bpill" style="background:#EAF3DE;color:#27500A">ไข่ดิบ</span></button></div><div class="l2 ppx-muted">ยังไม่คัด</div></td><td class="num ppx-gsep"><div class="l1">18,000</div></td><td class="num"><div class="l1"><span class="ppx-muted">0</span></div></td><td class="num" style="font-weight:700"><div class="l1">18,000</div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="queue">○ รอวางแผน</span></div><div class="l2"><span class="l2row"><span class="ppx-muted">งานเดิมยกเลิกแล้ว</span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1 ppx-muted">—</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" disabled="" title="ยังไม่มีงานคัด" aria-label="ยังไม่มีงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" onclick="_gd3JobFromLot('rlmumhfdjlwg')" title="เพิ่มงานคัด" aria-label="เพิ่มงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmumhfdjlwg', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+
+          <!-- IR-2609-01 · internal raw · planned, not sent -->
+          <tr class="gd3-lot" id="gd3rl-rlmumhfdjlil"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">IR-2609-01</span></div><div class="l2 ppx-muted"><span class="ppx-bpill tag">ภายใน</span> จาก GR-001, GR-002 · ท้ายเลน</div></td><td style="font-variant-numeric:tabular-nums"><div class="l1" style="font-variant-numeric:tabular-nums">01/01</div></td><td><div class="l1 ppx-muted">—</div><div class="l2 ppx-muted">ไข่เบอร์</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmumhfdjlil')"><span class="ppx-bpill" style="background:#EAF3DE;color:#27500A">ไข่ดิบ</span></button></div><div class="l2 ppx-muted">ยังไม่คัด</div></td><td class="num ppx-gsep"><div class="l1">120</div></td><td class="num"><div class="l1">80</div></td><td class="num" style="font-weight:700"><div class="l1">40</div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="planned">○ วางแผนแล้ว</span> </div><div class="l2"><span class="l2row"><span class="gd3-work"><span class="ppx-bpill grade">คัดเบอร์</span></span><span class="dot">·</span><span class="ppx-muted">ยังไม่ส่ง</span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1">เครื่อง 1 <span class="ppx-mono" style="font-size:11px">#3</span></div><div class="l2 ppx-muted">13:00–13:30</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" onclick="_gd3GoJob('rlmumhfdjlil')" title="ดูงานคัด" aria-label="ดูงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" onclick="_gd3JobFromLot('rlmumhfdjlil')" title="เพิ่มงานคัด" aria-label="เพิ่มงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmumhfdjlil', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+        </tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+  </div>
+
+  <!-- ===================== VIEW: รอวางแผน · extra rows ===================== -->
+  <div class="demo-lbl">มุมมอง รอวางแผน · 9 — แถวเพิ่มเติม (โครงเดียวกัน)</div>
+  <div class="panel gd3-scope">
+    <div class="ppx-scrollwrap">
+    <table class="ppx-table" style="table-layout:fixed;min-width:1120px">
+      <colgroup><col style="width:14%"><col style="width:6%"><col style="width:9%"><col style="width:8%"><col style="width:7%"><col style="width:8%"><col style="width:7%"><col style="width:10%"><col style="width: 13%;"><col style="width:11%"><col style="width: 7%;"></colgroup>
+      <thead>
+        <tr><th class="ppx-thgrp" colspan="4">วัตถุดิบ</th><th class="ppx-thgrp ppx-gsep" colspan="4">จำนวน (ฟอง)</th><th class="ppx-thgrp ppx-gsep" colspan="2">สถานะงาน · จัดการ</th><th class="ppx-thgrp gd3-actcol"></th></tr>
+        <tr><th>ล็อต · แหล่ง</th><th>วันที่รับ</th><th>น้ำหนัก</th><th>ชนิดไข่</th><th class="num ppx-gsep">รับเข้า</th><th class="num">วางแผนแล้ว</th><th class="num">คงเหลือ</th><th class="num">เสร็จ</th><th class="ppx-gsep">สถานะ · งาน</th><th>สถานี</th><th class="gd3-actcol"></th></tr>
+      </thead>
+      <tbody>
+        <tr class="gd3-lot" id="gd3rl-rlmrkmyxx0dm"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">7011</span></div><div class="l2 ppx-muted">ไม่ระบุที่มา</div></td><td><div class="l1" style="font-variant-numeric:tabular-nums">14/07</div></td><td><div class="l1 ppx-muted">—</div><div class="l2 ppx-muted">ไข่เบอร์</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmrkmyxx0dm')"><span class="ppx-bpill" style="background:#DEE6F6;color:#0C447C">ไข่เบอร์</span></button></div><div class="l2 ppx-muted">เบอร์ 4</div></td><td class="num ppx-gsep"><div class="l1">10,000</div></td><td class="num"><div class="l1">1,000</div></td><td class="num" style="font-weight:700"><div class="l1">9,000</div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="planned">○ วางแผนแล้ว</span> </div><div class="l2"><span class="l2row"><span class="gd3-work"><span class="ppx-bpill mix">คละ 3–4</span></span><span class="dot">·</span><span class="ppx-muted">บางส่วน</span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1">ผสมมือ 2</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" onclick="_gd3GoJob('rlmrkmyxx0dm')" title="ดูงานคัด" aria-label="ดูงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" onclick="_gd3JobFromLot('rlmrkmyxx0dm')" title="เพิ่มงานคัด" aria-label="เพิ่มงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmrkmyxx0dm', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+        <tr class="gd3-lot" id="gd3rl-rlmrkqu4bi4r"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">1-140</span></div><div class="l2 ppx-muted"><span class="ppx-bpill tag">ภายใน</span> รับกลับ (เดิม) · งานคัด #1</div></td><td><div class="l1" style="font-variant-numeric:tabular-nums">14/07</div></td><td><div class="l1 ppx-muted">—</div><div class="l2 ppx-muted">ไข่เบอร์</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmrkqu4bi4r')"><span class="ppx-bpill" style="background:#DEE6F6;color:#0C447C">ไข่เบอร์</span></button></div><div class="l2 ppx-muted">เบอร์ 3</div></td><td class="num ppx-gsep"><div class="l1">10,000</div></td><td class="num"><div class="l1"><span class="ppx-muted">0</span></div></td><td class="num" style="font-weight:700"><div class="l1">10,000</div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="queue">○ รอวางแผน</span></div><div class="l2"></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1 ppx-muted">—</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" disabled="" title="ยังไม่มีงานคัด" aria-label="ยังไม่มีงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" onclick="_gd3JobFromLot('rlmrkqu4bi4r')" title="เพิ่มงานคัด" aria-label="เพิ่มงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmrkqu4bi4r', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+        <tr class="gd3-lot" id="gd3rl-rlmrudcu9l2w"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">A-1307-02</span></div><div class="l2 ppx-muted">ฟาร์มหนองใหญ่</div></td><td><div class="l1" style="font-variant-numeric:tabular-nums">21/07</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlToggle('rlmrudcu9l2w')">62.5 กก.</button></div><div class="l2 ppx-muted">ทั้งล็อต</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlmrudcu9l2w')"><span class="ppx-bpill" style="background:#EAF3DE;color:#27500A">ไข่ดิบ</span></button></div><div class="l2 ppx-muted">ยังไม่คัด</div></td><td class="num ppx-gsep"><div class="l1">84,000</div></td><td class="num"><div class="l1"><span class="ppx-muted">0</span></div></td><td class="num" style="font-weight:700"><div class="l1">84,000</div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="queue">○ รอวางแผน</span></div><div class="l2"><span class="l2row"><span class="ppx-muted">งานเดิมยกเลิกแล้ว</span></span></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1 ppx-muted">—</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" disabled="" title="ยังไม่มีงานคัด" aria-label="ยังไม่มีงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" onclick="_gd3JobFromLot('rlmrudcu9l2w')" title="เพิ่มงานคัด" aria-label="เพิ่มงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlmrudcu9l2w', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+        <tr class="gd3-lot" id="gd3rl-rlms8buch96q"><td><div class="l1"><span class="ppx-mono" style="font-size:12.5px;font-weight:600">7003</span></div><div class="l2 ppx-muted">happy farm</div></td><td><div class="l1" style="font-variant-numeric:tabular-nums">31/07</div></td><td><div class="l1 ppx-muted">—</div><div class="l2 ppx-muted">ไข่เบอร์</div></td><td><div class="l1"><button type="button" class="gd3-fact" aria-expanded="false" onclick="_ppxRlTypeToggle('rlms8buch96q')"><span class="ppx-bpill" style="background:#DEE6F6;color:#0C447C">ไข่เบอร์</span></button></div><div class="l2 ppx-muted">เบอร์ 3</div></td><td class="num ppx-gsep"><div class="l1">120,000</div></td><td class="num"><div class="l1"><span class="ppx-muted">0</span></div></td><td class="num" style="font-weight:700"><div class="l1">120,000</div></td><td class="num"><div class="l1 ppx-muted">—</div></td><td class="ppx-gsep"><div class="l1"><span class="gd3-sw" data-s="queue">○ รอวางแผน</span></div><div class="l2"></div></td><td class="ppx-gsep-none gd3-st" style="font-size:12px"><div class="l1 ppx-muted">—</div></td><td class="gd3-actcol" style="padding-left:8px;padding-right:12px"><div class="gd3-acts"><button class="gd3-ibtn" data-v="view" disabled="" title="ยังไม่มีงานคัด" aria-label="ยังไม่มีงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1.5 8s2.5-4.5 6.5-4.5S14.5 8 14.5 8s-2.5 4.5-6.5 4.5S1.5 8 1.5 8z"></path><circle cx="8" cy="8" r="2"></circle></svg></button><button class="gd3-ibtn" data-v="create" onclick="_gd3JobFromLot('rlms8buch96q')" title="เพิ่มงานคัด" aria-label="เพิ่มงานคัด"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M8 3.5v9M3.5 8h9"></path></svg></button><button class="gd3-ibtn" data-v="more" onclick="_ppxRlMenuToggle('rlms8buch96q', event)" title="เพิ่มเติม" aria-label="เพิ่มเติม" aria-haspopup="true"><svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><circle cx="3" cy="8" r="1.3"></circle><circle cx="8" cy="8" r="1.3"></circle><circle cx="13" cy="8" r="1.3"></circle></svg></button></div></td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- ===================== VIEW: วันที่รับ ===================== -->
+  <div class="demo-lbl">มุมมอง วันที่รับ — toolbar มีช่องวันที่ · สถานะว่าง</div>
+  <div class="panel gd3-scope">
+    <div class="gp-toolbar"><span class="cmk-seg" role="group" aria-label="มุมมองล็อต"><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('today')">เกี่ยวข้องวันนี้ <span class="n">6</span></button><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('queue')">รอวางแผน <span class="n">9</span></button><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('partial')">วางแผนบางส่วน <span class="n">2</span></button><button type="button" aria-pressed="false" onclick="_ppxSetRecvView('full')">วางแผนครบ <span class="n">3</span></button><button type="button" aria-pressed="true" onclick="_ppxSetRecvView('date')">วันที่รับ</button></span><input type="date" id="gd3RecvDate" class="ppx-in" style="width:auto;height:28px;padding:0 8px;text-align:left" value="2026-10-01" aria-label="วันที่รับเข้า" onchange="_ppxSetRecvDate(this.value)"><span style="margin-left:auto"><button class="gd3-btn" data-v="primary" onclick="_ppxReOpenNew()">+ รับล็อตเข้า</button></span></div>
+    <div class="ppx-card"><span style="font-size:12px;color:var(--gd-text-subtle)">ยังไม่มีล็อตรับเข้าในวันที่เลือก</span></div>
+  </div>
+
+  <div class="demo-lbl">หมายเหตุ</div>
+  <div class="panel" style="font-size:11.5px;color:#444441;line-height:1.6">
+    <div><b>วัตถุดิบ</b> · ล็อตภายในติดป้ายม่วง ภายใน และบรรทัดรองบอกงานต้นทาง · น้ำหนัก เฉพาะไข่ดิบ (กด → ป๊อปโอเวอร์ล็อตย่อย) ไข่เบอร์ = — · ชนิดไข่ กด → ป๊อปโอเวอร์เบอร์ (ไข่ดิบ: ป๊อปโอเวอร์บอก "ทั้งล็อต ยังไม่คัด") · ป๊อปโอเวอร์ยึดกับช่องที่กด ปิดด้วย × / Esc / คลิกนอก — แถวไม่กาง</div>
+    <div><b>สถานะงาน</b> · คำสถานะชุดเดียวกับการ์ดงาน + ชิปงาน คัดเบอร์ (เขียว) / คละ (ม่วง) · สถานี = เครื่อง #คิว หรือ ผสมมือ n · เวลาแผน/จริงบรรทัดรอง</div>
+    <div><b>จำนวน</b> · วางแผนแล้ว รวมที่ส่งหน้างานแล้ว · คงเหลือ = รับเข้า − วางแผนแล้ว (ตัวหนาเมื่อ &gt; 0) · เสร็จ = เข้าจริงของงานที่คัดเสร็จ + ใช้ได้ % กดเปิดผลคัด</div>
+  </div>
+</div>
+<script>
+/* demo-only — the prototype supplies the real _ppxRlToggle / _ppxRlTypeToggle; this mirrors the Packing-page popover */
+var _pop = null, _popBtn = null;
+function _popClose() { if (_pop) { _pop.remove(); _pop = null; } if (_popBtn) { _popBtn.setAttribute('aria-expanded', 'false'); _popBtn = null; } }
+function _popOpen(btn, title, sub, bodyHtml) {
+  if (_popBtn === btn) { _popClose(); return; } _popClose();
+  var el = document.createElement('div'); el.className = 'gd3-ev-pop gd3-scope'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-label', title);
+  el.innerHTML = '<div class="ev-pop-head"><strong>' + title + '</strong>' + (sub ? '<span class="sub">' + sub + '</span>' : '') + '<button class="ev-pop-close" type="button" aria-label="ปิด">×</button></div><div class="ev-pop-body">' + bodyHtml + '</div>';
+  document.body.appendChild(el);
+  var r = btn.getBoundingClientRect(), w = el.offsetWidth, h = el.offsetHeight, vw = window.innerWidth, vh = window.innerHeight;
+  var left = Math.max(8, Math.min(r.left, vw - w - 8)), top = r.bottom + 6; if (top + h > vh - 8) top = Math.max(8, r.top - h - 6);
+  el.style.left = left + 'px'; el.style.top = top + 'px';
+  el.querySelector('.ev-pop-close').onclick = _popClose; _pop = el; _popBtn = btn; btn.setAttribute('aria-expanded', 'true');
+}
+document.addEventListener('click', function (ev) { if (_pop && !_pop.contains(ev.target) && !(_popBtn && _popBtn.contains(ev.target))) _popClose(); }, true);
+document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') _popClose(); });
+function _src(id) { var r = document.getElementById(id); return r ? r.querySelector('td').innerHTML.replace(/<div style="font-size:10px[^>]*>[^<]*<\/div>/, '') : ''; }
+function _lotOf(id) { var tr = document.getElementById('gd3rl-' + id); return tr ? tr.querySelector('.ppx-mono').textContent : ''; }
+window._ppxRlToggle = function (id) { var btn = document.querySelector('#gd3rl-' + id + ' td:nth-child(3) .gd3-fact'); var body = _src('gd3sub-' + id) || '<div style="padding:10px 12px;color:#64707D">ไม่ได้แบ่งล็อตย่อย · น้ำหนักอ้างอิงทั้งล็อต</div>'; _popOpen(btn, 'ล็อตย่อย · ' + _lotOf(id), 'น้ำหนักอ้างอิงต่อถาด', body); };
+window._ppxRlTypeToggle = function (id) { var btn = document.querySelector('#gd3rl-' + id + ' td:nth-child(4) .gd3-fact'); var raw = /ไข่ดิบ/.test(btn.textContent); var body = raw ? '<div style="padding:10px 12px;color:#64707D">ไข่ดิบทั้งล็อต · ยังไม่ทราบเบอร์จนกว่าจะคัด</div>' : (_src('gd3typ-' + id) || '<div style="padding:10px 12px;color:#64707D">ไม่มีรายละเอียดเบอร์</div>'); _popOpen(btn, (raw ? 'ไข่ดิบ' : 'ไข่เบอร์') + ' · ' + _lotOf(id), raw ? '' : 'รับเข้า · วางแผน · คงเหลือ ต่อเบอร์', body); };
+['_ppxSetRecvView', '_ppxSetRecvDate', '_ppxReOpenNew', '_ppxRlMenuToggle', '_gd3JobFromLot', '_gd3GoJob', '_gd3CpView'].forEach(function (n) { if (!window[n]) window[n] = function () {}; });
+</script>
+
+
+</body></html>

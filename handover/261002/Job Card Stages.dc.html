@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/fonts.css">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/colors.css">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/typography.css">
+  <link rel="stylesheet" href="_ds/cmk-factory-design-system-e4dc70a6-38e6-40ac-b009-d118b4071af0/tokens/spacing.css">
+  <style>
+    html, body { margin: 0; background: #fafbfc; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans Thai', 'Sukhumvit Set', sans-serif; color: #1a1a1a; font-variant-numeric: tabular-nums; text-wrap: pretty; }
+    a { color: #0C447C; } a:hover { color: #185FA5; }
+  </style>
+</helmet>
+<div style="max-width: 1240px; margin: 0 auto; padding: 18px 22px 48px; display: flex; flex-direction: column; gap: 16px;">
+  <div style="border-bottom: 1px solid #ecedf0; padding-bottom: 12px;">
+    <div style="font-size: 11px; font-weight: 500; letter-spacing: .4px; text-transform: uppercase; color: #888;">Daily Plan · คัดไข่ · การ์ดงาน</div>
+    <div style="font-size: 16px; font-weight: 700; color: #1a1a1a; margin-top: 4px;">หน้าการ์ดงาน — การ์ดเดียว ใช้ทั้งงานเครื่องคัดและงานผสมมือ ทุกขั้นของงาน</div>
+    <div style="font-size: 11.5px; color: #666; margin-top: 4px; line-height: 1.55;">คำสถานะและสีชุดเดียวกับ <a href="Status%20Block%20Stages.dc.html">บล็อกสถานะ</a> · ปุ่มเดียว = ขั้นถัดไป · ไม่มีขั้นติดเงื่อนไข · บันทึกผลครั้งเดียว ไม่มีร่างผล</div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px;">
+    <sc-for list="{{ ladder }}" as="l" hint-placeholder-count="4">
+      <div style="{{ l.style }}">
+        <div style="{{ l.wordStyle }}">{{ l.word }}</div>
+        <div style="font-size: 10.5px; color: #888; margin-top: 2px; line-height: 1.5;">{{ l.sub }}</div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 14px;">
+    <sc-for list="{{ cards }}" as="c" hint-placeholder-count="7">
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="display: flex; align-items: center; gap: 8px; height: 20px;">
+          <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; border-radius: 9999px; background: #1a1a1a; color: #fff; font-size: 11px; font-weight: 700; line-height: 1;">{{ c.n }}</span>
+          <span style="font-size: 12.5px; font-weight: 700; color: #1a1a1a;">{{ c.title }}</span>
+        </div>
+        <div style="{{ c.cardStyle }}">
+          <div style="display: flex; align-items: center; gap: 8px; min-height: 24px; line-height: 1;">
+            <span style="{{ c.seqStyle }}">{{ c.seq }}</span>
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 15px; font-weight: 700; color: #1a1a1a; line-height: 1;">{{ c.lot }}</span>
+            <span style="margin-left: auto; display: inline-flex; align-items: center; gap: 10px; white-space: nowrap;">
+              <span style="{{ c.workStyle }}">{{ c.work }}</span>
+              <span style="{{ c.work2Style }}">{{ c.work2 }}</span>
+              <span style="{{ c.plannedStyle }}">แผน {{ c.planned }} →</span>
+              <span style="{{ c.qtyStyle }}"><span style="{{ c.actLblStyle }}">{{ c.actLbl }} </span>{{ c.qty }}</span>
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: #5F6B7A; margin-top: 6px; height: 18px; line-height: 1; white-space: nowrap; overflow: hidden;">
+            <span style="{{ c.timeStyle }}">{{ c.time }}</span><span style="{{ c.sepStyle }}">·</span><span style="overflow: hidden; text-overflow: ellipsis;">{{ c.farm }}</span><span style="{{ c.wSepStyle }}">·</span><span style="{{ c.wStyle }}">{{ c.weight }}</span>
+          </div>
+          <div style="{{ c.srcBoxStyle }}">
+            <div style="{{ c.srcGridStyle }}">
+              <sc-for list="{{ c.srcRows }}" as="r" hint-placeholder-count="2">
+                <span style="{{ r.sizeStyle }}">{{ r.size }}</span>
+                <span style="font-weight: 700; text-align: right; line-height: 18px;">{{ r.qty }}</span>
+                <span style="color: #888; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 18px;"><span style="font-family: 'IBM Plex Mono', ui-monospace, monospace;">{{ r.lots }}</span> <span style="{{ r.tagStyle }}">{{ r.tag }}</span></span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; margin-top: 8px; font-size: 11px; height: 30px; white-space: nowrap;">
+            <span style="{{ c.stateStyle }}">{{ c.state }}</span>
+            <span style="margin-left: auto; display: inline-flex; gap: 8px; align-items: center;">
+              <span style="{{ c.xStyle }}">ยกเลิก</span>
+              <span style="{{ c.cta2Style }}">{{ c.cta2 }}</span>
+              <span style="{{ c.ctaStyle }}">{{ c.cta }}</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </sc-for>
+  </div>
+
+  <div style="background: #fff; border: 1px solid #d6d8dc; border-radius: 8px; box-shadow: 0 1px 2px rgba(0,0,0,.04); overflow: hidden;">
+    <div style="padding: 12px 14px 8px;">
+      <div style="font-size: 10px; font-weight: 500; letter-spacing: .4px; text-transform: uppercase; color: #888;">ลำดับความคืบหน้าของงาน · Progression</div>
+    </div>
+    <div style="overflow-x: auto;">
+      <div style="display: grid; grid-template-columns: 200px 130px minmax(240px, 1fr); font-size: 11.5px; min-width: 640px;">
+        <div style="padding: 6px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; background: #fafbfc; border-top: 1px solid #ecedf0;">ขั้น</div>
+        <div style="padding: 6px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; background: #fafbfc; border-top: 1px solid #ecedf0;">ปุ่ม</div>
+        <div style="padding: 6px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #888; background: #fafbfc; border-top: 1px solid #ecedf0;">ไปขั้นถัดไปเมื่อ</div>
+        <sc-for list="{{ prog }}" as="p" hint-placeholder-count="6">
+          <div style="padding: 8px 14px; border-top: 1px solid #ecedf0; display: flex; align-items: center; gap: 8px;"><span style="{{ p.railStyle }}"></span><span style="{{ p.wordStyle }}">{{ p.word }}</span></div>
+          <div style="padding: 8px 14px; border-top: 1px solid #ecedf0; font-weight: 600; color: #1a1a1a;">{{ p.cta }}</div>
+          <div style="padding: 8px 14px; border-top: 1px solid #ecedf0; color: #444441; line-height: 1.5;">{{ p.next }}</div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="background: #fff; border: 1px solid #d6d8dc; border-radius: 8px; padding: 12px 14px; font-size: 11.5px; color: #444441; line-height: 1.6; display: flex; flex-direction: column; gap: 4px;">
+    <div style="font-size: 10px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: #888; margin-bottom: 2px;">กติกาการ์ดงาน</div>
+    <div><b>บรรทัด 1</b> · #ลำดับคิวเครื่อง เฉพาะขั้นแผน/ส่งแล้ว (กำลังดำเนินการและเสร็จไม่มี · งานผสมมือไม่มี) · เลขล็อต (ตัวหลัก · หลายล็อต = "N ล็อต") ······ ชิปงาน · จำนวนเข้าคัด (ฟอง) — เสร็จแล้วอ่าน "แผน N → เข้าจริง N" (ปรับตามต้นทาง = "แผน N → ปรับ N" อำพัน)</div>
+    <div><b>ชิปงาน</b> · กิจกรรม ไม่ใช่สถานะ ไม่ใช่เส้นทาง: คัดเบอร์ เขียวอ่อน · คละ ม่วงอ่อน (เครื่องหรือมือก็สีเดียว) · ทำทั้งสอง = 2 ชิป — วางชิดขวาก่อนจำนวน · เส้นทางดูจาก #ลำดับเครื่อง (ผสมมือไม่มี)</div>
+    <div><b>บรรทัด 2</b> · เวลา (ผสมมือ: ไม่บังคับ — ไม่ระบุ = ไม่พิมพ์) · ฟาร์ม · น้ำหนัก · เวลาจริงเขียว (กำลังดำเนินการ = เวลาเริ่ม–) · ผสมมือไม่มีน้ำหนัก</div>
+    <div><b>แถวแหล่ง</b> · เฉพาะเมื่อมีมากกว่าหนึ่งเบอร์หรือหนึ่งล็อต · รวมตามเบอร์: ชิปเบอร์ (สีเบอร์) · ยอดรวม · ล็อตที่ใช้ (จาง) · รอผลคัด x/y อำพัน · ฟาร์มหลายแห่ง = "N ฟาร์ม"</div>
+    <div><b>แถวล่าง</b> · คำสถานะซ้าย (สีของขั้น) · ปุ่มขวา</div>
+    <div><b>ปุ่ม</b> · หนึ่งคำ หนึ่งปุ่มหลัก ขวาสุด สีเดียวทุกขั้น (ม่วงอ่อน สีของหน้าคัดไข่) — ขั้นบอกด้วยแถบซ้ายและคำสถานะ ไม่ใช่สีปุ่ม · ยกเลิก เป็นตัวหนังสือจางซ้ายปุ่ม เฉพาะขั้นแผน · ขณะมีร่างเปิด ไม่มีปุ่มทั้งบอร์ด</div>
+    <div><b>ไม่มีขั้นติดเงื่อนไข</b> · ร่างบันทึกไม่ได้ถ้าข้อมูลไม่ครบ · ผลจริงต้นทางน้อยกว่าที่จอง → จำนวนงานปรับลงตามจริงเอง (แผน → ปรับ อำพัน · เป้าตาม) — การ์ดบนบอร์ดพร้อมส่งเสมอ</div>
+    <div><b>ขนาด</b> · ทุกขั้นสูงเท่ากัน · บรรทัด 1 24px · บรรทัด 2 18px · ช่องแถวแหล่ง ≥ 44px · แถวปุ่ม 30px · ทุกบรรทัดจัดกึ่งกลางแนวตั้ง</div>
+    <div><b>ไม่พิมพ์</b> · รหัสระบบ · ชื่อฉบับ · หลักฐานผลคาด · คำว่า ฟอง · ข้อความอธิบายขั้นตอน</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;handAccent&quot;: {&quot;editor&quot;: &quot;color&quot;, &quot;default&quot;: &quot;#5B21B6&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;options&quot;: [&quot;#5B21B6&quot;, &quot;#5B4B8A&quot;, &quot;#7C3AED&quot;], &quot;section&quot;: &quot;งานผสมมือ&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const C = { grey: '#C9CFD6', blue: '#0C447C', amber: '#854F0B', green: '#27500A', red: '#791F1F', plain: '#5F6B7A' };
+    const HIDE = 'display:none';
+    const hand = this.props.handAccent ?? '#5B21B6';
+    const pill = (bg, fg) => `display:inline-flex;align-items:center;height:18px;font-size:10.5px;font-weight:600;padding:0 7px;border-radius:10px;background:${bg};color:${fg};white-space:nowrap;line-height:1`;
+    /* one primary look for every stage (page work accent); secondary = neutral outline */
+    const btn = (v) => {
+      const m = v === 'plain' ? ['#fff', '#1a1a1a', '#d6d8dc'] : ['#F5F3FF', '#5B21B6', '#C4B5FD'];
+      return `display:inline-flex;align-items:center;height:30px;padding:0 12px;border-radius:5px;font-size:11.5px;font-weight:600;background:${m[0]};color:${m[1]};border:1px solid ${m[2]};white-space:nowrap`;
+    };
+    const STATE = {
+      planned: ['○ ยังไม่ส่ง', C.plain], waiting: ['○ รอผลคัดต้นทาง', C.amber],
+      sent: ['✓ ส่งแล้ว', C.blue], run: ['● กำลังดำเนินการ', C.amber], done: ['✓ เสร็จ', C.green]
+    };
+    /* egg-size pill: categorical hue per size (warm→cool ramp), never a status colour */
+    const SIZE = { 'เบอร์ 0': ['#FDE8E8', '#7F1D1D'], 'เบอร์ 1': ['#FCEBDD', '#7C2D12'], 'เบอร์ 2': ['#FBF3E4', '#713F12'], 'เบอร์ 3': ['#EEF6E4', '#3F6212'], 'เบอร์ 4': ['#E4F3F0', '#134E4A'], 'เบอร์ 5': ['#E6F0FA', '#1E3A8A'] };
+    const sizePill = (lbl) => { const c = SIZE[lbl] || ['#EEF0F3', '#374151']; return pill(c[0], c[1]); };
+    const groupBySize = (rows) => {
+      const order = [], by = {};
+      rows.forEach(r => { const k = r[0]; if (!by[k]) { by[k] = { size: k, qty: 0, lots: [], wait: 0, adj: 0 }; order.push(k); } const g = by[k]; g.qty += Number(String(r[2]).replace(/,/g, '')) || 0; g.lots.push(r[1]); if (r[3] === 'wait') g.wait++; if (r[3] === 'adj') g.adj++; });
+      return order.map(k => { const g = by[k]; const tag = g.wait ? `รอผลคัด ${g.wait}/${g.lots.length}` : g.adj ? 'ปรับตามจริง' : ''; return { size: g.size, sizeStyle: sizePill(g.size), qty: g.qty.toLocaleString('th-TH'), lots: g.lots.join(' · '), tag, tagStyle: tag ? `color:${C.amber};font-weight:600` : HIDE }; });
+    };
+    /* work chip: job category — neutral ink on a soft tint (green = grade, teal = mix, both = split label); hand route keeps the purple tint */
+    /* work chip = activity colour, same on every route: คัดเบอร์ green · คละ purple */
+    const workChips = (w) => String(w || 'คัดเบอร์').split(' + ').map(x => x.trim()).map(p => ({ txt: p, style: /^คละ/.test(p) ? pill('#F5F3FF', hand) : pill('#EAF3DE', C.green) }));
+    const mk = (o) => {
+      const rail = C[o.rail], st = STATE[o.state], isHand = !!o.hand, locked = !!o.lock;
+      const src = o.src || [];
+      return {
+        n: o.n, title: o.title,
+        cardStyle: `background:#fff;border:1px solid #e3e5e9;border-left:4px solid ${rail};border-radius:8px;padding:10px 12px 10px 14px;box-shadow:0 1px 2px rgba(0,0,0,.04);${locked ? 'opacity:.72' : ''}`,
+        seq: (isHand || o.state === 'run' || o.state === 'done') ? '' : `#${o.seq ?? 2}`,
+        seqStyle: (isHand || o.state === 'run' || o.state === 'done') ? HIDE : `font-family:'IBM Plex Mono',ui-monospace,monospace;color:#0C447C;font-weight:700;font-size:12.5px`,
+        lot: o.lot ?? 'F-2609-B',
+        work: workChips(o.work)[0].txt, workStyle: workChips(o.work)[0].style,
+        work2: workChips(o.work)[1] ? workChips(o.work)[1].txt : '', work2Style: workChips(o.work)[1] ? workChips(o.work)[1].style : HIDE,
+        state: st[0], stateStyle: `font-size:11.5px;font-weight:700;color:${st[1]};white-space:nowrap;line-height:1`,
+        planned: o.planned ?? '', plannedStyle: o.planned ? 'font-size:11.5px;color:#64707d;line-height:1' : HIDE,
+        actLbl: o.actLbl ?? 'เข้าจริง',
+        actLblStyle: o.planned ? `font-size:11.5px;font-weight:600;color:${o.qtyTone ? C[o.qtyTone] : C.green}` : HIDE,
+        qty: o.qty ?? '21,000', qtyStyle: `font-size:15px;font-weight:700;line-height:1;${o.qtyTone ? `color:${C[o.qtyTone]}` : o.planned ? `color:${C.green}` : ''}`,
+        xStyle: (o.x === false || locked) ? HIDE : 'display:inline-flex;align-items:center;height:30px;padding:0 8px;font-size:11.5px;font-weight:600;color:#888;white-space:nowrap',
+        time: o.time ?? '08:00–10:00', timeStyle: o.time === null ? HIDE : (o.timeAct ? `font-weight:600;color:${C.green}` : ''), sepStyle: o.time === null ? HIDE : '',
+        farm: o.farm ?? 'ฟาร์มหนองใหญ่',
+        weight: o.weight ?? '63 กก.', wStyle: o.weight === null ? HIDE : '', wSepStyle: o.weight === null ? HIDE : '',
+        srcRows: groupBySize(src),
+        srcGridStyle: src.length ? 'display:grid;grid-template-columns:auto max-content minmax(0,1fr);gap:4px 10px;font-size:11.5px;align-items:center;line-height:1' : HIDE,
+        srcBoxStyle: 'min-height:44px;margin-top:6px',
+        cta: locked ? '' : (o.cta ?? ''), ctaStyle: (!locked && o.cta) ? btn() : HIDE,
+        cta2: locked ? '' : (o.cta2 ?? ''), cta2Style: (!locked && o.cta2) ? btn('plain') : HIDE
+      };
+    };
+    const cards = [
+      mk({ n: 1, title: 'แผน · พร้อมส่ง', rail: 'grey', state: 'planned', work: 'คัดเบอร์ + คละ 3–4', cta: 'ส่งงาน' }),
+      mk({ n: 2, title: 'แผน · รอผลคัดต้นทาง · 5 ล็อต', rail: 'amber', state: 'waiting', hand: true, lot: '5 ล็อต', work: 'คละ 3–4', qty: '2,000', time: '13:00–14:30', weight: null, farm: '3 ฟาร์ม', src: [['เบอร์ 3', 'F-2609-A', '400', 'wait'], ['เบอร์ 3', 'F-2609-B', '300', 'wait'], ['เบอร์ 3', 'IS-2609-02', '300'], ['เบอร์ 4', 'S-2609-01', '600'], ['เบอร์ 4', 'F-2609-C', '400']], cta: 'ส่งงาน' }),
+      mk({ n: 3, title: 'แผน · ปรับตามผลจริงต้นทาง', rail: 'grey', state: 'planned', hand: true, lot: 'F-2609-A', work: 'คละ 3–4', planned: '600', qty: '400', qtyTone: 'amber', actLbl: 'ปรับ', time: '15:00–15:30', weight: null, farm: 'ฟาร์มบ้านนา', src: [['เบอร์ 3', 'F-2609-A', '200', 'adj'], ['เบอร์ 4', 'F-2609-A', '200', 'adj']], cta: 'ส่งงาน' }),
+      mk({ n: 4, title: 'ส่งแล้ว', rail: 'blue', state: 'sent', x: false, cta: 'บันทึก', cta2: 'ใบงาน' }),
+      mk({ n: 5, title: 'กำลังดำเนินการ', rail: 'amber', state: 'run', x: false, time: '08:10–', timeAct: true, cta: 'บันทึก' }),
+      mk({ n: 6, title: 'เสร็จ', rail: 'green', state: 'done', x: false, planned: '21,000', qty: '21,468', time: '08:10–10:40', timeAct: true, cta: 'ผลคัด' }),
+      mk({ n: 7, title: 'ล็อกขณะมีร่างเปิด', rail: 'grey', state: 'planned', lock: true, x: false })
+    ];
+    const ladder = [
+      { word: '○ แผน', sub: 'แก้ไข/ลบได้', c: C.plain, rail: C.grey },
+      { word: '✓ ส่งแล้ว', sub: 'มีใบงาน · รอผลจริง', c: C.blue, rail: C.blue },
+      { word: '● กำลังดำเนินการ', sub: 'เครื่อง/หน้างานเริ่มแล้ว (จากระบบข้อมูลในอนาคต)', c: C.amber, rail: C.amber },
+      { word: '✓ เสร็จ', sub: 'ผลจริงล็อกแล้ว', c: C.green, rail: C.green }
+    ].map(l => ({ word: l.word, sub: l.sub, style: `border-top:3px solid ${l.rail};padding:6px 0 0`, wordStyle: `font-size:12.5px;font-weight:700;color:${l.c}` }));
+    const rail = (c) => `display:inline-block;width:4px;height:18px;border-radius:2px;background:${c}`;
+    const prog = [
+      { word: '○ ยังไม่ส่ง', c: C.plain, railC: C.grey, cta: 'ส่งงาน', next: 'ส่งงาน → ออกใบงาน จองไข่' },
+      { word: '○ รอผลคัดต้นทาง', c: C.amber, railC: C.amber, cta: 'ส่งงาน', next: 'ส่งได้ด้วยจำนวนคาด · ผลจริงต้นทางออก → จำนวนปรับตามจริง (แผน → ปรับ อำพัน)' },
+      { word: '✓ ส่งแล้ว', c: C.blue, railC: C.blue, cta: 'บันทึก · ใบงาน', next: 'สัญญาณเริ่มงานจากเครื่อง → กำลังดำเนินการ · หรือบันทึกผลครั้งเดียว → เสร็จ' },
+      { word: '● กำลังดำเนินการ', c: C.amber, railC: C.amber, cta: 'บันทึก', next: 'บันทึกผลครั้งเดียว (ผลรวม = เข้าจริง) → เสร็จ' },
+      { word: '✓ เสร็จ', c: C.green, railC: C.green, cta: 'ผลคัด', next: 'แก้ผลคัดได้จนมีงาน/ล็อตอ้างใช้ · ปิดวันล็อก' }
+    ].map(p => ({ word: p.word, wordStyle: `font-size:11.5px;font-weight:700;color:${p.c};white-space:nowrap`, railStyle: rail(p.railC), cta: p.cta, next: p.next }));
+    return { cards, ladder, prog };
+  }
+}
+</script>
+</body>
+</html>

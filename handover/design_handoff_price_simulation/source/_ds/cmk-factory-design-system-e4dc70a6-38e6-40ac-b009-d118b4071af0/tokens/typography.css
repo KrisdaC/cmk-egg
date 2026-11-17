@@ -1,0 +1,33 @@
+/* ==========================================================================
+   CMK Factory — Typography tokens
+   Inter (Latin) + Noto Sans Thai (Thai) for UI; IBM Plex Mono for codes/IDs.
+   Numbers always tabular. Body 12-13px; section headers 11px UPPERCASE.
+   ========================================================================== */
+:root {
+  --font-ui:   'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+               'Noto Sans Thai', 'Sukhumvit Set', 'IBM Plex Sans Thai', sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', 'Cascadia Code',
+               'Source Code Pro', monospace;
+
+  /* ---- Type scale (operator-dense) ---- */
+  --text-page-title: 20px;  /* H1 — page name */
+  --text-h2:         14px;  /* major section title (bold) */
+  --text-modal:      16px;  /* dialog title */
+  --text-kpi-num:    22px;  /* KPI hero number */
+  --text-body:       13px;  /* default body */
+  --text-body-sm:    12px;  /* dense body / controls */
+  --text-meta:       11px;  /* meta, status pills */
+  --text-label:      10px;  /* control labels, small pills */
+  --text-section:    11px;  /* UPPERCASE section header */
+
+  /* ---- Weights ---- */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-semibold:600;
+  --weight-bold:    700;
+
+  /* ---- Section-header treatment ---- */
+  --section-letter-spacing: 0.4px;
+
+  --numeric: tabular-nums; /* @kind other */
+}

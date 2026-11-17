@@ -71,10 +71,269 @@ export const trips = pgTable("trips", {
   driverId: integer("driver_id").references(() => drivers.id),
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow(),
+  // Trip-level workflow — see migrations/0040_trip_status.sql. Trip status
+  // itself is never stored, always derived live from these plus real
+  // packing completeness and orders.logisticsStatus.
+  confirmedAt: timestamp("confirmed_at"),
+  vehicleConfirmedAt: timestamp("vehicle_confirmed_at"),
+  departedAt: timestamp("departed_at"),
 });
 
 export type Trip = typeof trips.$inferSelect;
 export type InsertTrip = typeof trips.$inferInsert;
+
+// Preliminary shipment plans — feasibility-only draft groupings of orders made
+// during round planning, before a real trip is created. Distinct from `trips`:
+// these never publish/release anything on their own.
+export const preliminaryShipmentPlans = pgTable("preliminary_shipment_plans", {
+  id: serial("id").primaryKey(),
+  deliveryDate: date("delivery_date").notNull(),
+  productionRound: integer("production_round"),
+  label: text("label").notNull(),
+  groupLabel: text("group_label"),
+  orderIds: jsonb("order_ids").notNull().$type<number[]>(),
+  vehicleId: integer("vehicle_id").references(() => vehicles.id),
+  loadInDate: date("load_in_date"),
+  loadInTime: text("load_in_time"),
+  deliverPlanDate: date("deliver_plan_date"),
+  deliverPlanTime: text("deliver_plan_time"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type PreliminaryShipmentPlan = typeof preliminaryShipmentPlans.$inferSelect;
+export type InsertPreliminaryShipmentPlan = typeof preliminaryShipmentPlans.$inferInsert;
+
+// Grading — Receiving Lots (Production > Grading, Section 1). Distinct from the
+// legacy `eggReceivingLots` table (which hardcodes a fixed 3000-egg/10-tray lot
+// and doesn't model material type, sized-egg source, or grade-line quantities).
+// A lot has no stored lifecycle status — its planned/sent-to-floor/left-to-plan
+// state is meant to be derived from downstream grading-job allocations once that
+// feature exists; for now, with no grading jobs yet, every lot is honestly 100%
+// unallocated. `srcJobId` is a forward-compatible pointer to a future grading-job
+// table (not yet built), left unconstrained (no FK) until that table exists.
+export const gradingReceivingLots = pgTable("grading_receiving_lots", {
+  id: serial("id").primaryKey(),
+  lotNo: text("lot_no").notNull(),
+  recvDate: date("recv_date").notNull(),
+  farm: text("farm"), // required when material="raw" or origin="external"; null for a manually-entered sized grading_return (no known farm) — a raw grading_return carries the source lot's real farm through
+  material: text("material").notNull(), // "raw" | "sized"
+  origin: text("origin"), // "external" | "grading_return" — sized (manually chosen) or raw (auto-created from a job's ungraded output, see createOrUpdateReprocessLot)
+  srcJobId: integer("src_job_id"), // the job a grading_return lot came from — set automatically for raw grading_return lots; unenforced/manual for sized
+  qty: integer("qty"), // raw, single-lot mode: received qty (eggs)
+  // Sample weight of 10 trays (300 eggs), in kg — NOT a per-egg weight. This
+  // is how farms/graders actually weigh a lot to estimate average egg size;
+  // per-egg average = avgWeight / 300. DECIMAL(6,3) already covers the
+  // realistic ~9–30kg range with headroom, so no width change was needed
+  // when this shifted from a per-egg (kg/egg) convention.
+  avgWeight: decimal("avg_weight", { precision: 6, scale: 3 }),
+  divided: boolean("divided").notNull().default(false), // raw only: "Physical sub-lots" mode
+  // sub.w is the same 10-tray (300-egg) sample weight, per sub-lot, in kg.
+  subs: jsonb("subs").notNull().default([]).$type<{ ref: string; qty: number | null; w: number | null }[]>(),
+  gradeLines: jsonb("grade_lines").notNull().default([]).$type<{ size: string; qty: number | null }[]>(),
+  note: text("note"),
+  // "rejected" is a real terminal-ish state (quality failure, wrong farm,
+  // etc.) — the lot stays in the record (never deleted, matching the
+  // no-delete-once-received rule) but is excluded from planning/forecast
+  // everywhere else. Blocked if the lot already has grading jobs, and
+  // reversible (reject was a mistake) as long as it still has none.
+  status: text("status").notNull().default("received"), // "received" | "rejected"
+  rejectedReason: text("rejected_reason"),
+  rejectedAt: timestamp("rejected_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type GradingReceivingLot = typeof gradingReceivingLots.$inferSelect;
+export type InsertGradingReceivingLot = typeof gradingReceivingLots.$inferInsert;
+
+// Grading — manually-entered opening egg stock by size, per grading date
+// (Production > Grading, Section 2 "Available eggs vs demand"). This is real
+// user input, not derived.
+export const gradingOpeningStock = pgTable(
+  "grading_opening_stock",
+  {
+    id: serial("id").primaryKey(),
+    gradingDate: date("grading_date").notNull(),
+    size: text("size").notNull(), // "0".."6"
+    qty: integer("qty").notNull().default(0),
+    updatedAt: timestamp("updated_at").defaultNow(),
+  },
+  t => ({
+    dateSizeUnique: uniqueIndex("grading_opening_stock_date_size_idx").on(t.gradingDate, t.size),
+  }),
+);
+
+// Grading — yield (weight → size composition) history. Built into the system
+// rather than something a user uploads: seeded once from real historical
+// data (source: "seed"), then grows on its own — every time a grading job's
+// actual result is CONFIRMED (not draft) against a non-divided raw lot with a
+// known weight, its real observed size/defect percentages are appended as a
+// new row (source: "actual", jobId traces it back to that job). "From
+// today's jobs" in Section 2 forecasts by applying this single, always-
+// active, ever-growing history to each available raw receiving lot's average
+// weight (lower-bound step match: the largest row weight <= the lot's
+// weight). `rows[].weight` is on the same basis as
+// gradingReceivingLots.avgWeight — the 10-tray (300-egg) sample weight, not a
+// per-egg weight — in whichever unit `predictorUnit` says (always "kg" for
+// rows added by the system; the original upload feature that could pick "g"
+// no longer exists, but old rows may still carry it). `rows[].defects` are
+// loss categories (thin/dented/cracked/dirty/uncountable %) — for a seed row
+// this is the source data's own value, for an actual row it's the job's real
+// recorded defects normalized to %. `rows[].sum` is the seed data's own
+// declared row total (%), kept as-is; null for actual rows (there's nothing
+// external to reconcile against — the row itself IS the real observation).
+// `rows[].active` is a per-row on/off — inactive rows exist for record-
+// keeping but are excluded from weight matching.
+export const gradingYieldModels = pgTable("grading_yield_models", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  predictorUnit: text("predictor_unit").notNull(), // "g" | "kg" — unit of rows[].weight
+  rows: jsonb("rows").notNull().$type<
+    {
+      weight: number;
+      sizes: Record<string, number>;
+      defects: Record<string, number>;
+      sum: number | null;
+      active: boolean;
+      source: "seed" | "actual"; // "seed" = has a historical-import contribution; "actual" = built purely from confirmed jobs
+      n: number; // number of contributions (historical import counts as 1) backing this row's percentages
+      qtyTotal: number; // total egg qty across all contributions — the % denominator
+      contributions: Record<string, { qty: number; n: number; sizes: Record<string, number>; defects: Record<string, number> }>; // key "seed" = historical import; else jobId
+    }[]
+  >(),
+  active: boolean("active").notNull().default(false),
+  publishedAt: timestamp("published_at").defaultNow(),
+});
+
+export type GradingYieldModelRow = typeof gradingYieldModels.$inferSelect;
+
+export type GradingOpeningStock = typeof gradingOpeningStock.$inferSelect;
+
+// Grading — jobs (a quantity from a lot assigned to grade on a machine).
+// `qty` makes Planned/Left to plan on the Receiving Lots table real (Planned =
+// sum of job qty for the lot). `status` is a real, if minimal, execution
+// state: "planned" (created, sitting on the Machine Job Board) → "sent_to_floor"
+// (operator has physically dispatched it — gates Record Actual Result, since
+// recording a result before the batch is even on the floor wouldn't make
+// sense) — there's no further "completed"/QC state like the full machine-batch
+// composer the design reference has. `machine` is a fixed 3-slot list (no
+// machine master data exists), not free text, so occupancy can be shown per
+// machine. `mixedEggLane` is recorded but doesn't drive any lane/output logic
+// yet — there's no per-size output tracking to apply it to.
+export const gradingJobs = pgTable("grading_jobs", {
+  id: serial("id").primaryKey(),
+  lotId: integer("lot_id")
+    .notNull()
+    .references(() => gradingReceivingLots.id),
+  productionDate: date("production_date").notNull(),
+  qty: integer("qty").notNull(),
+  machine: text("machine"),
+  plannedStart: text("planned_start"), // "HH:MM"
+  plannedEnd: text("planned_end"),
+  mixedEggLane: boolean("mixed_egg_lane").notNull().default(true),
+  note: text("note"),
+  status: text("status").notNull().default("planned"), // "planned" | "sent_to_floor"
+  sentToFloorAt: timestamp("sent_to_floor_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type GradingJob = typeof gradingJobs.$inferSelect;
+
+// Grading — actual result recorded against a job (Machine Job Board, "Record
+// actual result"). One row per job. `output` holds actual eggs by outcome —
+// keys are EGG_SIZES minus "6" plus "mixed" (a missing key means "not
+// recorded," 0 means "recorded as none" — the two are never conflated).
+// No.6 has no entry field at all: it's legacy/unmapped in the reference
+// prototype and is never treated as a real outcome, so it's not modeled here
+// either. `defects`/`weighingLoss`/`otherVariance` are real operator input,
+// not derived. Forecast-per-outcome for comparison is computed client-side
+// from the active yield model + the job's lot weight (same lower-bound-step
+// match used elsewhere) rather than stored, since there's no "freeze the
+// forecast at batch-open time" workflow yet — it's always the current model.
+export const gradingJobResults = pgTable("grading_job_results", {
+  id: serial("id").primaryKey(),
+  jobId: integer("job_id")
+    .notNull()
+    .references(() => gradingJobs.id)
+    .unique(),
+  actualQty: integer("actual_qty"), // null = same as job.qty ("as planned")
+  // Per-sub-lot actual breakdown, keyed by sub ref (e.g. {"A": 300, "B": 400})
+  // — only set when the job covers a WHOLE divided lot, since a job doesn't
+  // track which sub-lot its eggs came from and a partial job can't be
+  // honestly attributed to specific subs. actualQty is always the sum of
+  // this when present.
+  actualBySub: jsonb("actual_by_sub").$type<Record<string, number> | null>(),
+  inputNote: text("input_note"), // required by UI when actualQty differs from planned
+  actualStart: text("actual_start"), // "HH:MM"
+  actualEnd: text("actual_end"),
+  output: jsonb("output").notNull().default({}).$type<Record<string, number>>(),
+  // Eggs graded directly into a Finished Good SKU rather than tallied loose
+  // by size — a real alternative to `output`, not a duplicate of it. Each
+  // line is a snapshot (item/unit/factor resolved at save time from the
+  // Product Master, `items` table) so later reads don't need to re-join
+  // items or re-derive unit conversions. baseEggs = qty * factor, and counts
+  // toward its `outcome` size the same way a loose `output[outcome]` entry
+  // does — reconciliation is wipBase (output) + fgBase (these lines).
+  fgLines: jsonb("fg_lines").notNull().default([]).$type<
+    { itemId: number; sku: string; name: string; outcome: string; qty: number | null; unit: string; factor: number; baseEggs: number }[]
+  >(),
+  // Breaks the single "mixed" outcome down into which two adjacent sizes it
+  // actually is (e.g. "3-4") — a job can report several different mixed
+  // pairs. output["mixed"] is always kept equal to the sum of these lines'
+  // qty, so everywhere else in the app that reads output.mixed as one
+  // generic outcome (FG mapping, demand tables, forecasting) needs no change.
+  mixedLines: jsonb("mixed_lines").notNull().default([]).$type<{ range: string; qty: number }[]>(),
+  // How many of this job's already-recorded fgLines trays (for a given WIP
+  // SKU) physically used a special tray — a PARTITION of that SKU's
+  // production, never added on top of it. componentSku/componentName are
+  // the real packaging component (e.g. C29999P301, resolved from that WIP
+  // item's packaging_profile) the tray count is really about — this is
+  // what "cuts" against, i.e. real cumulative material usage, not more egg
+  // output. See /Users/krisdachugh/.claude/plans/scalable-hatching-moore.md.
+  specialTrayLines: jsonb("special_tray_lines").notNull().default([]).$type<
+    { itemId: number; sku: string; name: string; componentSku: string; componentName: string; qty: number }[]
+  >(),
+  // Eggs that went through the machine but weren't assigned any size —
+  // real, accounted-for quantity (not a loss), which needs re-grading. When
+  // set on a confirmed result, a new raw receiving lot is auto-created (see
+  // createOrUpdateReprocessLot) so it can be planned into a new job, linked
+  // back via that lot's srcJobId.
+  ungradedQty: integer("ungraded_qty"),
+  defects: jsonb("defects").notNull().default({}).$type<Record<string, number>>(),
+  weighingLoss: integer("weighing_loss"),
+  otherVariance: integer("other_variance"),
+  varianceNote: text("variance_note"), // required by UI when otherVariance != 0
+  status: text("status").notNull().default("draft"), // "draft" | "confirmed"
+  confirmedAt: timestamp("confirmed_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export type GradingJobResult = typeof gradingJobResults.$inferSelect;
+
+// Grading — floor-document print events ("Floor documents" on the Machine Job
+// Board). A real, append-only log: each print creates a new revision for its
+// (production_date, scope) pair and freezes a snapshot of the jobs shown at
+// that moment — "reprint" replays the stored snapshot instead of live data,
+// matching the design reference's "every revision is an immutable snapshot"
+// rule. `scope` is "all" or a machine name from GRADING_MACHINES. There's no
+// work-instruction system, so `snapshot` carries the job/lot/result fields the
+// sheet needs directly rather than a WI reference id. `printedBy` is the
+// session user's email when available, null otherwise (shown as "unrecorded,"
+// same as the design reference) — this app doesn't require being logged in in
+// dev mode, so it's honestly not always known.
+export const gradingPrintEvents = pgTable("grading_print_events", {
+  id: serial("id").primaryKey(),
+  productionDate: date("production_date").notNull(),
+  scope: text("scope").notNull(), // "all" | machine name
+  revision: integer("revision").notNull(),
+  jobIds: jsonb("job_ids").notNull().$type<number[]>(),
+  snapshot: jsonb("snapshot").notNull().$type<any[]>(),
+  printedBy: text("printed_by"),
+  printedAt: timestamp("printed_at").defaultNow(),
+});
+
+export type GradingPrintEvent = typeof gradingPrintEvents.$inferSelect;
 
 // Business Partners - Unified entity for customers and vendors/brands
 // Level 1: Partner (who we do business with - billing/branding entity)
@@ -901,6 +1160,13 @@ export const orders = pgTable("orders", {
   adjustmentApprovedBy: text("adjustment_approved_by"),
   adjustmentApprovedAt: timestamp("adjustment_approved_at"),
   productionRound: integer("production_round"), // 1-4, null = not yet assigned to a round
+  // Set only when this order's round was pushed forward via the "Defer to
+  // next round" action (not any other round reassignment) — a required
+  // reason, recorded once, forward-only (no dedicated "undo defer" action).
+  deferReason: text("defer_reason"), // "trip" | "vehicle" | "delivery_time" | "product" | "other"
+  deferReasonNote: text("defer_reason_note"), // free text — required when deferReason is "other"
+  deferredFromRound: integer("deferred_from_round"),
+  deferredAt: timestamp("deferred_at"),
   pickupDate: date("pickup_date"),
   pickupTime: text("pickup_time"),
   tripId: integer("trip_id").references(() => trips.id),
