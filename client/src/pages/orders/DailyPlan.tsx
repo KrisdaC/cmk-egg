@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef, Fragment } from "rea
 import { useLocation } from "wouter";
 import { Loader2, RefreshCw, Pencil, Printer } from "lucide-react";
 import { OverviewTab } from "./DailyPlanOverview";
+import { SummaryTab } from "./DailyPlanSummary";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ export interface PlanLine {
 // A real finished-good order line eligible for production-demand (PQ)
 // aggregation — matches server/routes/bom.ts's own `(item_role IS NULL OR
 // item_role = 'FG')` filter exactly, so Packing and BOM never disagree.
-function isFgLine(l: { itemRole: string | null }): boolean {
+export function isFgLine(l: { itemRole: string | null }): boolean {
   return l.itemRole == null || l.itemRole === "FG";
 }
 
@@ -46,6 +47,10 @@ export interface PlanOrder {
   deliveryProvince?: string | null;
   deliveryDistrict?: string | null;
   status: string;
+  // "off_plan" = walk-in sale (ออเดอร์นอกแผน); logisticsStatus "dispatched"
+  // = physically handed over (trip checkout, or an off-plan sale completing).
+  source?: string | null;
+  logisticsStatus?: string | null;
   productionRound: number | null;
   deferredFromRound?: number | null;
   tripId: number | null;
@@ -93,7 +98,7 @@ export interface DailyData {
   trips: PlanTrip[];
 }
 
-export type SubTab = "demand" | "bom" | "trip" | "overview" | "checkout" | "fgstock";
+export type SubTab = "demand" | "bom" | "trip" | "overview" | "checkout" | "fgstock" | "summary";
 export type Round = number;
 
 // ── Colour maps ────────────────────────────────────────────────────────────────
@@ -4156,8 +4161,8 @@ function CloseReadinessModal({
 // (packing_target_results), same derive-don't-duplicate pattern as every
 // other status in this app. See /Users/krisdachugh/.claude/plans/scalable-hatching-moore.md.
 
-type TripStatusKind = "needs_confirm" | "needs_packing" | "ready" | "done";
-type PackingTargetResultLite = { itemId: number; status: string | null; actualQtyEggs: number | null; targetQtyEggs: number };
+export type TripStatusKind = "needs_confirm" | "needs_packing" | "ready" | "done";
+export type PackingTargetResultLite = { itemId: number; status: string | null; actualQtyEggs: number | null; targetQtyEggs: number };
 
 // Only FG lines go through Packing's target/result flow — WIP (graded
 // directly) and DEFECT (sold straight from grading) never get a packing
@@ -4179,7 +4184,7 @@ function tripPackingComplete(
   return true;
 }
 
-function tripStatus(
+export function tripStatus(
   trip: PlanTrip,
   stops: (PlanOrder & { partnerName: string })[],
   resultsByRound: Record<number, PackingTargetResultLite[]>,
@@ -15621,6 +15626,7 @@ const L1_TABS: { key: string; label: string; subtab: SubTab }[] = [
   { key: "delivery", label: "Delivery", subtab: "trip" },
   { key: "checkout", label: "Checkout", subtab: "checkout" },
   { key: "fgstock", label: "FG Stock", subtab: "fgstock" },
+  { key: "summary", label: "สรุปผล", subtab: "summary" },
 ];
 
 function DailyOperationsNav({
@@ -16378,6 +16384,12 @@ export default function DailyPlan() {
               <CheckoutTab date={date} trips={data?.trips ?? []} partners={data?.partners ?? []} />
             ) : subtab === "fgstock" ? (
               <FgStockTab date={date} />
+            ) : subtab === "summary" ? (
+              <SummaryTab
+                date={date}
+                data={data}
+                onGoCheckout={() => setSubtab("checkout")}
+              />
             ) : (
               <ProductionArea
                 date={date}

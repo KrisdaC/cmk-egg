@@ -545,4 +545,88 @@ router.get("/fg-stock", async (req, res) => {
   }
 });
 
+/** GET /api/packing/summary?date=YYYY-MM-DD — everything the Daily Operations
+ * "สรุปผล" tab needs that DailyData (/api/orders/daily) doesn't already carry:
+ *   - targets: every packing target for the date (all rounds, sent or not)
+ *     joined to its real result (if any) and item attributes, so the client
+ *     can build plan-vs-packed by SKU / size / pack type / station / hour.
+ *   - carriedTrips: trips planned for an EARLIER delivery date that actually
+ *     departed on this date ("ยกมา") — invisible to /orders/daily, which only
+ *     returns trips for this delivery date.
+ * Real data only: there is no per-station egg-issue (ไข่เบิกเข้า) or hourly
+ * entry log in the schema, so neither is returned. */
+router.get("/summary", async (req, res) => {
+  const date = req.query.date as string | undefined;
+  if (!date) return res.status(400).json({ message: "date required" });
+  try {
+    const targetRows = (
+      await db.execute(sql`
+        SELECT pt.id AS target_id, pt.round, pt.item_id, pt.qty_eggs, pt.sent_at,
+               i.sku, i.name AS item_name, i.eggs_per_pack, i.primary_size, i.secondary_size,
+               i.pack_unit, i.selling_unit,
+               ptr.actual_qty_eggs, ptr.station, ptr.status, ptr.confirmed_at
+        FROM packing_targets pt
+        JOIN items i ON i.id = pt.item_id
+        LEFT JOIN packing_target_results ptr ON ptr.target_id = pt.id
+        WHERE pt.delivery_date = ${date}::date
+        ORDER BY pt.round, i.sku
+      `)
+    ).rows as any[];
+
+    const carriedRows = (
+      await db.execute(sql`
+        SELECT t.id, t.delivery_date, t.trip_number, t.name, t.departed_at,
+               v.plate_number AS vehicle_plate, v.vehicle_type, d.name AS driver_name,
+               COALESCE(SUM(COALESCE(oi.accepted_qty, oi.quantity) * COALESCE(i.eggs_per_pack, 1)), 0) AS eggs,
+               COUNT(DISTINCT o.delivery_site_id) AS stops
+        FROM trips t
+        LEFT JOIN vehicles v ON v.id = t.vehicle_id
+        LEFT JOIN drivers  d ON d.id = t.driver_id
+        LEFT JOIN orders o ON o.trip_id = t.id AND o.status != 'cancelled'
+        LEFT JOIN order_items oi ON oi.order_id = o.id
+        LEFT JOIN items i ON i.id = oi.item_id
+        WHERE t.departed_at::date = ${date}::date AND t.delivery_date::date < ${date}::date
+        GROUP BY t.id, v.plate_number, v.vehicle_type, d.name
+        ORDER BY t.departed_at
+      `)
+    ).rows as any[];
+
+    return res.json({
+      date,
+      targets: targetRows.map(r => ({
+        targetId: r.target_id,
+        round: r.round,
+        itemId: r.item_id,
+        sku: r.sku,
+        itemName: r.item_name,
+        eggsPerPack: Number(r.eggs_per_pack ?? 1) || 1,
+        primarySize: r.primary_size,
+        secondarySize: r.secondary_size,
+        packUnit: r.pack_unit || r.selling_unit || null,
+        targetQtyEggs: Number(r.qty_eggs),
+        sentAt: r.sent_at,
+        actualQtyEggs: r.actual_qty_eggs != null ? Number(r.actual_qty_eggs) : null,
+        station: r.station ?? null,
+        status: r.status ?? null,
+        confirmedAt: r.confirmed_at ?? null,
+      })),
+      carriedTrips: carriedRows.map(r => ({
+        id: r.id,
+        deliveryDate: r.delivery_date,
+        tripNumber: r.trip_number,
+        name: r.name,
+        departedAt: r.departed_at,
+        vehiclePlate: r.vehicle_plate ?? null,
+        vehicleType: r.vehicle_type ?? null,
+        driverName: r.driver_name ?? null,
+        eggs: Number(r.eggs),
+        stops: Number(r.stops),
+      })),
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to load summary" });
+  }
+});
+
 export default router;
