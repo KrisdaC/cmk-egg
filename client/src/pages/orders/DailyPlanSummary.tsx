@@ -138,8 +138,8 @@ function Card({ children, className = "" }: { children: ReactNode; className?: s
 function SectionHead({ n, title, right }: { n: number; title: string; right?: ReactNode }) {
   return (
     <div className="flex items-center gap-3 pb-3 border-b border-[#E1E5EA]">
-      <span className="w-9 h-9 rounded-full bg-[#1a1a1a] text-white text-[14px] font-bold flex items-center justify-center shrink-0">{n}</span>
-      <span className="text-[20px] font-bold text-[#1a1a1a]">{title}</span>
+      <span className="w-9 h-9 rounded-full bg-[#1a1a1a] text-white text-[12px] font-bold flex items-center justify-center shrink-0">{n}</span>
+      <span className="text-[18px] font-bold text-[#1a1a1a]">{title}</span>
       <span className="flex-1" />
       {right}
     </div>
@@ -160,7 +160,7 @@ function Seg<T extends string>({
         <button
           key={k}
           onClick={() => onChange(k)}
-          className={`px-4 py-1.5 rounded-lg text-[12px] font-semibold whitespace-nowrap transition-colors ${
+          className={`px-4 py-1.5 rounded-lg text-[10px] font-semibold whitespace-nowrap transition-colors ${
             value === k ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#6b7280] hover:text-[#1a1a1a]"
           }`}
         >
@@ -188,12 +188,12 @@ function Kpi({
 }) {
   return (
     <div className="px-7 py-5 min-w-0">
-      <div className="text-[13px] text-[#6b7280] mb-1">{label}</div>
+      <div className="text-[11px] text-[#6b7280] mb-1">{label}</div>
       <div className="flex items-baseline gap-2 whitespace-nowrap">
-        <span className="text-[42px] leading-[1.1] font-bold tabular-nums" style={{ color: valueColor }}>{value}</span>
-        {unit && <span className="text-[16px] text-[#8a8f98] font-medium">{unit}</span>}
+        <span className="text-[40px] leading-[1.1] font-bold tabular-nums" style={{ color: valueColor }}>{value}</span>
+        {unit && <span className="text-[14px] text-[#8a8f98] font-medium">{unit}</span>}
       </div>
-      {sub != null && <div className="text-[13px] text-[#3f4650] mt-0.5">{sub}</div>}
+      {sub != null && <div className="text-[11px] text-[#3f4650] mt-0.5">{sub}</div>}
     </div>
   );
 }
@@ -250,7 +250,7 @@ export function SummaryTab({
     };
   }, [date]);
 
-  if (err) return <div className="p-6 text-[12px] text-[#92400E]">โหลดข้อมูลสรุปผลไม่สำเร็จ</div>;
+  if (err) return <div className="p-6 text-[10px] text-[#92400E]">โหลดข้อมูลสรุปผลไม่สำเร็จ</div>;
   if (!api || !data) {
     return (
       <div className="flex items-center justify-center py-16 bg-white rounded-xl border border-[#e3e5e8]">
@@ -407,12 +407,12 @@ export function SummaryView({
     <div className="space-y-6 text-[#1a1a1a]">
       {/* Page header */}
       <div className="flex items-center gap-3 px-1 pt-1">
-        <span className="text-[24px] font-bold">สรุปผลแพ็ก</span>
-        <span className="text-[13px] text-[#8a8f98]">แผน เทียบ ผลจริง · วันผลิต {thDate(date)}</span>
+        <span className="text-[22px] font-bold">สรุปผลแพ็ก</span>
+        <span className="text-[11px] text-[#8a8f98]">แผน เทียบ ผลจริง · วันผลิต {thDate(date)}</span>
         <span className="flex-1" />
         <button
           onClick={() => exportCsv(date, m)}
-          className="px-5 py-2.5 rounded-xl border border-[#cfd3d9] bg-white text-[14px] font-semibold hover:bg-[#f6f7f8]"
+          className="px-5 py-2.5 rounded-xl border border-[#cfd3d9] bg-white text-[12px] font-semibold hover:bg-[#f6f7f8]"
         >
           ส่งออก CSV
         </button>
@@ -456,7 +456,7 @@ export function SummaryView({
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="p-6">
-            <div className="text-[16px] font-bold text-[#6b7280] mb-4">เทียบเป้าวันนี้ · การผลิต · ออเดอร์</div>
+            <div className="text-[14px] font-bold text-[#6b7280] mb-4">เทียบเป้าวันนี้ · การผลิต · ออเดอร์</div>
             <div className="space-y-3">
               <BarLine label="การผลิต" light={0} fill={Math.min(100, pct(packedEggs, planEggs))} dark="#A3C0E4" value={packedEggs} of={planEggs} />
               <BarLine
@@ -468,40 +468,40 @@ export function SummaryView({
                 of={orderEggs}
               />
             </div>
-            <div className="text-[12px] text-[#8a8f98] mt-3 leading-relaxed">
+            <div className="text-[10px] text-[#8a8f98] mt-3 leading-relaxed">
               การผลิต = แพ็กแล้ว / แผนผลิต · ออเดอร์ = เช็คเอาท์แล้ว / ยอดออเดอร์ · พื้นอ่อน = แพ็กแล้ว รอเช็คเอาท์ {fmtNum(awaiting)}
             </div>
-            <div className="text-[12px] text-[#8a8f98] leading-relaxed">
+            <div className="text-[10px] text-[#8a8f98] leading-relaxed">
               MVP: ยอดออเดอร์ = แผนผลิต (ยังไม่นับสต็อก FG ข้ามวัน) · เมื่อเริ่มนับสต็อก ฐานสองแถวนี้จะแยกตัวเลขกัน
             </div>
             <div className="border-t border-[#E1E5EA] my-4" />
-            <div className="text-[16px] font-bold text-[#6b7280] mb-3">คืบหน้าการแพ็ก · ตามประเภทแพ็ก· นับเป็นหน่วยแพ็ค</div>
+            <div className="text-[14px] font-bold text-[#6b7280] mb-3">คืบหน้าการแพ็ก · ตามประเภทแพ็ก· นับเป็นหน่วยแพ็ค</div>
             <div className="space-y-3">
               {families.map(f => {
                 const u = famPackUnits.get(f.family)!;
                 const p = pct(u.packed, u.plan);
                 return (
                   <div key={f.family} className="flex items-center gap-4">
-                    <span className="flex items-center gap-2 w-[130px] shrink-0 text-[15px] font-bold">
+                    <span className="flex items-center gap-2 w-[130px] shrink-0 text-[13px] font-bold">
                       <Dot color={FAMILY_COLOR[f.family]} />
                       {f.family}
                     </span>
                     <div className="flex-1 h-[20px] rounded-full bg-[#EEF0F3] overflow-hidden">
                       <div className="h-full rounded-full" style={{ width: `${Math.min(100, p)}%`, background: p >= 100 ? "#356B60" : "#869A76" }} />
                     </div>
-                    <span className="text-[14px] tabular-nums text-right whitespace-nowrap min-w-[190px]">
+                    <span className="text-[12px] tabular-nums text-right whitespace-nowrap min-w-[190px]">
                       <b>{fmtNum(u.packed)}</b> <span className="text-[#8a8f98]">/ {fmtNum(u.plan)} ·</span>{" "}
                       <b style={{ color: p >= 100 ? "#2F6B4F" : "#8A5A1D" }}>{p}%</b>
                     </span>
                   </div>
                 );
               })}
-              {families.length === 0 && <div className="text-[12px] text-[#9aa0a8]">ไม่มีข้อมูล</div>}
+              {families.length === 0 && <div className="text-[10px] text-[#9aa0a8]">ไม่มีข้อมูล</div>}
             </div>
           </Card>
 
           <Card className="p-6">
-            <div className="text-[16px] font-bold text-[#6b7280] mb-4">ออเดอร์วันนี้ · ตามลูกค้า</div>
+            <div className="text-[14px] font-bold text-[#6b7280] mb-4">ออเดอร์วันนี้ · ตามลูกค้า</div>
             <div className="flex items-center gap-8 flex-wrap lg:flex-nowrap">
               <Donut
                 parts={custRows.map(r => ({ v: m.custOrderEggs[r.g] ?? 0, color: custColor(r.g) }))}
@@ -511,7 +511,7 @@ export function SummaryView({
                 {custRows
                   .map(r => ({ g: r.g, v: m.custOrderEggs[r.g] ?? 0 }))
                   .map(r => (
-                    <div key={r.g} className="flex items-center gap-3 text-[15px]">
+                    <div key={r.g} className="flex items-center gap-3 text-[13px]">
                       <Dot color={custColor(r.g)} />
                       <span className="font-semibold flex-1">{r.g}</span>
                       <b className="tabular-nums">{fmtNum(r.v)}</b>
@@ -526,10 +526,10 @@ export function SummaryView({
         {/* Trips by drop point */}
         <Card className="p-6">
           <div className="flex items-baseline gap-3 flex-wrap mb-4">
-            <span className="text-[16px] font-bold text-[#6b7280]">เที่ยวรถ · ตามจุดส่ง</span>
-            <span className="text-[12px] text-[#8a8f98]">· สีชิป = สถานะเที่ยว (เทา รอ · ฟ้า กำลังเช็คเอาท์ · เขียว ออกแล้ว)</span>
+            <span className="text-[14px] font-bold text-[#6b7280]">เที่ยวรถ · ตามจุดส่ง</span>
+            <span className="text-[10px] text-[#8a8f98]">· สีชิป = สถานะเที่ยว (เทา รอ · ฟ้า กำลังเช็คเอาท์ · เขียว ออกแล้ว)</span>
             <span className="flex-1" />
-            <span className="text-[13px] text-[#6b7280] font-semibold">
+            <span className="text-[11px] text-[#6b7280] font-semibold">
               ออกแล้ว {m.tripsDone} / {m.tripsTotal} เที่ยว{m.carried.length > 0 && <> · ยกมา {m.carried.length}</>}
             </span>
           </div>
@@ -541,14 +541,14 @@ export function SummaryView({
                 <div key={row.group} className="flex items-start gap-4">
                   <span className="flex items-center gap-2 w-[150px] shrink-0 pt-1.5">
                     <Dot color={custColor(row.group)} />
-                    <span className="text-[15px] font-bold truncate">{row.group}</span>
+                    <span className="text-[13px] font-bold truncate">{row.group}</span>
                   </span>
-                  <span className="w-[64px] shrink-0 pt-2 text-[12px] text-[#8a8f98]">{row.sites} สาขา</span>
+                  <span className="w-[64px] shrink-0 pt-2 text-[10px] text-[#8a8f98]">{row.sites} สาขา</span>
                   <div className="flex-1 flex flex-wrap gap-2">
                     {shown.map((c, i) => (
                       <span
                         key={i}
-                        className={`px-3.5 py-1.5 rounded-full text-[13px] font-medium whitespace-nowrap ${
+                        className={`px-3.5 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap ${
                           c.kind === "done" ? "bg-[#E6F0D8] text-[#2F4A12]" : c.kind === "ready" ? "bg-[#DCEAFB] text-[#1E4A8A]" : "bg-[#EEF0F3] text-[#4b5260]"
                         }`}
                       >
@@ -558,26 +558,26 @@ export function SummaryView({
                     {row.chips.length > 6 && (
                       <button
                         onClick={() => setExpandChips(s => ({ ...s, [row.group]: !open }))}
-                        className="px-3.5 py-1.5 rounded-full text-[13px] font-semibold bg-[#EEF0F3] text-[#4b5260] hover:bg-[#e3e6ea]"
+                        className="px-3.5 py-1.5 rounded-full text-[11px] font-semibold bg-[#EEF0F3] text-[#4b5260] hover:bg-[#e3e6ea]"
                       >
                         {open ? "ย่อ ‹" : `+${row.chips.length - 6} สาขา ›`}
                       </button>
                     )}
                   </div>
-                  <span className="shrink-0 pt-1.5 text-[15px] tabular-nums text-right min-w-[110px]">
+                  <span className="shrink-0 pt-1.5 text-[13px] tabular-nums text-right min-w-[110px]">
                     <b>{row.done}</b> <span className="text-[#8a8f98]">/ {row.trips} เที่ยว</span>
                   </span>
                 </div>
               );
             })}
-            {m.dropRows.length === 0 && <div className="text-[12px] text-[#9aa0a8]">ยังไม่มีเที่ยวรถ</div>}
+            {m.dropRows.length === 0 && <div className="text-[10px] text-[#9aa0a8]">ยังไม่มีเที่ยวรถ</div>}
           </div>
         </Card>
 
         {/* Matrix */}
         <Card className="p-5">
           <div className="flex items-center gap-4 flex-wrap mb-4">
-            <span className="text-[18px] font-bold">{mxMode === "size" ? "เบอร์ไข่" : mxMode === "pack" ? "ประเภทแพ็ค" : "แพ็ก × เบอร์"} × ลูกค้า</span>
+            <span className="text-[16px] font-bold">{mxMode === "size" ? "เบอร์ไข่" : mxMode === "pack" ? "ประเภทแพ็ค" : "แพ็ก × เบอร์"} × ลูกค้า</span>
             <Seg
               value={mxMode}
               onChange={setMxMode}
@@ -592,9 +592,9 @@ export function SummaryView({
             <Seg value={unit} onChange={setUnit} options={[["egg", "ฟอง"], ["pack", "แพ็ค"]]} />
           </div>
           <div className="rounded-xl border border-[#E1E5EA] overflow-x-auto">
-            <table className="w-full text-[16px]">
+            <table className="w-full text-[14px]">
               <thead>
-                <tr className="text-[12px] uppercase tracking-wide text-[#8a8f98] border-b border-[#E1E5EA]">
+                <tr className="text-[10px] uppercase tracking-wide text-[#8a8f98] border-b border-[#E1E5EA]">
                   <th className="text-left font-semibold px-5 py-3 whitespace-nowrap normal-case">
                     {mxMode === "size" ? "เบอร์ไข่" : mxMode === "pack" ? "ประเภทแพ็ค" : "แพ็ก × เบอร์"} \ ลูกค้า
                   </th>
@@ -643,7 +643,7 @@ export function SummaryView({
           title="ลูกค้า"
           right={
             <div className="flex items-center gap-4">
-              <span className="text-[13px] text-[#8a8f98]">ออเดอร์ครบ <b className="text-[#1a1a1a] text-[16px]">{m.ordersComplete}</b> / {m.ordersCount}</span>
+              <span className="text-[11px] text-[#8a8f98]">ออเดอร์ครบ <b className="text-[#1a1a1a] text-[14px]">{m.ordersComplete}</b> / {m.ordersCount}</span>
               <Seg value={unit} onChange={setUnit} options={[["egg", "ฟอง"], ["pack", "แพ็ค"]]} />
             </div>
           }
@@ -651,10 +651,10 @@ export function SummaryView({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card className="p-6">
             <div className="flex items-baseline gap-3 mb-4">
-              <span className="text-[15px] font-bold text-[#6b7280]">ออเดอร์ เทียบ แพ็กแล้ว · รายลูกค้า</span>
-              <span className="text-[12px] text-[#8a8f98]">แตะเพื่อดูรายละเอียด</span>
+              <span className="text-[13px] font-bold text-[#6b7280]">ออเดอร์ เทียบ แพ็กแล้ว · รายลูกค้า</span>
+              <span className="text-[10px] text-[#8a8f98]">แตะเพื่อดูรายละเอียด</span>
               <span className="flex-1" />
-              <span className="text-[12px] text-[#8a8f98]">ออเดอร์</span>
+              <span className="text-[10px] text-[#8a8f98]">ออเดอร์</span>
             </div>
             <div className="space-y-3">
               {(() => {
@@ -667,27 +667,27 @@ export function SummaryView({
                         onClick={() => setOpenCust(open ? null : r.g)}
                         className="w-full flex items-center gap-4 px-5 py-4 text-left"
                       >
-                        <span className="text-[10px] text-[#8a8f98] w-3">{open ? "▾" : "▸"}</span>
+                        <span className="text-[9px] text-[#8a8f98] w-3">{open ? "▾" : "▸"}</span>
                         <span className="flex items-center gap-2 w-[130px] shrink-0">
                           <Dot color={custColor(r.g)} />
-                          <span className="text-[17px] font-bold text-[#1E3A8A]">{r.g}</span>
+                          <span className="text-[15px] font-bold text-[#1E3A8A]">{r.g}</span>
                         </span>
                         <div className="relative flex-1 h-[26px] rounded-md bg-[#EEF0F3] overflow-hidden">
                           <div className="absolute inset-y-0 left-0" style={{ width: `${(r.packed / scale) * 100}%`, background: custColor(r.g), opacity: 0.45 }} />
                           <div className="absolute inset-y-0 left-0" style={{ width: `${(r.sent / scale) * 100}%`, background: custColor(r.g) }} />
                         </div>
                         <div className="text-right whitespace-nowrap min-w-[200px]">
-                          <div className="text-[18px] tabular-nums">
-                            <b>{fmtNum(r.sent)}</b> <span className="text-[12px] text-[#8a8f98]">ส่งจริง · {pct(r.sent, r.order)}%</span>
+                          <div className="text-[16px] tabular-nums">
+                            <b>{fmtNum(r.sent)}</b> <span className="text-[10px] text-[#8a8f98]">ส่งจริง · {pct(r.sent, r.order)}%</span>
                           </div>
-                          <div className="text-[12px] text-[#8a8f98] tabular-nums">แพ็กแล้ว {fmtNum(r.packed)} · แผน {fmtNum(r.plan)}</div>
+                          <div className="text-[10px] text-[#8a8f98] tabular-nums">แพ็กแล้ว {fmtNum(r.packed)} · แผน {fmtNum(r.plan)}</div>
                         </div>
                       </button>
                       {open && (
                         <div className="px-5 pb-4 overflow-x-auto">
-                          <table className="w-full text-[12px]">
+                          <table className="w-full text-[10px]">
                             <thead>
-                              <tr className="text-[10px] text-[#8a8f98] border-b border-[#EEF0F3]">
+                              <tr className="text-[9px] text-[#8a8f98] border-b border-[#EEF0F3]">
                                 <th className="text-left py-1.5 font-semibold">SKU</th>
                                 <th className="text-right py-1.5 font-semibold">แผน</th>
                                 <th className="text-right py-1.5 font-semibold">แพ็กแล้ว</th>
@@ -700,7 +700,7 @@ export function SummaryView({
                                 .map(x => (
                                   <tr key={x.a.itemId} className="border-b border-[#F4F5F7] last:border-b-0">
                                     <td className="py-1.5 pr-2">
-                                      <span className="font-mono text-[10px] text-[#0C447C]">{x.a.sku}</span>
+                                      <span className="font-mono text-[9px] text-[#0C447C]">{x.a.sku}</span>
                                       <span className="text-[#555] ml-2">{x.a.name}</span>
                                     </td>
                                     <td className="text-right tabular-nums">{fmtNum(conv(x.f.plan, x.a.eggsPerPack))}</td>
@@ -717,18 +717,18 @@ export function SummaryView({
                 });
               })()}
             </div>
-            <div className="text-[12px] text-[#8a8f98] mt-3">แถบ: พื้นเทา = แผน · โทนอ่อน = แพ็กแล้ว · โทนเข้ม = ส่งจริง (เช็คเอาท์แล้ว)</div>
+            <div className="text-[10px] text-[#8a8f98] mt-3">แถบ: พื้นเทา = แผน · โทนอ่อน = แพ็กแล้ว · โทนเข้ม = ส่งจริง (เช็คเอาท์แล้ว)</div>
           </Card>
 
           <Card className="p-6">
-            <div className="text-[15px] font-bold text-[#6b7280] mb-4">ประเภทแพ็ก · ทุกลูกค้า</div>
+            <div className="text-[13px] font-bold text-[#6b7280] mb-4">ประเภทแพ็ก · ทุกลูกค้า</div>
             <div className="space-y-6">
               {(() => {
                 const scale = Math.max(1, ...families.flatMap(f => [f.plan, f.packed]));
                 return families.map(f => (
                   <div key={f.family}>
                     <div className="flex items-center gap-4">
-                      <span className="flex items-center gap-2 w-[90px] shrink-0 text-[17px] font-bold">
+                      <span className="flex items-center gap-2 w-[90px] shrink-0 text-[15px] font-bold">
                         <Dot color={FAMILY_COLOR[f.family]} />
                         {f.family}
                       </span>
@@ -737,10 +737,10 @@ export function SummaryView({
                         <div className="absolute inset-y-0 left-0" style={{ width: `${(f.sent / scale) * 100}%`, background: FAMILY_COLOR[f.family] }} />
                       </div>
                       <div className="text-right whitespace-nowrap min-w-[190px]">
-                        <div className="text-[18px] tabular-nums">
-                          <b>{fmtNum(f.sent)}</b> <span className="text-[12px] text-[#8a8f98]">ส่งจริง · {pct(f.sent, f.order)}%</span>
+                        <div className="text-[16px] tabular-nums">
+                          <b>{fmtNum(f.sent)}</b> <span className="text-[10px] text-[#8a8f98]">ส่งจริง · {pct(f.sent, f.order)}%</span>
                         </div>
-                        <div className="text-[12px] text-[#8a8f98] tabular-nums">แพ็กแล้ว {fmtNum(f.packed)} · แผน {fmtNum(f.plan)}</div>
+                        <div className="text-[10px] text-[#8a8f98] tabular-nums">แพ็กแล้ว {fmtNum(f.packed)} · แผน {fmtNum(f.plan)}</div>
                       </div>
                     </div>
                     <div className="mt-2 space-y-1.5">
@@ -748,11 +748,11 @@ export function SummaryView({
                         .sort((a, b) => a.sort - b.sort)
                         .map(s => (
                           <div key={s.sub} className="flex items-center gap-4">
-                            <span className="w-[90px] shrink-0 pl-5 text-[14px] text-[#3f4650]">{s.sub}</span>
+                            <span className="w-[90px] shrink-0 pl-5 text-[12px] text-[#3f4650]">{s.sub}</span>
                             <div className="relative flex-1 h-[10px] rounded-full bg-[#EEF0F3] overflow-hidden">
                               <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, (s.packed / scale) * 100)}%`, background: FAMILY_COLOR[f.family], opacity: 0.5 }} />
                             </div>
-                            <span className="text-right whitespace-nowrap min-w-[190px] text-[14px] tabular-nums">
+                            <span className="text-right whitespace-nowrap min-w-[190px] text-[12px] tabular-nums">
                               <b>{fmtNum(s.packed)}</b> <span className="text-[#8a8f98]">/ {fmtNum(s.plan)} · {pct(s.packed, s.plan)}%</span>
                             </span>
                           </div>
@@ -761,7 +761,7 @@ export function SummaryView({
                   </div>
                 ));
               })()}
-              {families.length === 0 && <div className="text-[12px] text-[#9aa0a8]">ไม่มีข้อมูล</div>}
+              {families.length === 0 && <div className="text-[10px] text-[#9aa0a8]">ไม่มีข้อมูล</div>}
             </div>
           </Card>
         </div>
@@ -769,12 +769,12 @@ export function SummaryView({
 
       {/* ── 3 สถานีแพ็ก ─────────────────────────────────────────── */}
       <section className="space-y-4">
-        <SectionHead n={3} title="สถานีแพ็ก" right={<span className="text-[12px] text-[#8a8f98]">หน่วย ฟอง — แพ็คมีหลายขนาด เทียบกันไม่ได้</span>} />
+        <SectionHead n={3} title="สถานีแพ็ก" right={<span className="text-[10px] text-[#8a8f98]">หน่วย ฟอง — แพ็คมีหลายขนาด เทียบกันไม่ได้</span>} />
         <Card className="px-5 py-4 flex items-center gap-3 flex-wrap">
-          <span className="text-[12px] text-[#8a8f98] mr-1">สถานี</span>
+          <span className="text-[10px] text-[#8a8f98] mr-1">สถานี</span>
           <button
             onClick={() => setStationSel("ALL")}
-            className={`px-5 py-2 rounded-full text-[14px] font-semibold ${stationSel === "ALL" ? "bg-[#1a1a1a] text-white" : "border border-[#cfd3d9] text-[#1a1a1a] bg-white"}`}
+            className={`px-5 py-2 rounded-full text-[12px] font-semibold ${stationSel === "ALL" ? "bg-[#1a1a1a] text-white" : "border border-[#cfd3d9] text-[#1a1a1a] bg-white"}`}
           >
             ทุกสถานี
           </button>
@@ -782,7 +782,7 @@ export function SummaryView({
             <button
               key={s}
               onClick={() => setStationSel(s)}
-              className={`px-4 py-2 rounded-full text-[14px] font-semibold flex items-center gap-2 border ${
+              className={`px-4 py-2 rounded-full text-[12px] font-semibold flex items-center gap-2 border ${
                 stationSel === s ? "border-[#1a1a1a] bg-[#f6f7f8]" : "border-[#cfd3d9] bg-white"
               }`}
             >
@@ -795,7 +795,7 @@ export function SummaryView({
         </Card>
 
         {stationNames.length === 0 ? (
-          <Card className="px-6 py-8 text-[13px] text-[#8a8f98]">ยังไม่มีผลแพ็กที่ยืนยันแล้วสำหรับวันนี้</Card>
+          <Card className="px-6 py-8 text-[11px] text-[#8a8f98]">ยังไม่มีผลแพ็กที่ยืนยันแล้วสำหรับวันนี้</Card>
         ) : (
           <>
             <Card className="grid grid-cols-2 md:grid-cols-5 md:divide-x divide-[#E1E5EA] overflow-hidden">
@@ -833,9 +833,9 @@ export function SummaryView({
                   })}
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-[15px]">
+                  <table className="w-full text-[13px]">
                     <thead>
-                      <tr className="text-[12px] text-[#8a8f98] border-b border-[#E1E5EA]">
+                      <tr className="text-[10px] text-[#8a8f98] border-b border-[#E1E5EA]">
                         <th className="text-left font-semibold py-3 px-2">สถานี</th>
                         <th className="text-right font-semibold px-2">ผลผลิต (ฟอง)</th>
                         <th className="text-right font-semibold px-2">ไข่เบิกเข้า (ฟอง)</th>
@@ -883,9 +883,9 @@ export function SummaryView({
 
             {stationView === "sku" && (
               <Card className="p-6 overflow-x-auto">
-                <table className="w-full text-[14px]">
+                <table className="w-full text-[12px]">
                   <thead>
-                    <tr className="text-[12px] text-[#8a8f98] border-b border-[#E1E5EA]">
+                    <tr className="text-[10px] text-[#8a8f98] border-b border-[#E1E5EA]">
                       <th className="text-left font-semibold py-3 px-2">ประเภทแพ็ก · SKU</th>
                       {stationList.map(s => (
                         <th key={s} className="text-right font-semibold px-2 whitespace-nowrap">{stationLabel(s)}</th>
@@ -911,9 +911,9 @@ export function SummaryView({
                             return (
                               <tr key={x.a.itemId} className="border-b border-[#EEF0F3]">
                                 <td className="px-2 py-2.5">
-                                  <span className="font-mono text-[10px] text-[#0C447C]">{x.a.sku}</span>
+                                  <span className="font-mono text-[9px] text-[#0C447C]">{x.a.sku}</span>
                                   <span className="text-[#555] ml-2">{x.a.name}</span>
-                                  <span className="text-[#8a8f98] ml-2 text-[11px]">{x.a.pack.sub}</span>
+                                  <span className="text-[#8a8f98] ml-2 text-[9px]">{x.a.pack.sub}</span>
                                 </td>
                                 {per.map((v, i) => (
                                   <td key={i} className={`px-2 text-right tabular-nums ${v ? "font-bold" : "text-[#c3c7cd]"}`}>{v ? fmtNum(v) : "—"}</td>
@@ -934,16 +934,16 @@ export function SummaryView({
               <Card className="p-6 overflow-x-auto">
                 {(() => {
                   const hours = Array.from(selStat.byHour.keys()).sort((a, b) => a - b);
-                  if (hours.length === 0) return <div className="text-[13px] text-[#8a8f98]">ไม่มีเวลาบันทึกผลแพ็ก</div>;
+                  if (hours.length === 0) return <div className="text-[11px] text-[#8a8f98]">ไม่มีเวลาบันทึกผลแพ็ก</div>;
                   const lo = hours[0], hi = hours[hours.length - 1];
                   const range = Array.from({ length: hi - lo + 1 }, (_, i) => lo + i);
                   const maxV = Math.max(1, ...Array.from(selStat.byHour.values()));
                   return (
                     <>
-                      <div className="text-[11px] text-[#8a8f98] mb-3">เวลา = เวลาที่ยืนยันผลแพ็กของแต่ละรายการ (ยังไม่มีบันทึกรายชั่วโมงจริง)</div>
-                      <table className="w-full text-[14px]">
+                      <div className="text-[9px] text-[#8a8f98] mb-3">เวลา = เวลาที่ยืนยันผลแพ็กของแต่ละรายการ (ยังไม่มีบันทึกรายชั่วโมงจริง)</div>
+                      <table className="w-full text-[12px]">
                         <thead>
-                          <tr className="text-[12px] text-[#8a8f98] border-b border-[#E1E5EA]">
+                          <tr className="text-[10px] text-[#8a8f98] border-b border-[#E1E5EA]">
                             <th className="text-left font-semibold py-3 px-2 w-[90px]">ชั่วโมง</th>
                             <th className="text-left font-semibold px-2">ผลผลิต</th>
                             <th className="text-right font-semibold px-2">ฟอง</th>
@@ -977,7 +977,7 @@ export function SummaryView({
 
       {/* ── 4 การส่ง ──────────────────────────────────────────── */}
       <section className="space-y-4 pb-8">
-        <SectionHead n={4} title="การส่ง" right={<span className="text-[12px] text-[#8a8f98]">แตะแถว = ไปเที่ยวนั้นในแท็บเช็คเอาท์</span>} />
+        <SectionHead n={4} title="การส่ง" right={<span className="text-[10px] text-[#8a8f98]">แตะแถว = ไปเที่ยวนั้นในแท็บเช็คเอาท์</span>} />
         <Card className="grid grid-cols-1 md:grid-cols-4 md:divide-x divide-[#E1E5EA] overflow-hidden">
           <Kpi
             label="เที่ยวรถ"
@@ -1007,7 +1007,7 @@ export function SummaryView({
         </Card>
 
         <Card className="p-6">
-          <div className="text-[15px] font-bold text-[#6b7280] mb-4">
+          <div className="text-[13px] font-bold text-[#6b7280] mb-4">
             FULFILLMENT ต่อเที่ยว<span className="font-normal"> · ส่งจริง / ใบจัดของ · เรียงเที่ยวที่ยังไม่ครบขึ้นก่อน</span>
           </div>
           <div className="space-y-1">
@@ -1020,17 +1020,17 @@ export function SummaryView({
                   onClick={onGoCheckout}
                   className="w-full flex items-center gap-4 py-3 text-left hover:bg-[#F8F9FA] rounded-lg"
                 >
-                  <span className="w-[64px] shrink-0 text-[15px] font-bold tabular-nums text-[#4b5260]">{r.time ?? "—"}</span>
-                  <span className="w-[270px] shrink-0 text-[15px] truncate flex items-center gap-2">
+                  <span className="w-[64px] shrink-0 text-[13px] font-bold tabular-nums text-[#4b5260]">{r.time ?? "—"}</span>
+                  <span className="w-[270px] shrink-0 text-[13px] truncate flex items-center gap-2">
                     <span className="truncate">{r.label}</span>
                     {r.carriedFrom && (
-                      <span className="px-2.5 py-0.5 rounded-full bg-[#F8EBD0] text-[#7A5410] text-[12px] font-semibold whitespace-nowrap">ยกมา {r.carriedFrom}</span>
+                      <span className="px-2.5 py-0.5 rounded-full bg-[#F8EBD0] text-[#7A5410] text-[10px] font-semibold whitespace-nowrap">ยกมา {r.carriedFrom}</span>
                     )}
                   </span>
                   <div className="flex-1 h-[18px] rounded-full bg-[#EEF0F3] overflow-hidden">
                     <div className="h-full rounded-full" style={{ width: `${Math.min(100, p)}%`, background: done ? "#356B60" : "#7B93B8" }} />
                   </div>
-                  <span className="text-[14px] tabular-nums whitespace-nowrap text-right min-w-[260px]">
+                  <span className="text-[12px] tabular-nums whitespace-nowrap text-right min-w-[260px]">
                     <b>{fmtNum(r.sent)}</b> <span className="text-[#8a8f98]">/ {fmtNum(r.load)} ·</span>{" "}
                     <b style={{ color: done ? "#2F6B4F" : "#8A5A1D" }}>{p}%</b>{" "}
                     {done ? <span style={{ color: "#2F6B4F" }}>✓ เสร็จ{r.doneAt ? ` ${r.doneAt}` : ""}</span> : <span className="text-[#8a8f98]">รอ</span>}
@@ -1038,7 +1038,7 @@ export function SummaryView({
                 </button>
               );
             })}
-            {m.fulfil.length === 0 && <div className="text-[12px] text-[#9aa0a8]">ยังไม่มีเที่ยวรถ</div>}
+            {m.fulfil.length === 0 && <div className="text-[10px] text-[#9aa0a8]">ยังไม่มีเที่ยวรถ</div>}
           </div>
         </Card>
       </section>
@@ -1067,12 +1067,12 @@ function BarLine({
 }) {
   return (
     <div className="flex items-center gap-4">
-      <span className="w-[80px] shrink-0 text-[15px] font-bold">{label}</span>
+      <span className="w-[80px] shrink-0 text-[13px] font-bold">{label}</span>
       <div className="relative flex-1 h-[24px] rounded-full bg-[#EEF0F3] overflow-hidden">
         {light > 0 && <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${light}%`, background: dark, opacity: 0.18 }} />}
         <div className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${fill}%`, background: dark }} />
       </div>
-      <span className="text-[14px] tabular-nums whitespace-nowrap min-w-[200px] text-right">
+      <span className="text-[12px] tabular-nums whitespace-nowrap min-w-[200px] text-right">
         <b>{fmtNum(value)}</b> <span className="text-[#8a8f98]">/ {fmtNum(of)} ·</span> <b>{pct(value, of)}%</b>
       </span>
     </div>
@@ -1104,8 +1104,8 @@ function Donut({ parts, center }: { parts: { v: number; color: string }[]; cente
         acc += len;
         return el;
       })}
-      <text textAnchor="middle" y="2" fontSize="22" fontWeight="700" fill="#1a1a1a">{center}</text>
-      <text textAnchor="middle" y="24" fontSize="11" fill="#8a8f98">ฟอง</text>
+      <text textAnchor="middle" y="2" fontSize="20" fontWeight="700" fill="#1a1a1a">{center}</text>
+      <text textAnchor="middle" y="24" fontSize="10" fill="#8a8f98">ฟอง</text>
     </svg>
   );
 }
