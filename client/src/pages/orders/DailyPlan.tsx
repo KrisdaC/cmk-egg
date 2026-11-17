@@ -8269,27 +8269,7 @@ function ProductionArea({
               concept in the schema yet. */}
           <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-3.5 shadow-sm">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">
-                Grading date
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button onClick={() => onDateChange(addDays(date, -1))}
-                  className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">‹</button>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={e => e.target.value && onDateChange(e.target.value)}
-                  className="h-8 px-2 text-[13px] border border-[#e3e5e8] rounded-lg bg-white focus:outline-none focus:border-[#1E40AF]"
-                />
-                <button onClick={() => onDateChange(addDays(date, 1))}
-                  className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">›</button>
-              </div>
-              <button onClick={() => onDateChange(todayISO())}
-                className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${date === todayISO() ? "bg-[#1a1a1a] text-white border-[#1a1a1a]" : "border-[#d6d8dc] text-[#555] hover:bg-[#f5f5f5]"}`}>
-                Today
-              </button>
-
-              <div className="w-px h-6 bg-[#e3e5e8] mx-1" />
+              
 
               <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">
                 สถานะวางแผน
@@ -8592,27 +8572,7 @@ function ProductionArea({
               Phases 2-4 for those. */}
           <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-3.5 shadow-sm">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">
-                Packing date
-              </span>
-              <div className="flex items-center gap-1.5">
-                <button onClick={() => onDateChange(addDays(date, -1))}
-                  className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">‹</button>
-                <input
-                  type="date"
-                  value={date}
-                  onChange={e => e.target.value && onDateChange(e.target.value)}
-                  className="h-8 px-2 text-[13px] border border-[#e3e5e8] rounded-lg bg-white focus:outline-none focus:border-[#1E40AF]"
-                />
-                <button onClick={() => onDateChange(addDays(date, 1))}
-                  className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">›</button>
-              </div>
-              <button onClick={() => onDateChange(todayISO())}
-                className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${date === todayISO() ? "bg-[#1a1a1a] text-white border-[#1a1a1a]" : "border-[#d6d8dc] text-[#555] hover:bg-[#f5f5f5]"}`}>
-                Today
-              </button>
-
-              <div className="w-px h-6 bg-[#e3e5e8] mx-1" />
+              
 
               <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">
                 สถานะวางแผน
@@ -15485,16 +15445,7 @@ function BomCommandBar({ date, round, onDateChange, pqVersion }: { date: string;
   return (
     <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-3.5 shadow-sm">
       <div className="flex items-center gap-3 flex-wrap">
-        <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">Requirement date</span>
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => onDateChange(addDays(date, -1))} className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">‹</button>
-          <input type="date" value={date} onChange={e => e.target.value && onDateChange(e.target.value)} className="h-8 px-2 text-[13px] border border-[#e3e5e8] rounded-lg bg-white focus:outline-none focus:border-[#1E40AF]" />
-          <button onClick={() => onDateChange(addDays(date, 1))} className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">›</button>
-        </div>
-        <button onClick={() => onDateChange(todayISO())} className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${date === todayISO() ? "bg-[#1a1a1a] text-white border-[#1a1a1a]" : "border-[#d6d8dc] text-[#555] hover:bg-[#f5f5f5]"}`}>
-          Today
-        </button>
-        <div className="ml-auto text-right">
+                <div className="ml-auto text-right">
           <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">Source (lineage)</div>
           <div className="text-[11.5px] text-[#555]">
             {pqVersion != null ? `PQ v${pqVersion}` : "PQ draft (unpublished)"} · O-R R{round} + BOM — read-only · no local round (M-R) · print = report only, releases nothing
@@ -15613,9 +15564,9 @@ function PlanningWorkflow({
 // initial-subtab logic below), which just lands on this same tab.
 
 const L1_TABS: { key: string; label: string; subtab: SubTab }[] = [
-  { key: "overview", label: "Overview", subtab: "overview" },
-  { key: "orders", label: "Orders", subtab: "demand" },
-  { key: "production", label: "Production", subtab: "bom" },
+  { key: "overview", label: "ภาพรวม", subtab: "overview" },
+  { key: "orders", label: "แผนผลิต", subtab: "demand" },
+  { key: "production", label: "ผลิต", subtab: "bom" },
   // Trip Manager (TripManager, rendered below when subtab === "trip") has
   // been fully built and wired to real data for a while, but had no nav
   // entry anywhere — not in this L1 bar, no route, nothing calls
@@ -15623,9 +15574,9 @@ const L1_TABS: { key: string; label: string; subtab: SubTab }[] = [
   // Found while the user looked for the new picking-list print's entry
   // point (TripManager's "ส่ง Trip" button). Not something broken by any
   // recent edit — `git log -S` shows no prior commit ever added this tab.
-  { key: "delivery", label: "Delivery", subtab: "trip" },
-  { key: "checkout", label: "Checkout", subtab: "checkout" },
-  { key: "fgstock", label: "FG Stock", subtab: "fgstock" },
+  { key: "delivery", label: "จัดเที่ยวส่ง", subtab: "trip" },
+  { key: "checkout", label: "เช็คเอาท์", subtab: "checkout" },
+  { key: "fgstock", label: "สต็อก FG", subtab: "fgstock" },
   { key: "summary", label: "สรุปผล", subtab: "summary" },
 ];
 
@@ -15636,6 +15587,8 @@ function DailyOperationsNav({
   onOrderTab,
   prodTab,
   onProdTab,
+  date,
+  onDate,
 }: {
   subtab: SubTab;
   onSelect: (s: SubTab) => void;
@@ -15643,23 +15596,24 @@ function DailyOperationsNav({
   onOrderTab: (t: "planning" | "aq") => void;
   prodTab: ProductionSubTab;
   onProdTab: (t: ProductionSubTab) => void;
+  date: string;
+  onDate: (d: string) => void;
 }) {
   const activeKey = L1_TABS.find(t => t.subtab === subtab)?.key;
   return (
     <div className="bg-white rounded-xl border border-[#e3e5e8] overflow-hidden">
-      <div className="flex items-center gap-6 px-5 pt-3.5 flex-wrap">
-        <span className="text-[19px] font-bold text-[#1a1a1a] whitespace-nowrap">Daily Operations</span>
-        <div className="flex items-center gap-6">
+      {/* One shared production-date filter for every tab (was a separate date
+          picker inside each tab's own command bar). */}
+      <div className="flex items-center gap-3 px-3 py-2 flex-wrap">
+        <div className="inline-flex items-center gap-0.5 p-0.5 rounded-lg bg-[#EEF0F3] flex-wrap">
           {L1_TABS.map(t => {
             const active = t.key === activeKey;
             return (
               <button
                 key={t.key}
                 onClick={() => onSelect(t.subtab)}
-                className={`pb-3.5 text-[14px] font-medium border-b-2 -mb-px transition-colors ${
-                  active
-                    ? "border-[#2563EB] text-[#2563EB]"
-                    : "border-transparent text-[#888] hover:text-[#555]"
+                className={`px-3.5 py-1.5 rounded-md text-[13px] font-semibold whitespace-nowrap transition-colors ${
+                  active ? "bg-white text-[#1a1a1a] shadow-sm" : "text-[#6b7280] hover:text-[#1a1a1a]"
                 }`}
               >
                 {t.label}
@@ -15667,10 +15621,19 @@ function DailyOperationsNav({
             );
           })}
         </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] font-semibold text-[#8a8f98] whitespace-nowrap">วันผลิต</span>
+          <input
+            type="date"
+            value={date}
+            onChange={e => e.target.value && onDate(e.target.value)}
+            className="h-8 px-2.5 text-[13px] border border-[#cfd3d9] rounded-md bg-white focus:outline-none focus:border-[#2563EB]"
+          />
+        </div>
       </div>
       {subtab === "demand" && (
         <div className="flex items-center gap-6 px-5 pt-2.5 border-t border-[#e3e5e8]">
-          {([["planning", "Order Planning"], ["aq", "AQ Sales Reference"]] as const).map(([k, label]) => (
+          {([["planning", "วางแผนออเดอร์"], ["aq", "อ้างอิงยอดขาย AQ"]] as const).map(([k, label]) => (
             <button
               key={k}
               onClick={() => onOrderTab(k)}
@@ -15685,9 +15648,9 @@ function DailyOperationsNav({
           ))}
         </div>
       )}
-      {/* Same row as Orders' Order Planning/AQ Sales Reference above — moved
-          here from ProductionArea's own (previously purple/bold) tab bar so
-          both L1 tabs' sub-tabs look and sit the same way. */}
+      {/* Same row as Orders' sub-tabs above — moved here from ProductionArea's
+          own (previously purple/bold) tab bar so both L1 tabs' sub-tabs look
+          and sit the same way. */}
       {subtab === "bom" && (
         <div className="flex items-center gap-6 px-5 pt-2.5 border-t border-[#e3e5e8]">
           {PRODUCTION_TABS.map(t => (
@@ -16008,6 +15971,8 @@ export default function DailyPlan() {
             onOrderTab={setOrderTab}
             prodTab={prodTab}
             onProdTab={setProdTab}
+            date={date}
+            onDate={setDate}
           />
 
           {/* Date / round header bar — Order Planning gets its own richer
@@ -16016,31 +15981,7 @@ export default function DailyPlan() {
           {subtab === "trip" && (
           <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-3.5 shadow-sm">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">
-              Delivery date
-            </span>
-            <div className="flex items-center gap-1.5">
-              <button onClick={() => setDate(d => addDays(d, -1))}
-                className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">‹</button>
-              <input
-                type="date"
-                value={date}
-                onChange={e => e.target.value && setDate(e.target.value)}
-                className="h-8 px-2 text-[13px] border border-[#e3e5e8] rounded-lg bg-white focus:outline-none focus:border-[#1E40AF]"
-              />
-              <button onClick={() => setDate(d => addDays(d, 1))}
-                className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">›</button>
-            </div>
-            <button onClick={() => setDate(today)}
-              className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${date === today ? "bg-[#1a1a1a] text-white border-[#1a1a1a]" : "border-[#d6d8dc] text-[#555] hover:bg-[#f5f5f5]"}`}>
-              วันนี้
-            </button>
-            <button onClick={() => setDate(tomorrow)}
-              className={`px-2.5 py-1 text-[11px] rounded-full border transition-colors ${date === tomorrow ? "bg-[#1a1a1a] text-white border-[#1a1a1a]" : "border-[#d6d8dc] text-[#555] hover:bg-[#f5f5f5]"}`}>
-              พรุ่งนี้
-            </button>
-
-            <div className="w-px h-6 bg-[#e3e5e8] mx-1" />
+            
 
             <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">
               Order planning round (O-R)
@@ -16118,37 +16059,7 @@ export default function DailyPlan() {
             <div className="space-y-3">
               <div className="bg-white rounded-xl border border-[#e3e5e8] px-5 py-3.5 shadow-sm">
                 <div className="flex items-end gap-6 flex-wrap">
-                  <div className="flex-none">
-                    <div className="flex items-center gap-2 h-[15px] mb-1.5">
-                      <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide whitespace-nowrap">Date</span>
-                      <div className="inline-flex h-[17px] -my-px" title="มุมมอง Load-in ยังไม่รองรับ — หน้านี้แสดงตามวันส่งเสมอ">
-                        <span className="inline-flex items-center justify-center w-[58px] border border-[#cbd5e1] text-[#555] bg-white rounded-l-full text-[10.5px] cursor-not-allowed select-none">
-                          Load-in
-                        </span>
-                        <span className="inline-flex items-center justify-center w-[58px] border border-[#1F2937] bg-[#1F2937] text-white rounded-r-full text-[10.5px] -ml-px select-none">
-                          Delivery
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button onClick={() => setDate(d => addDays(d, -1))}
-                        className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">‹</button>
-                      <input
-                        type="date"
-                        value={date}
-                        onChange={e => e.target.value && setDate(e.target.value)}
-                        className="h-8 px-2 text-[13px] border border-[#e3e5e8] rounded-lg bg-white focus:outline-none focus:border-[#1E40AF]"
-                      />
-                      <button onClick={() => setDate(d => addDays(d, 1))}
-                        className="w-7 h-7 flex items-center justify-center border border-[#e3e5e8] rounded text-[#555] hover:bg-[#f5f5f5]">›</button>
-                      <button onClick={() => setDate(today)}
-                        className={`h-8 px-2.5 text-[11.5px] rounded-lg border transition-colors ${date === today ? "bg-[#1a1a1a] text-white border-[#1a1a1a]" : "border-[#d6d8dc] text-[#555] hover:bg-[#f5f5f5]"}`}>
-                        Today
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="w-px self-stretch bg-[#eef0f3]" />
+                  
 
                   <div className="flex-none">
                     <div className="text-[10px] font-semibold text-[#888] uppercase tracking-wide mb-1.5 h-[15px]">Plan status</div>
