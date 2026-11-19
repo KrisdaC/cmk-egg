@@ -27,9 +27,16 @@ ssh root@165.22.48.49
 cd <app dir>                              # where the app lives (check: pm2 describe <app> → "exec cwd")
 git log -1 --oneline && git status --short   # what version is running? any local edits on the server?
 pm2 list
-export DATABASE_URL=...                   # same value the app uses (see its .env)
-psql "$DATABASE_URL" -f deploy/uat_precheck.sql   # copy the file up first if the server's repo is old
+# Connection: the password contains "@", so a postgres:// URL cannot be parsed. Use PG* variables instead
+# (valid for this SSH session; paste again after reconnecting). Run from the app folder:
+URL=$(grep -E '^DATABASE_URL=' .env | head -1 | cut -d= -f2- | tr -d '"'"'")
+REST=${URL#*://}; CREDS=${REST%@*}; HOSTDB=${REST##*@}
+export PGUSER=${CREDS%%:*} PGPASSWORD=${CREDS#*:} PGHOST=${HOSTDB%%:*}
+export PGPORT=$(echo "${HOSTDB#*:}" | cut -d/ -f1) PGDATABASE=${HOSTDB##*/}
+echo "$PGUSER@$PGHOST:$PGPORT/$PGDATABASE"      # expect appuser@localhost:5432/cmk
+psql -f deploy/uat_precheck.sql           # copy the file up first if the server's repo is old
 ```
+
 Read the precheck output:
 - Section 1 tells you which migrations UAT already has (`MISSING` = will be applied; fine either way, the script skips what exists).
 - If **0017** is `MISSING`, UAT is older than expected: also run `migrations/0013`–`0017` first (all idempotent), then continue.
@@ -37,22 +44,22 @@ Read the precheck output:
 
 ## 2. Backup (required)
 ```bash
-pg_dump "$DATABASE_URL" -F c --no-owner --no-acl -f ~/uat_backup_$(date +%Y%m%d_%H%M).dump
+pg_dump -F c --no-owner --no-acl -f ~/uat_backup_$(date +%Y%m%d_%H%M).dump
 ls -lh ~/uat_backup_*.dump
 git rev-parse HEAD > ~/uat_prev_commit.txt   # remember the running version for rollback
 ```
 
 ## 3. Migrate the database (before the new code)
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f deploy/uat_migrate.sql
-psql "$DATABASE_URL" -f deploy/uat_precheck.sql | grep -c MISSING     # expect 0
+psql -v ON_ERROR_STOP=1 -f deploy/uat_migrate.sql
+psql -f deploy/uat_precheck.sql | grep -c MISSING     # expect 0
 ```
 Single transaction: on any error nothing is applied. Safe to re-run.
 
 ## 3b. Clean the items (DESTRUCTIVE — UAT items are re-imported afterwards)
 Decision made: wipe items **and everything pointing at them** (order lines, packing targets, price-proposal lines, active prices, item–partner links, pack specs). Orders keep their headers but will have **no lines** until re-entered; trips, partners, sites, vehicles, drivers are untouched. `material_cost_rates` rows are kept (their SKU link is saved and restored in step 6).
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -v confirm=yes -f deploy/uat_clean_items.sql
+psql -v ON_ERROR_STOP=1 -v confirm=yes -f deploy/uat_clean_items.sql
 ```
 Without `-v confirm=yes` it does nothing. It is one transaction, and the backup from step 2 is your undo.
 
@@ -67,7 +74,7 @@ pm2 restart <app name> && pm2 logs <app name> --lines 50 --nostream
 ## 4b. Re-import items, then re-link material costs
 Import the items (master data template / the app's import), then restore the material-cost SKU links:
 ```bash
-psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f deploy/uat_relink_material_costs.sql
+psql -v ON_ERROR_STOP=1 -f deploy/uat_relink_material_costs.sql
 ```
 It lists any saved SKUs that are not in the new item list; add them to the import and run it again.
 
@@ -77,7 +84,7 @@ It lists any saved SKUs that are not in the new item list; add them to the impor
 3. **ผลิต → คัดไข่ / แพ็กสินค้า / BOM** each open.
 4. **จัดเที่ยวส่ง** and **เช็คเอาท์** list trips (uses new `trips.departed_at`).
 5. **สรุปผล** renders (KPIs may be 0 if UAT has no packing data yet).
-6. Row counts from precheck section 2 unchanged (`psql "$DATABASE_URL" -f deploy/uat_precheck.sql`).
+6. Row counts from precheck section 2 unchanged (`psql -f deploy/uat_precheck.sql`).
 
 ## 6. Rollback
 Migrations are additive, so the old code runs fine on the new schema:
@@ -85,7 +92,7 @@ Migrations are additive, so the old code runs fine on the new schema:
 git checkout $(cat ~/uat_prev_commit.txt) && npm run build && pm2 restart <app name>
 ```
 Rollback does **not** bring items back — restore the backup for that:
-`pg_restore -d "$DATABASE_URL" --clean --if-exists --no-owner ~/uat_backup_<timestamp>.dump`
+`pg_restore -d "$PGDATABASE" --clean --if-exists --no-owner ~/uat_backup_<timestamp>.dump`
 
 ---
 

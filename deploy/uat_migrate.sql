@@ -1,9 +1,24 @@
--- UAT migration: 0018 → 0040 (consolidated, safe to re-run).
+-- UAT migration: 0002 + 0018 → 0040 (consolidated, safe to re-run).
 -- Generated from migrations/*.sql. Every statement is IF NOT EXISTS, except 0030
 -- (data backfill) which is guarded so it only runs once. One transaction: all or nothing.
 -- Run:  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f deploy/uat_migrate.sql
 
 BEGIN;
+
+-- ===== 0002_add_po_intake_fields.sql (never applied on UAT; found by schema diff 2026-11-19) =====
+-- PO Intake: additional fields on orders
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS po_number        text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS source           text DEFAULT 'manual';
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS adjustment_reason      text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS adjustment_approved    boolean DEFAULT false;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS adjustment_approved_by text;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS adjustment_approved_at timestamp;
+
+-- PO Intake: additional fields on order_items
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS accepted_qty       integer;
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS po_price           decimal(10,2);
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS price_status       text;
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS customer_item_code text;
 
 -- ===== 0018_preliminary_shipment_plans.sql =====
 CREATE TABLE IF NOT EXISTS preliminary_shipment_plans (
