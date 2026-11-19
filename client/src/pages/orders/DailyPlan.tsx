@@ -7556,7 +7556,11 @@ function ProductionArea({
     const r = await fetch(`/api/packing/target-results?date=${date}&round=${packingRound}`);
     if (r.ok) setPackingResults(await r.json());
   }, [date, packingRound]);
-  useEffect(() => { fetchPackingResults(); }, [fetchPackingResults]);
+  // Also refetch when the work order gets sent: the server only returns target
+  // lines once sent_at is set, so a fetch made before "ใบสั่งงาน" was pressed is
+  // empty and would otherwise stay empty until a page reload.
+  const workOrderSentAt = packingRoundStates[packingRound]?.workOrderSentAt ?? null;
+  useEffect(() => { fetchPackingResults(); }, [fetchPackingResults, workOrderSentAt]);
 
   const [resultInputs, setResultInputs] = useState<Record<number, string>>({});
   const [savingPackingResult, setSavingPackingResult] = useState<number | null>(null);
