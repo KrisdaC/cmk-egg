@@ -5972,11 +5972,31 @@ function CheckoutTab({
   date,
   trips,
   partners,
+  onRefresh,
 }: {
   date: string;
   trips: PlanTrip[];
   partners: PlanPartner[];
+  onRefresh?: () => void;
 }) {
+  // เช็คเอาท์ = dispatch: stamps trips.departed_at and marks every order on the
+  // trip logistics_status "dispatched" (PATCH /api/orders/trips/:id/checkout).
+  const [checkingOut, setCheckingOut] = useState(false);
+  const checkoutTrip = async (tripId: number) => {
+    if (!confirm("เช็คเอาท์เที่ยวนี้? ออเดอร์ทั้งหมดในเที่ยวนี้จะถูกบันทึกว่าจัดส่งแล้ว")) return;
+    setCheckingOut(true);
+    try {
+      const r = await fetch(`/api/orders/trips/${tripId}/checkout`, { method: "PATCH" });
+      if (!r.ok) {
+        const data = await r.json().catch(() => ({}));
+        alert(data.message || "เช็คเอาท์ไม่สำเร็จ");
+        return;
+      }
+      onRefresh?.();
+    } finally {
+      setCheckingOut(false);
+    }
+  };
   const allOrders = useMemo(
     () =>
       partners.flatMap(p =>
@@ -6187,6 +6207,8 @@ function CheckoutTab({
             status={selected.status}
             packingResultsByRound={packingResultsByRound}
             onPrint={() => setPrintTrip(selected.trip)}
+            onCheckout={() => checkoutTrip(selected.trip.id)}
+            checkingOut={checkingOut}
           />
         ) : (
           <div className="bg-white rounded-xl border border-[#E1E5EA] p-10 text-center text-[13px] text-[#bbb]">
@@ -6213,12 +6235,16 @@ function CheckoutDetailPanel({
   status,
   packingResultsByRound,
   onPrint,
+  onCheckout,
+  checkingOut,
 }: {
   trip: PlanTrip;
   stops: (PlanOrder & { partnerName: string })[];
   status: { kind: TripStatusKind; label: string; at: string | null };
   packingResultsByRound: Record<number, PackingTargetResultLite[]>;
   onPrint: () => void;
+  onCheckout: () => void;
+  checkingOut: boolean;
 }) {
   const uniquePartners = Array.from(new Set(stops.map(o => o.partnerName)));
   const headingText = stops.length === 1 ? stops[0].deliverySiteName : trip.name ?? `Trip ${trip.tripNumber}`;
@@ -6246,34 +6272,78 @@ function CheckoutDetailPanel({
 
   return (
     <div className="bg-white rounded-xl border border-[#E1E5EA] overflow-hidden">
-      <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-[#f0f0f0] flex-wrap">
-        <div className="flex items-center gap-2">
+      <div className="px-5 pt-4 pb-3 border-b border-[#f0f0f0]">
+        <div className="flex items-center gap-3 flex-wrap">
           <CustPill name={uniquePartners[0] ?? ""} />
-          <span className="text-[16px] font-bold text-[#1a1a1a]">{headingText}</span>
-          {uniquePartners.length > 1 && <span className="text-[11px] text-[#888]">+{uniquePartners.length - 1} ลูกค้า</span>}
+          <span className="text-[22px] font-bold text-[#1a1a1a]">{headingText}</span>
+          {uniquePartners.length > 1 && <span className="text-[12px] text-[#888]">+{uniquePartners.length - 1} ลูกค้า</span>}
         </div>
-        <button onClick={onPrint} className="px-3 py-1.5 text-[12px] font-bold rounded-lg bg-[#1a1a1a] text-white hover:bg-black">
-          พิมพ์ใบเบิก
-        </button>
-      </div>
-      <div className="px-4 py-2 text-[11.5px] text-[#555] border-b border-[#f0f0f0] flex items-center gap-1.5 flex-wrap">
-        {isSelfPickup ? (
-          <span className="font-semibold text-[#BE185D]">ลูกค้ามารับ</span>
-        ) : (
+        <div className="mt-1.5 text-[13px] text-[#8a8f98] flex items-center gap-x-1.5 flex-wrap">
+          {isSelfPickup ? (
+            <span className="font-semibold text-[#BE185D]">ลูกค้ามารับ</span>
+          ) : (
+            <span>
+              {[trip.vehicleType, trip.vehiclePlate].filter(Boolean).join(" ")}
+              {trip.driverName ? ` · ${trip.driverName}` : ""}
+            </span>
+          )}
+          <span>· ขึ้นของ {pickupLabel ?? "ไม่ระบุ"}</span>
+          <span>· {siteCount} สาขา</span>
           <span>
-            {[trip.vehicleType, trip.vehiclePlate].filter(Boolean).join(" ")}
-            {trip.driverName ? ` · ${trip.driverName}` : ""}
+            · ใบจัดของ <b className="text-[#555]">{fmtNum(planEggs)}</b> ฟอง
+            {unitTotals.map((u, i) => (
+              <span key={u.family}>
+                {i === 0 ? " = " : " · "}
+                <b className="text-[#555]">{fmtNum(u.qty)}</b> {u.family}
+              </span>
+            ))}
           </span>
-        )}
-        <span>· ขึ้นของ {pickupLabel ?? "ไม่ระบุ"}</span>
-        <span>· {siteCount} สาขา</span>
-        <span>
-          · ใบจัดของ <b className="text-[#1a1a1a]">{fmtNum(planEggs)}</b> ฟอง
-          {unitTotals.length > 0 && ` = ${unitTotals.map(u => `${fmtNum(u.qty)} ${u.family}`).join(" · ")}`}
-        </span>
-        <span>
-          · เบิกแล้ว <b className={dispatched ? "text-green-700" : "text-[#aaa]"}>{fmtNum(dispatchedEggs)}</b> ฟอง
-        </span>
+          <span>
+            · เบิกแล้ว <b className={dispatched ? "text-green-700" : "text-[#555]"}>{fmtNum(dispatchedEggs)}</b> ฟอง
+          </span>
+        </div>
+        <div className="mt-3 flex items-center justify-end gap-2">
+          {status.kind === "done" ? (
+            <>
+              <span className="px-4 py-2 text-[13px] font-bold rounded-lg bg-[#F0FDF4] border border-[#86EFAC] text-green-700">
+                ✓ เช็คเอาท์แล้ว
+              </span>
+              <button onClick={onPrint} className="px-4 py-2 text-[13px] font-bold rounded-lg bg-[#1a1a1a] text-white hover:bg-black">
+                พิมพ์ใบเบิก
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                disabled
+                title="ยังไม่รองรับ — ต้องมีข้อมูลสต็อก FG จริงก่อนถึงจะคำนวณคิวจัดสรรได้อย่างถูกต้อง"
+                className="px-4 py-2 text-[13px] font-bold rounded-lg border border-[#d6d8dc] bg-white text-[#1a1a1a] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                จัดก่อน
+              </button>
+              <button
+                onClick={onPrint}
+                className="px-4 py-2 text-[13px] font-bold rounded-lg border border-[#d6d8dc] bg-white text-[#1a1a1a] hover:bg-[#f5f5f5]"
+              >
+                พิมพ์ร่าง
+              </button>
+              <button
+                onClick={onCheckout}
+                disabled={status.kind !== "ready" || checkingOut}
+                title={
+                  status.kind === "needs_confirm"
+                    ? "ต้องยืนยันเที่ยวก่อน (แท็บจัดเที่ยวส่ง)"
+                    : status.kind === "needs_packing"
+                      ? "ต้องแพ็กให้ครบก่อน"
+                      : "เช็คเอาท์ — บันทึกว่าเที่ยวนี้ออกแล้ว"
+                }
+                className="px-4 py-2 text-[13px] font-bold rounded-lg bg-[#1a1a1a] text-white hover:bg-black disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                {checkingOut ? "กำลังเช็คเอาท์..." : "เช็คเอาท์"}
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       <div className="flex items-center gap-4 px-4 py-2.5 border-b border-[#f0f0f0] bg-[#FAFBFC] flex-wrap text-[12px]">
@@ -16313,7 +16383,7 @@ export default function DailyPlan() {
                 onRefresh={fetchData}
               />
             ) : subtab === "checkout" ? (
-              <CheckoutTab date={date} trips={data?.trips ?? []} partners={data?.partners ?? []} />
+              <CheckoutTab date={date} trips={data?.trips ?? []} partners={data?.partners ?? []} onRefresh={fetchData} />
             ) : subtab === "fgstock" ? (
               <FgStockTab date={date} />
             ) : subtab === "summary" ? (
