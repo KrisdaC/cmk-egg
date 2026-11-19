@@ -1,4 +1,4 @@
--- UAT migration: 0002 + 0018 → 0040 (consolidated, safe to re-run).
+-- UAT migration: 0002 + 0018 → 0041 (consolidated, safe to re-run).
 -- Generated from migrations/*.sql. Every statement is IF NOT EXISTS, except 0030
 -- (data backfill) which is guarded so it only runs once. One transaction: all or nothing.
 -- Run:  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f deploy/uat_migrate.sql
@@ -337,5 +337,11 @@ CREATE TABLE IF NOT EXISTS packing_target_results (
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS confirmed_at timestamptz;
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS vehicle_confirmed_at timestamptz;
 ALTER TABLE trips ADD COLUMN IF NOT EXISTS departed_at timestamptz;
+
+-- ===== 0041_prelim_plan_pulled.sql =====
+-- Delivery tab pulls each preliminary shipment plan (of a closed round) into a
+-- trip, once. pulled_at marks a plan as already converted, so deleting the
+-- resulting trip never makes it come back.
+ALTER TABLE preliminary_shipment_plans ADD COLUMN IF NOT EXISTS pulled_at timestamptz;
 
 COMMIT;

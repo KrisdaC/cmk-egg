@@ -4297,6 +4297,23 @@ function TripManager({
     ).catch(() => {});
   }, []);
 
+  // Pull the day's preliminary shipment plans (of closed rounds) into trips by
+  // default. The server converts each plan at most once, so re-opening this tab
+  // — or deleting a trip — never recreates anything.
+  useEffect(() => {
+    let live = true;
+    fetch("/api/orders/trips/from-plans", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ date }),
+    })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { if (live && j && j.created > 0) onRefresh(); })
+      .catch(() => {});
+    return () => { live = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
+
   // All confirmed orders for this date (with partner info flat)
   const allOrders = useMemo(() =>
     partners.flatMap(p => p.orders

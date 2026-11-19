@@ -97,6 +97,9 @@ export const preliminaryShipmentPlans = pgTable("preliminary_shipment_plans", {
   loadInTime: text("load_in_time"),
   deliverPlanDate: date("deliver_plan_date"),
   deliverPlanTime: text("deliver_plan_time"),
+  // Set when the Delivery tab has turned this plan into a trip (see
+  // POST /api/orders/trips/from-plans) — a plan is pulled at most once.
+  pulledAt: timestamp("pulled_at", { withTimezone: true }),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

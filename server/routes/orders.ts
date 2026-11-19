@@ -1775,6 +1775,73 @@ router.post("/trips", async (req, res) => {
   }
 });
 
+/** POST /api/orders/trips/from-plans — turn preliminary shipment plans into trips.
+ * Body: { date }. Only plans of a CLOSED order round (a closed round's plans are
+ * final) that have not been pulled before. One trip per plan: named after the
+ * plan label, with the plan's vehicle; the plan's orders that are still
+ * unassigned go on it in delivery-time order. Safe to call repeatedly — each
+ * plan is converted once (pulled_at), so a deleted trip is never recreated. */
+router.post("/trips/from-plans", async (req, res) => {
+  const { date } = req.body as { date?: string };
+  if (!date) return res.status(400).json({ message: "date required" });
+  try {
+    const result = await db.transaction(async tx => {
+      const closed = await tx
+        .select({ round: productionRoundStates.round, closedAt: productionRoundStates.closedAt })
+        .from(productionRoundStates)
+        .where(eq(productionRoundStates.deliveryDate, date));
+      const closedRounds = closed.filter(r => r.closedAt != null).map(r => r.round);
+      if (closedRounds.length === 0) return { created: 0, tripIds: [] as number[] };
+
+      const plans = (
+        await tx.select().from(preliminaryShipmentPlans).where(eq(preliminaryShipmentPlans.deliveryDate, date))
+      )
+        .filter(p => p.pulledAt == null && p.productionRound != null && closedRounds.includes(p.productionRound))
+        .sort((a, b) => a.label.localeCompare(b.label, undefined, { numeric: true }));
+
+      const tripIds: number[] = [];
+      for (const plan of plans) {
+        const ids = (plan.orderIds as number[]) ?? [];
+        const candidates = ids.length
+          ? await tx
+              .select({ id: orders.id, deliveryTime: orders.deliveryTime, tripId: orders.tripId, status: orders.status })
+              .from(orders)
+              .where(inArray(orders.id, ids))
+          : [];
+        const free = candidates
+          .filter(o => o.tripId == null && o.status !== "cancelled")
+          .sort((a, b) => (a.deliveryTime ?? "99:99").localeCompare(b.deliveryTime ?? "99:99") || a.id - b.id);
+
+        if (free.length > 0) {
+          const existing = await tx.select({ id: trips.id }).from(trips).where(eq(trips.deliveryDate, date));
+          const tripNumber = existing.length + 1;
+          const [created] = await tx
+            .insert(trips)
+            .values({
+              deliveryDate: date,
+              productionRound: plan.productionRound,
+              tripNumber,
+              name: plan.label,
+              vehicleId: plan.vehicleId ?? null,
+              notes: plan.groupLabel ?? null,
+            })
+            .returning();
+          for (let i = 0; i < free.length; i++) {
+            await tx.update(orders).set({ tripId: created.id, stopOrder: i + 1 }).where(eq(orders.id, free[i].id));
+          }
+          tripIds.push(created.id);
+        }
+        await tx.update(preliminaryShipmentPlans).set({ pulledAt: new Date() }).where(eq(preliminaryShipmentPlans.id, plan.id));
+      }
+      return { created: tripIds.length, tripIds };
+    });
+    return res.json(result);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to create trips from plans" });
+  }
+});
+
 /** PATCH /api/trips/:id — update trip fields */
 router.patch("/trips/:id", async (req, res) => {
   const id = parseInt(req.params.id, 10);
