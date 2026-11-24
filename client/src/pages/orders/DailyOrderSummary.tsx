@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Download, Printer, ChevronLeft, ChevronRight } from "lucide-react";
+import { todayBkk } from "@shared/date";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -51,7 +52,7 @@ export default function DailyOrderSummary() {
               </Button>
               <div className="flex items-center gap-2 px-3 py-2 border rounded-md">
                 <Calendar className="w-4 h-4 text-muted-foreground" />
-                <Input type="date" defaultValue="2026-01-02" className="border-0 p-0 h-auto w-[130px]" data-testid="input-date" />
+                <Input type="date" defaultValue={todayBkk()} className="border-0 p-0 h-auto w-[130px]" data-testid="input-date" />
               </div>
               <Button variant="outline" size="icon" data-testid="button-next-day">
                 <ChevronRight className="w-4 h-4" />

@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 
+import { todayBkk } from "@shared/date";
 export interface ParsedPOLine {
   customerItemCode: string;
   itemName: string;
@@ -211,7 +212,7 @@ function parseMakro(ws: XLSX.WorkSheet, rows: any[][]): ParsedPO[] {
     });
   }
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayBkk();
   return [{
     poNumber: poNumber || `MK-${today}`,
     orderDate: orderDate || today,
@@ -247,7 +248,7 @@ function parseMakroSimple(rows: any[][], poNumber: string, orderDate: string, de
     return r;
   });
 
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayBkk();
   return [{
     poNumber: poNumber || `MK-${today}`,
     orderDate: orderDate || today,

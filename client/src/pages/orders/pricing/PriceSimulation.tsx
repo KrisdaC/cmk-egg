@@ -49,6 +49,7 @@ import {
 } from "./_shared";
 import QuotationModal from "./QuotationModal";
 
+import { todayBkk, firstOfMonthISO as firstOfMonthBkk } from "@shared/date";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface EggItem {
@@ -117,14 +118,8 @@ const SIZE_LABEL: Record<string, string> = {
 
 // ─── Date helpers ─────────────────────────────────────────────────────────────
 
-function todayISO(): string {
-  return new Date().toISOString().split("T")[0];
-}
-
-function firstOfMonthISO(): string {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-01`;
-}
+const todayISO = todayBkk;
+const firstOfMonthISO = () => firstOfMonthBkk();
 
 const THAI_MONTHS_SHORT = ["ม.ค.","ก.พ.","มี.ค.","เม.ย.","พ.ค.","มิ.ย.","ก.ค.","ส.ค.","ก.ย.","ต.ค.","พ.ย.","ธ.ค."];
 

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
+import { todayBkk } from "@shared/date";
 import {
   Tabs,
   TabsContent,
@@ -1054,7 +1055,7 @@ function ProposalDetailSheet({
   onRefresh: () => void;
 }) {
   const [activateOpen, setActivateOpen] = useState(false);
-  const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split("T")[0]);
+  const [effectiveDate, setEffectiveDate] = useState(todayBkk());
   const [submitting, setSubmitting] = useState(false);
   // lineEdits holds in-progress edits keyed by line id: { counter, final }
   const [lineEdits, setLineEdits] = useState<Record<number, { counter: string; final: string }>>({});

@@ -56,6 +56,7 @@ import {
 } from "./_shared";
 import { SiteGroupManagerDialog } from "./SiteGroupManager";
 
+import { todayBkk } from "@shared/date";
 export default function ProposalsPage() {
   const [, navigate] = useLocation();
   const [proposals, setProposals] = useState<ProposalRow[]>([]);
@@ -258,7 +259,7 @@ function ProposalDetailSheet({
 }) {
   const [, navigate] = useLocation();
   const [activateOpen, setActivateOpen] = useState(false);
-  const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split("T")[0]);
+  const [effectiveDate, setEffectiveDate] = useState(todayBkk());
   const [submitting, setSubmitting] = useState(false);
   const [showQuotation, setShowQuotation] = useState(false);
 
@@ -507,7 +508,7 @@ function ProposalDetailSheet({
       {showQuotation && proposal && proposal.partner && (
         <QuotationModal
           partnerId={proposal.partner.id}
-          dateFrom={proposal.effectiveDate ?? new Date().toISOString().split("T")[0]}
+          dateFrom={proposal.effectiveDate ?? todayBkk()}
           siteGroups={exceptionGroups}
           simItems={lines
             .filter((l) => l.item != null)

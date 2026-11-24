@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { parseFile } from "@/lib/po-parsers";
 
+import { todayBkk } from "@shared/date";
 // =============================================
 // TYPES
 // =============================================
@@ -228,7 +229,7 @@ export default function POIntakePage() {
     ).length;
     const needAdj = poList.filter((p) => p.status === "pending" && p.adjustment_eggs !== 0).length;
     const todayAccepted = poList
-      .filter((p) => p.order_date === new Date().toISOString().slice(0, 10))
+      .filter((p) => p.order_date === todayBkk())
       .reduce((s, p) => s + Number(p.total_accepted_qty_eggs), 0);
     return { pending, readyToConfirm, needAdj, todayAccepted };
   }, [poList]);

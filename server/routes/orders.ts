@@ -20,6 +20,7 @@ import {
 import { desc, eq, inArray, like, sql } from "drizzle-orm";
 import { z } from "zod";
 
+import { todayBkk } from "@shared/date";
 const router = Router();
 
 // Eggs per one selling unit. The selling unit can differ from the pack unit
@@ -455,7 +456,7 @@ router.get("/mixed-ratios", async (_req, res) => {
  */
 router.get("/daily", async (req, res) => {
   try {
-    const date = (req.query.date as string) || new Date().toISOString().slice(0, 10);
+    const date = (req.query.date as string) || todayBkk();
 
     const rows = await db.execute(sql`
       SELECT
@@ -653,7 +654,7 @@ router.get("/daily", async (req, res) => {
 
 router.get("/ad-demand", async (req, res) => {
   try {
-    const date = (req.query.date as string) || new Date().toISOString().slice(0, 10);
+    const date = (req.query.date as string) || todayBkk();
     const days = Math.max(1, parseInt((req.query.days as string) || "30", 10));
 
     const rows = await db.execute(sql`
@@ -697,7 +698,7 @@ router.get("/ad-demand", async (req, res) => {
 // excluded from the divisor). Excluded partners are left out of the sums but
 // still listed in `customers` so they can be re-included.
 async function computeAqReference(query: Record<string, any>) {
-  const date = (query.date as string) || new Date().toISOString().slice(0, 10);
+  const date = (query.date as string) || todayBkk();
   const days = Math.min(365, Math.max(1, parseInt((query.days as string) || "30", 10) || 30));
   const methodRaw = String(query.method || "all");
   const method = ["all", "weekday", "weekday_month"].includes(methodRaw) ? methodRaw : "all";

@@ -4,6 +4,7 @@ import { X, Printer } from "lucide-react";
 import { SIZE_PILL } from "./_shared";
 import type { PricingWeek, SiteGroup } from "./_shared";
 
+import { todayBkk } from "@shared/date";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface EggItem {
@@ -90,7 +91,7 @@ export default function QuotationModal({
       .then(d => d && setPartner(d));
   }, [partnerId]);
 
-  const todayISO = new Date().toISOString().split("T")[0];
+  const todayISO = todayBkk();
 
   // Group items by primary_size for section headers
   const sizes = Array.from(new Set(simItems.map(r => r.item.primary_size).filter(Boolean))) as string[];

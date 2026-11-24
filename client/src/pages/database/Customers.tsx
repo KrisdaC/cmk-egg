@@ -27,6 +27,10 @@ import { useToast } from "@/hooks/use-toast";
 import type { CustomerAccount, DeliverySite, CustomerContact } from "@shared/schema";
 import { insertCustomerAccountSchema, insertDeliverySiteSchema, insertCustomerContactSchema } from "@shared/schema";
 import { z } from "zod";
+import {
+  BUSINESS_TYPES, CUSTOMER_TYPES, PAYMENT_TERMS_OPTIONS, SITE_REGIONS,
+  partnerFormToPayload, partnerRecordToForm, siteFormToPayload, siteRecordToForm, withStoredOption,
+} from "@shared/master-forms";
 import { SiteGroupManagerDialog } from "@/pages/orders/pricing/SiteGroupManager";
 import type { SiteGroup, Partner } from "@/pages/orders/pricing/_shared";
 
@@ -37,25 +41,8 @@ const VEHICLE_TYPES = [
   { value: "refrigerated", label: "ตู้ห้องเย็น" },
 ] as const;
 
-const THAILAND_REGIONS = [
-  { value: "bangkok", label: "กรุงเทพและปริมณฑล" },
-  { value: "central", label: "ภาคกลาง" },
-  { value: "north", label: "ภาคเหนือ" },
-  { value: "northeast", label: "ภาคตะวันออกเฉียงเหนือ" },
-  { value: "east", label: "ภาคตะวันออก" },
-  { value: "west", label: "ภาคตะวันตก" },
-  { value: "south", label: "ภาคใต้" },
-] as const;
-
-const BUSINESS_TYPES = [
-  { value: "Individual", label: "บุคคลธรรมดา" },
-  { value: "Corporation", label: "นิติบุคคล" },
-] as const;
-
-const CUSTOMER_TYPES = [
-  { value: "Traditional Trade", label: "ค้าปลีกดั้งเดิม" },
-  { value: "Modern Trade", label: "ค้าปลีกสมัยใหม่" },
-] as const;
+// Option lists (business/customer type, payment terms, regions) live in shared/master-forms.ts
+// so they can be tested and so a stored value outside a list is still shown.
 
 type AccountWithRelations = CustomerAccount & {
   deliverySites?: DeliverySite[];
@@ -70,19 +57,6 @@ const formSchema = insertCustomerAccountSchema.extend({
   code: z.string().min(1, "กรุณากรอกรหัสบัญชี"),
   businessName: z.string().min(1, "กรุณากรอกชื่อธุรกิจ"),
 });
-
-const PAYMENT_TERMS_OPTIONS = [
-  { value: "Cash", label: "เงินสด", creditDays: 0 },
-  { value: "COD", label: "เก็บเงินปลายทาง (COD)", creditDays: 0 },
-  { value: "Credit 7 Days", label: "เครดิต 7 วัน", creditDays: 7 },
-  { value: "Credit 15 Days", label: "เครดิต 15 วัน", creditDays: 15 },
-  { value: "Credit 30 Days", label: "เครดิต 30 วัน", creditDays: 30 },
-] as const;
-
-const getCreditDaysFromPaymentTerms = (paymentTerms: string): number => {
-  const option = PAYMENT_TERMS_OPTIONS.find(o => o.value === paymentTerms);
-  return option?.creditDays ?? 0;
-};
 
 const CUST_HEX: [string, string][] = [
   ['makro', '#A32D2D'], ['bigc', '#3B6D11'], ['big c', '#3B6D11'],
@@ -258,6 +232,7 @@ export default function Customers() {
       province: "",
       postalCode: "",
       country: "Thailand",
+      deliveryRegion: "",
       deliveryZone: "",
       preferredTimeSlot: "",
       accessInstructions: "",
@@ -309,6 +284,7 @@ export default function Customers() {
       province: "",
       postalCode: "",
       country: "Thailand",
+      deliveryRegion: "",
       deliveryZone: "",
       preferredTimeSlot: "",
       accessInstructions: "",
@@ -322,27 +298,7 @@ export default function Customers() {
   const openEditSiteDialog = (site: DeliverySite) => {
     setEditingSite(site);
     setSelectedAccountId(site.partnerId);
-    siteForm.reset({
-      partnerId: site.partnerId,
-      siteCode: site.siteCode,
-      displayName: site.displayName,
-      partnerBranchCode: site.partnerBranchCode ?? "",
-      branchName: site.branchName ?? "",
-      deliveryType: site.deliveryType ?? "direct_to_store",
-      addressLine1: site.addressLine1 ?? "",
-      addressLine2: site.addressLine2 ?? "",
-      district: site.district ?? "",
-      subDistrict: site.subDistrict ?? "",
-      province: site.province ?? "",
-      postalCode: site.postalCode ?? "",
-      country: site.country ?? "Thailand",
-      deliveryZone: site.deliveryZone ?? "",
-      preferredTimeSlot: site.preferredTimeSlot ?? "",
-      accessInstructions: site.accessInstructions ?? "",
-      acceptableVehicles: (site as any).acceptableVehicles ?? [],
-      googleMapsUrl: site.googleMapsUrl ?? "",
-      isActive: site.isActive ?? true,
-    });
+    siteForm.reset(siteRecordToForm(site) as any);
     setSiteDialogOpen(true);
   };
 
@@ -355,7 +311,7 @@ export default function Customers() {
 
   const onSiteSubmit = (data: SiteFormValues) => {
     if (editingSite) {
-      updateSiteMutation.mutate({ ...data, id: editingSite.id });
+      updateSiteMutation.mutate({ ...(siteFormToPayload(data, editingSite) as typeof data), id: editingSite.id });
     } else {
       createSiteMutation.mutate(data);
     }
@@ -487,26 +443,7 @@ export default function Customers() {
 
   const openEditDialog = (account: AccountWithRelations) => {
     setEditingAccount(account);
-    form.reset({
-      nickname: account.nickname,
-      code: account.code,
-      businessName: account.businessName ?? "",
-      businessType: (account as any).businessType ?? "",
-      customerType: (account as any).customerType ?? "",
-      branchCode: account.branchCode ?? "",
-      branchName: account.branchName ?? "",
-      taxId: account.taxId ?? "",
-      addressLine1: account.addressLine1 ?? "",
-      addressLine2: account.addressLine2 ?? "",
-      district: account.district ?? "",
-      subDistrict: account.subDistrict ?? "",
-      province: account.province ?? "",
-      postalCode: account.postalCode ?? "",
-      country: account.country ?? "Thailand",
-      paymentTerms: account.paymentTerms ?? "COD",
-      customerTier: account.customerTier ?? "",
-      isActive: account.isActive ?? true,
-    });
+    form.reset(partnerRecordToForm(account));
     setDialogOpen(true);
   };
 
@@ -517,11 +454,10 @@ export default function Customers() {
   };
 
   const onSubmit = (data: FormValues) => {
-    // Derive creditDays from paymentTerms for database consistency
-    const submitData = {
-      ...data,
-      creditDays: getCreditDaysFromPaymentTerms(data.paymentTerms ?? "COD"),
-    };
+    // Credit days follow the terms only when the form knows them (e.g. "Credit 15 Days");
+    // a stored plain "Credit" keeps its days, and blanks go back to null. Opening and
+    // saving a record unchanged must change nothing (shared/master-forms.ts).
+    const submitData = partnerFormToPayload(data, editingAccount) as typeof data & { creditDays: number | null };
     if (editingAccount) {
       updateMutation.mutate({ ...submitData, id: editingAccount.id });
     } else {
@@ -551,7 +487,7 @@ export default function Customers() {
     const regions = new Set<string>();
     accounts?.forEach(a => {
       a.deliverySites?.forEach(site => {
-        if (site.deliveryZone) regions.add(site.deliveryZone);
+        const r = site.deliveryRegion || site.deliveryZone; if (r) regions.add(r);
       });
     });
     return Array.from(regions).sort();
@@ -561,7 +497,7 @@ export default function Customers() {
     let result = accounts?.filter(a => {
       // Region filter - check if any delivery site matches the selected region
       if (regionFilter !== "all") {
-        const hasMatchingRegion = a.deliverySites?.some(site => site.deliveryZone === regionFilter);
+        const hasMatchingRegion = a.deliverySites?.some(site => (site.deliveryRegion || site.deliveryZone) === regionFilter);
         if (!hasMatchingRegion) return false;
       }
       
@@ -903,7 +839,7 @@ export default function Customers() {
                         (site.district ?? '').toLowerCase().includes(term) ||
                         (site.subDistrict ?? '').toLowerCase().includes(term) ||
                         (site.province ?? '').toLowerCase().includes(term) ||
-                        (site.deliveryZone ?? '').toLowerCase().includes(term)
+                        ((site.deliveryRegion || site.deliveryZone) ?? '').toLowerCase().includes(term)
                       );
                     }).map((site) => (
                       <div
@@ -973,8 +909,8 @@ export default function Customers() {
                           </span>
                         </div>
                         <div className="pt-1">
-                          {site.deliveryZone && (
-                            <span className="text-[10px] text-muted-foreground">{site.deliveryZone}</span>
+                          {(site.deliveryRegion || site.deliveryZone) && (
+                            <span className="text-[10px] text-muted-foreground">{site.deliveryRegion || site.deliveryZone}</span>
                           )}
                         </div>
                         <div />
@@ -1087,7 +1023,7 @@ export default function Customers() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {BUSINESS_TYPES.map((type) => (
+                          {withStoredOption(BUSINESS_TYPES, field.value).map((type) => (
                             <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1109,7 +1045,7 @@ export default function Customers() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {CUSTOMER_TYPES.map((type) => (
+                          {withStoredOption(CUSTOMER_TYPES, field.value).map((type) => (
                             <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
                           ))}
                         </SelectContent>
@@ -1263,14 +1199,14 @@ export default function Customers() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>เงื่อนไขการชำระ</FormLabel>
-                    <Select value={field.value ?? "COD"} onValueChange={field.onChange}>
+                    <Select value={field.value ?? ""} onValueChange={field.onChange}>
                       <FormControl>
                         <SelectTrigger data-testid="select-payment-terms">
                           <SelectValue placeholder="เลือกเงื่อนไข" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {PAYMENT_TERMS_OPTIONS.map((option) => (
+                        {withStoredOption(PAYMENT_TERMS_OPTIONS.map(o => ({ value: o.value as string, label: o.label })), field.value).map((option) => (
                           <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                         ))}
                       </SelectContent>
@@ -1528,7 +1464,7 @@ export default function Customers() {
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={siteForm.control}
-                  name="deliveryZone"
+                  name="deliveryRegion"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>ภูมิภาค</FormLabel>
@@ -1539,7 +1475,7 @@ export default function Customers() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {THAILAND_REGIONS.map((region) => (
+                          {withStoredOption(SITE_REGIONS, field.value).map((region) => (
                             <SelectItem key={region.value} value={region.value}>{region.label}</SelectItem>
                           ))}
                         </SelectContent>

@@ -44,6 +44,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { getItems, getItemById, upsertItem, deleteItem } from "@/lib/api/items";
 
+import { bomReadinessChecks, gradeFromSize, hasValue, sellingUnitOptions, withStoredOption } from "@shared/master-forms";
 interface Item {
   id: number;
   sku: string | null;
@@ -424,9 +425,12 @@ export default function Items() {
       is_egg: editingItemData.isEgg ?? editingItemData.isEggItem ?? false,
       egg_input_type: _contentTypeToInputType(editingItemData.eggContentType),
       egg_is_mixed: editingItemData.eggContentType === "GRADED_MIX",
-      primary_grade: editingItemData.primaryGrade ?? null,
-      secondary_grade: editingItemData.secondaryGrade ?? null,
-      min_primary_grade: editingItemData.minPrimaryGrade ? Number(editingItemData.minPrimaryGrade) : null,
+      // the grade columns are the older copy of primary/secondary size; show the size when they are empty
+      primary_grade: editingItemData.primaryGrade ?? gradeFromSize(editingItemData.primarySize),
+      secondary_grade: editingItemData.secondaryGrade ?? gradeFromSize(editingItemData.secondarySize),
+      min_primary_grade: hasValue(editingItemData.minPrimaryGrade)
+        ? Number(editingItemData.minPrimaryGrade)
+        : (hasValue(editingItemData.minPrimary) ? Number(editingItemData.minPrimary) : null),
       primary_size: editingItemData.primarySize ?? undefined,
       secondary_size: editingItemData.secondarySize ?? undefined,
       min_primary: editingItemData.minPrimary ?? null,
@@ -471,6 +475,11 @@ export default function Items() {
   const watchEggInputType = form.watch("egg_input_type");
   const watchEggIsMixed = form.watch("egg_is_mixed");
   const watchPrimaryGrade = form.watch("primary_grade");
+  const watchPkgProfile = form.watch("packaging_profile");
+  const watchAddMaterials = form.watch("additional_materials");
+  // Role defaults (sellable/producable/consumable) apply only when the USER changes the role,
+  // never as a side effect of opening a record — that silently rewrote stored flags.
+  const roleDirty = !!form.formState.dirtyFields.item_role;
 
   // Basket qty per selling unit (mirrors handover calculateBasketRequirementFromItem logic)
   const basketQtyPerSellingUnit = useMemo(() => {
@@ -492,31 +501,24 @@ export default function Items() {
   const showBomSection = watchRole?.toUpperCase() === "FG" || watchProducable || watchSellable || watchIsEgg;
 
   // BOM readiness checks (matching handover _bomItemReadiness logic)
-  const bomReadiness = useMemo(() => {
-    const checks = [
-      {
-        label: "หน่วยขาย + การแปลงหน่วยฐาน · Selling unit & base conversion",
-        pass: !!watchSellingUnit && !!watchEggsPerPack && watchEggsPerPack > 0,
-      },
-      {
-        label: "มีรายการ BOM อย่างน้อย 1 รายการ · BOM has at least one line",
-        pass: watchIsEgg || false,
-      },
-      {
-        label: "ทุกบรรทัดข้อมูลครบถ้วน · All component lines complete",
-        pass: !watchIsEgg || (!!watchEggInputType && (watchEggInputType !== "graded" || !!watchPrimaryGrade)),
-        hint: watchIsEgg && !watchEggInputType
-          ? "เลือก Egg input type ก่อน — ดู ⚠ ในส่วน Egg inputs"
-          : (watchEggInputType === "graded" && !watchPrimaryGrade ? "ระบุ Primary grade" : undefined),
-      },
-    ];
-    const failCount = checks.filter((c) => !c.pass).length;
-    return { checks, ok: failCount === 0, failCount };
-  }, [watchSellingUnit, watchEggsPerPack, watchIsEgg, watchEggInputType, watchPrimaryGrade]);
+  const bomReadiness = useMemo(
+    () =>
+      bomReadinessChecks({
+        role: watchRole,
+        sellingUnit: watchSellingUnit,
+        eggsPerPack: watchEggsPerPack,
+        isEgg: watchIsEgg,
+        eggInputType: watchEggInputType,
+        primaryGrade: watchPrimaryGrade,
+        packagingProfile: watchPkgProfile as any,
+        additionalMaterials: watchAddMaterials as any,
+      }),
+    [watchRole, watchSellingUnit, watchEggsPerPack, watchIsEgg, watchEggInputType, watchPrimaryGrade, watchPkgProfile, watchAddMaterials],
+  );
 
   // Auto-apply role behavior defaults when role changes
   useEffect(() => {
-    if (!watchRole) return;
+    if (!watchRole || !roleDirty) return;
     const def = ROLE_BEHAVIOR_DEFAULTS[watchRole.toUpperCase()];
     if (!def) return;
     form.setValue("is_sellable", def.sellable);
@@ -531,13 +533,10 @@ export default function Items() {
   }, [watchRole]);
 
   // Selling unit options: only from this item's defined units
-  const sellingUnitChoices = useMemo(() => {
-    const opts: { value: string; label: string }[] = [];
-    if (watchBaseUnit) opts.push({ value: watchBaseUnit, label: `${watchBaseUnit} (ฐาน · base)` });
-    if (watchPackUnit) opts.push({ value: watchPackUnit, label: `${watchPackUnit} (แพ็ค · pack)` });
-    if (watchBasketUnit) opts.push({ value: watchBasketUnit, label: `${watchBasketUnit} (ตะกร้า · basket)` });
-    return opts;
-  }, [watchBaseUnit, watchPackUnit, watchHasBasket, watchBasketUnit]);
+  const sellingUnitChoices = useMemo(
+    () => sellingUnitOptions({ base: watchBaseUnit, pack: watchPackUnit, basket: watchBasketUnit, stored: watchSellingUnit }),
+    [watchBaseUnit, watchPackUnit, watchBasketUnit, watchSellingUnit],
+  );
 
   // Conversion preview
   const conversionPreviews = useMemo(() => {
@@ -763,12 +762,12 @@ export default function Items() {
                           <SelectTrigger><SelectValue placeholder="เลือก role" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="FG">FG</SelectItem>
-                          <SelectItem value="WIP">WIP</SelectItem>
-                          <SelectItem value="RM">RM</SelectItem>
-                          <SelectItem value="PACKAGING">PACKAGING</SelectItem>
-                          <SelectItem value="SUPPLY">SUPPLY</SelectItem>
-                          <SelectItem value="DEFECT">DEFECT</SelectItem>
+                          {withStoredOption(
+                            ["FG", "WIP", "RM", "PACKAGING", "SUPPLY", "DEFECT"].map(r => ({ value: r, label: r })),
+                            field.value,
+                          ).map(r => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -777,14 +776,14 @@ export default function Items() {
                   <FormField control={form.control} name="item_type" render={({ field }) => (
                     <FormItem>
                       <FormLabel>Item type (subtype of role)</FormLabel>
-                      <Select value={field.value} onValueChange={field.onChange} disabled={availableTypes.length === 0}>
+                      <Select value={field.value} onValueChange={field.onChange} disabled={availableTypes.length === 0 && !field.value}>
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder={availableTypes.length === 0 ? "—" : "เลือกประเภท"} />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          {availableTypes.map((t) => (
+                          {withStoredOption(availableTypes, field.value).map((t) => (
                             <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                           ))}
                         </SelectContent>
@@ -881,11 +880,12 @@ export default function Items() {
                           <SelectTrigger><SelectValue placeholder="หน่วยฐาน" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="ฟอง">ฟอง</SelectItem>
-                          <SelectItem value="ใบ">ใบ</SelectItem>
-                          <SelectItem value="ดวง">ดวง</SelectItem>
-                          <SelectItem value="ม้วน">ม้วน</SelectItem>
-                          <SelectItem value="ชิ้น">ชิ้น</SelectItem>
+                          {withStoredOption(
+                            ["ฟอง", "ใบ", "ดวง", "ม้วน", "ชิ้น"].map(u => ({ value: u, label: u })),
+                            field.value,
+                          ).map(u => (
+                            <SelectItem key={u.value} value={u.value}>{u.label}</SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </FormItem>
@@ -1387,8 +1387,8 @@ export default function Items() {
                                       <SelectValue placeholder="— เลือก · choose —" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {PKG_ITEM_TYPES.map((t) => (
-                                        <SelectItem key={t} value={t}>{t}</SelectItem>
+                                      {withStoredOption(PKG_ITEM_TYPES.map((t) => ({ value: t, label: t })), itemType).map((t) => (
+                                        <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                                       ))}
                                     </SelectContent>
                                   </Select>

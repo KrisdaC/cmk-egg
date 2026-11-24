@@ -4,6 +4,7 @@ import { Loader2, RefreshCw, Pencil, Printer } from "lucide-react";
 import { OverviewTab } from "./DailyPlanOverview";
 import { SummaryTab } from "./DailyPlanSummary";
 
+import { todayBkk, addDaysISO } from "@shared/date";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 export interface PlanLine {
@@ -125,18 +126,8 @@ const SIZE_PILL_CLS: Record<string, string> = {
 function custColor(n: string) { return CUST_COLOR[n] ?? "#5F5E5A"; }
 function custBg(n: string) { return CUST_BG[n] ?? "#f6f7f9"; }
 export function fmtNum(n: number) { return Math.round(n).toLocaleString("th-TH"); }
-function todayISO() {
-  return new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" }))
-    .toISOString().slice(0, 10);
-}
-function addDays(iso: string, n: number) {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+const todayISO = todayBkk;
+const addDays = addDaysISO;
 
 function CustPill({ name }: { name: string }) {
   return (

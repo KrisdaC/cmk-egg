@@ -24,6 +24,7 @@ import {
 } from "@shared/schema";
 import { eq, desc, sql, and, gte, lte, sum } from "drizzle-orm";
 
+import { todayBkk } from "@shared/date";
 export class DatabaseStorage {
   // === Suppliers ===
   async getSuppliers() {
@@ -465,7 +466,7 @@ export class DatabaseStorage {
     });
   }
   async getDailyAggregatedRequirements() {
-    const today = new Date().toISOString().split('T')[0];
+    const today = todayBkk();
     return await db.query.productionRequests.findMany({
       where: eq(productionRequests.status, "pending"),
       with: { 

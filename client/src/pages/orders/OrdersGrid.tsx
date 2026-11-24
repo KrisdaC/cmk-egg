@@ -5,6 +5,7 @@ import { parseFile, detectSiteFromPO, FORMAT_ACCEPT, type POFormat, type Deliver
 import type { UploadReviewData } from "./POUploadReview";
 import { useToast } from "@/hooks/use-toast";
 
+import { todayBkk, addDaysISO } from "@shared/date";
 // ── Types ──────────────────────────────────────────────────────────────────────
 
 interface OrderLine {
@@ -136,12 +137,10 @@ function needsAttention(o: OrderRow): string | null {
 
 // ── Date helpers ───────────────────────────────────────────────────────────────
 
-function todayISO() { return new Date().toISOString().slice(0, 10); }
-function addDays(iso: string, n: number) {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-}
+// Calendar dates are Bangkok "YYYY-MM-DD" strings — see shared/date.ts (the old
+// local versions went through UTC and were a day off in Thailand).
+const todayISO = todayBkk;
+const addDays = addDaysISO;
 function fmtDateDow(iso: string) {
   return new Date(iso + "T00:00:00").toLocaleDateString("en-GB", {
     weekday: "short", day: "2-digit", month: "2-digit", year: "numeric",
