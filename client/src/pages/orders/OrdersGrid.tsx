@@ -227,7 +227,7 @@ function Chip({ active, onClick, children, color }: {
     return (
       <button
         onClick={onClick}
-        className="px-3 py-1 rounded-full text-[11px] font-semibold border text-white cursor-pointer"
+        className="px-3 py-1 rounded-full text-[11px] font-semibold border text-white cursor-pointer whitespace-nowrap shrink-0"
         style={{ background: color, borderColor: color }}
       >
         {children}
@@ -237,7 +237,7 @@ function Chip({ active, onClick, children, color }: {
   return (
     <button
       onClick={onClick}
-      className={`px-3 py-1 rounded-full text-[11px] font-medium border cursor-pointer transition-all ${
+      className={`px-3 py-1 rounded-full text-[11px] font-medium border cursor-pointer transition-all whitespace-nowrap shrink-0 ${
         active
           ? "bg-[#EFF6FF] text-[#1E40AF] border-[#1E40AF] font-semibold"
           : "bg-white text-[#555] border-[#d6d8dc] hover:border-[#999] hover:bg-[#f5f5f5]"
@@ -1598,7 +1598,7 @@ export default function OrdersGrid() {
           </div>
 
           {/* Filter grid */}
-          <div className="grid gap-x-6 gap-y-3" style={{ gridTemplateColumns: "auto auto auto auto auto" }}>
+          <div className="flex flex-wrap items-start gap-x-6 gap-y-3">
             {/* DATE */}
             <div className="space-y-1.5">
               <span className="text-[10px] font-semibold text-[#888] uppercase tracking-wide">วันที่</span>
@@ -1608,7 +1608,7 @@ export default function OrdersGrid() {
                 <Chip active={dateMode === "range"} onClick={() => setDateMode("range")}>ช่วง</Chip>
               </div>
               {dateMode === "single" && (
-                <div className="flex items-center gap-1 mt-1">
+                <div className="flex flex-wrap items-center gap-1 mt-1">
                   <Chip active={date === yesterday} onClick={() => setDate(yesterday)}>เมื่อวาน</Chip>
                   <Chip active={date === today} onClick={() => setDate(today)}>วันนี้</Chip>
                   <Chip active={date === tomorrow} onClick={() => setDate(tomorrow)}>พรุ่งนี้</Chip>
